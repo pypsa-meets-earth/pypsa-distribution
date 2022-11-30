@@ -40,46 +40,6 @@ subworkflow pypsaearth:
         "./config.yaml"
 
 
-rule add_electricity:
-    input:
-        base_network="networks/base.nc"
-        ** {
-            f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
-            for tech in config["renewable"]
-            if tech in config["electricity"]["renewable_carriers"]
-        },
-        demand="resources/demand/electric_load.xlsx",  # path for the nodal demand
-        tech_costs=COSTS,
-        regions="resources/bus_regions/regions_onshore.geojson",
-    output:
-        "networks/elec.nc",
-    log:
-        "logs/add_electricity.log",
-    benchmark:
-        "benchmarks/add_electricity"
-    threads: 1
-    resources:
-        mem_mb=3000,
-    script:
-        "scripts/add_electricity.py"
-
-
-rule base_network:
-    input:
-        shapes="resources/shapes/shapes.geojson",
-    output:
-        "networks/base.nc",
-    log:
-        "logs/base_network.log",
-    benchmark:
-        "benchmarks/base_network"
-    threads: 1
-    resources:
-        mem_mb=3000,
-    script:
-        "scripts/base_network.py"
-
-
 rule build_shapes:
     output:
         "resources/shapes/shapes.geojson",
@@ -108,6 +68,22 @@ rule build_demand:
         mem_mb=3000,
     script:
         "scripts/build_demand.py"
+
+
+rule base_network:
+    input:
+        shapes="resources/shapes/shapes.geojson",
+    output:
+        "networks/base.nc",
+    log:
+        "logs/base_network.log",
+    benchmark:
+        "benchmarks/base_network"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/base_network.py"
 
 
 rule build_renewable_profiles:
@@ -142,3 +118,43 @@ rule build_renewable_profiles:
         mem_mb=ATLITE_NPROCESSES * 5000,
     script:
         pypsaearth("scripts/build_renewable_profiles.py")
+
+
+rule add_electricity:
+    input:
+        base_network="networks/base.nc"
+        ** {
+            f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
+            for tech in config["renewable"]
+            if tech in config["electricity"]["renewable_carriers"]
+        },
+        demand="resources/demand/electric_load.xlsx",  # path for the nodal demand
+        tech_costs=COSTS,
+        regions="resources/bus_regions/regions_onshore.geojson",
+    output:
+        "networks/elec.nc",
+    log:
+        "logs/add_electricity.log",
+    benchmark:
+        "benchmarks/add_electricity"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/add_electricity.py"
+
+
+rule solve_network:
+    input:
+        "networks/elec.nc",
+    output:
+        "networks/results/elec.nc",
+    log:
+        "logs/solve_network.log",
+    benchmark:
+        "benchmarks/solve_network"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/solve_network.py"
