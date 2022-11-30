@@ -668,9 +668,9 @@ def merge_yamls(path_base, path_changes, path_output):
             else:
                 d[k] = v
         return d
-    
+
     yaml = YAML()
-    
+
     with open(path_base) as fp:
         base_config = yaml.load(fp)
         with open(path_changes) as fc:

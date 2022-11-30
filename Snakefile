@@ -15,7 +15,9 @@ COSTS = "data/costs.csv"
 
 
 # prepare pypsa-earth config
-merge_yamls("./pypsa-earth/config.default.yaml", "./config.yaml", "./config.pypsa-earth.yaml")
+merge_yamls(
+    "./pypsa-earth/config.default.yaml", "./config.yaml", "./config.pypsa-earth.yaml"
+)
 
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 20)
 
@@ -29,8 +31,6 @@ wildcard_constraints:
     discountrate="[-+a-zA-Z0-9\.\s]*",
 
 
-
-
 subworkflow pypsaearth:
     workdir:
         "./pypsa-earth"
@@ -39,10 +39,11 @@ subworkflow pypsaearth:
     configfile:
         "./config.yaml"
 
+
 rule add_electricity:
     input:
         base_network="networks/base.nc"
-        **{
+        ** {
             f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
             for tech in config["renewable"]
             if tech in config["electricity"]["renewable_carriers"]
@@ -62,6 +63,7 @@ rule add_electricity:
     script:
         "scripts/add_electricity.py"
 
+
 rule base_network:
     input:
         shapes="resources/shapes/shapes.geojson",
@@ -77,6 +79,7 @@ rule base_network:
     script:
         "scripts/base_network.py"
 
+
 rule build_shapes:
     output:
         "resources/shapes/shapes.geojson",
@@ -89,6 +92,7 @@ rule build_shapes:
         mem_mb=3000,
     script:
         "scripts/build_shapes.py"
+
 
 rule build_demand:
     input:
@@ -106,12 +110,13 @@ rule build_demand:
         "scripts/build_demand.py"
 
 
-
 rule build_renewable_profiles:
     input:
         base_network="networks/base.nc",
         natura=pypsaearth("resources/natura.tiff"),
-        copernicus=pypsaearth("data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"),
+        copernicus=pypsaearth(
+            "data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"
+        ),
         gebco=pypsaearth("data/gebco/GEBCO_2021_TID.nc"),
         country_shapes="resources/shapes/country_shapes.geojson",
         offshore_shapes="resources/shapes/offshore_shapes.geojson",
