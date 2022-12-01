@@ -657,9 +657,9 @@ def merge_yamls(path_base, path_changes, path_output):
 
     from ruamel.yaml import YAML
 
-    path_base = os.path.realpath(path_base)
-    path_changes = os.path.realpath(path_changes)
-    path_output = os.path.realpath(path_output)
+    path_base = Path(path_base)
+    path_changes = Path(path_changes)
+    path_output = Path(path_output)
 
     def update(d, u):
         for k, v in u.items():
