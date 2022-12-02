@@ -115,65 +115,58 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
 
     return(my_feature)
 
+def from_geojson_to_tif():
 
+    gdf = gpd.read_file('microgrid_shape.geojson')
+    gdf.to_file('microgrid_shape.shp')
 
-#I create a rectangle which will be the minigrid
+    with fiona.open("microgrid_shape.shp", "r") as shapefile:
+        shapes = [feature["geometry"] for feature in shapefile]
 
-#%%
-# FeatureCollection = FeatureCollection([my_feature])
+    with rasterio.open('sle_ppp_2019_constrained.tif') as src:
+        out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
+        out_meta = src.meta
 
-# with open('microgrid_shape.geojson', 'w') as f:
-#         f.write(geojson.dumps(FeatureCollection))
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                    "transform": out_transform})
 
-# gdf = gpd.read_file('microgrid_shape.geojson')
-# gdf.to_file('microgrid_shape.shp')
+    with rasterio.open("SL.masked.tif", "w", **out_meta) as dest:
+        dest.write(out_image)
 
-# with fiona.open("microgrid_shape.shp", "r") as shapefile:
-#     shapes = [feature["geometry"] for feature in shapefile]
-
-# with rasterio.open('sle_ppp_2019_constrained.tif') as src:
-#     out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
-#     out_meta = src.meta
-
-# out_meta.update({"driver": "GTiff",
-#                  "height": out_image.shape[1],
-#                  "width": out_image.shape[2],
-#                  "transform": out_transform})
-
-# with rasterio.open("SL.masked.tif", "w", **out_meta) as dest:
-#     dest.write(out_image)
-
-# myRaster = 'sle_ppp_2019_constrained.tif'
-# total_pop= gr.from_file(myRaster)
+def estimate_microgrid_population():
+    myRaster = 'sle_ppp_2019_constrained.tif'
+    total_pop= gr.from_file(myRaster)
     
-# total_pop=total_pop.to_geopandas() 
+    total_pop=total_pop.to_geopandas() 
 
-# total_pop=(total_pop['value'].sum()) #Total SL population
+    total_pop=(total_pop['value'].sum()) #Total SL population
 
-# myRaster = 'SL.masked.tif'
-# pop_microgrid = gr.from_file(myRaster)
+    myRaster = 'SL.masked.tif'
+    pop_microgrid = gr.from_file(myRaster)
     
-# pop_microgrid=pop_microgrid.to_geopandas() 
+    pop_microgrid=pop_microgrid.to_geopandas() 
 
-# pop_microgrid=(pop_microgrid['value'].sum()) #Microgrid population
+    pop_microgrid=(pop_microgrid['value'].sum()) #Microgrid population
 
-# #I import the dataframe of electricity demand for Africa
-# import pandas as pd
-# df_demand=pd.read_excel(r'C:\Users\denis\OneDrive\Desktop\Mini grids\pypsa-distribution\Africa.xlsx', index_col = None)
+#I import the dataframe of electricity demand for Africa
+    import pandas as pd
+    df_demand=pd.read_excel(r'C://Users//denis//OneDrive//Desktop//NEWNEW//pypsa-distribution//data//Africa.xlsx', index_col = None)
 
-# #I select the rows related to Benin (since there are no data for SL)
-# df_demand_SL=df_demand.loc[26280:35039, :]
+#I select the rows related to Benin (since there are no data for SL) 
+    df_demand_SL=df_demand.loc[26280:35039, :]
 
-# # I select the column "electricity demand"
-# df_demand_SL=df_demand_SL["Electricity demand"]
+# I select the column "electricity demand"
+    df_demand_SL=df_demand_SL["Electricity demand"]
 
-# df_demand_SL=pd.DataFrame(df_demand_SL)
+    df_demand_SL=pd.DataFrame(df_demand_SL)
 
-# p=(pop_microgrid/total_pop)*100 #Coefficient
+    p=(pop_microgrid/total_pop)*100 #Coefficient
 
-# electric_load=df_demand_SL/p #Electric load of the minigrid
+    electric_load=df_demand_SL/p #Electric load of the minigrid
 
-# electric_load_xlsx=electric_load.to_excel('electric_load.xlsx', index=False) 
+    electric_load.to_excel('electric_load.xlsx', index=False) 
 
 def writeToGeojsonFile(path, fileName, data):
     filePathNameWExt = './' + path + '/' + fileName + '.geojson'
@@ -202,6 +195,9 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"]["micA"]["name"],
     )
 
+#%%
     writeToGeojsonFile('./','microgrid_shape', my_feature)
 
-
+    from_geojson_to_tif()
+    
+    estimate_microgrid_population()
