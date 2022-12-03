@@ -199,6 +199,20 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
         )
 
 
+def create_load_df(load_file):
+
+    load_file=pd.read_excel("electric_load.xlsx")
+
+    load_df=load_file.set_index([n.snapshots])
+
+    load_df.index.names=['time']
+
+    return load_df
+
+def attach_load(n, load_df, tech_modelling):
+
+    n.madd("Load", ["My_load"], bus=["onebus"], carrier="AC", p_set=load_df)
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -239,7 +253,11 @@ if __name__ == "__main__":
                     snakemake.config["tech_modelling"]["storage_techs"],
                     snakemake.config["electricity"]["extendable_carriers"],
     )
-
+    
+    load_df=create_load_df(snakemake.input)
+    
+    attach_load(n, load_df, snakemake.config["tech_modelling"]["load_carriers"])
+    
     n.export_to_netcdf(snakemake.output[0])
    
 
