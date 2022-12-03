@@ -15,6 +15,10 @@ def create_network():
 
     return n
 
+def add_bus_to_network(n):
+
+    n.madd("Bus", ["onebus"], carrier="AC", v_nom=20)
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -25,9 +29,9 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = create_network()
+    add_bus_to_network(n)
     n.export_to_netcdf(snakemake.output[0])
-
-
+    
 
 
 
