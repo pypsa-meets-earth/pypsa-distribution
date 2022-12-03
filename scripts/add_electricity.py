@@ -126,6 +126,37 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
 
     return costs
 
+def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_carriers):
+
+    _add_missing_carriers_from_costs(n, costs, tech_modelling)
+
+    for tech in tech_modelling:
+       
+        # with xr.open_dataset(f"renewable_profiles/profile_{tech}.nc") as ds:
+        with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
+            
+            if ds.indexes["bus"].empty:
+                continue   
+
+            suptech = tech.split("-", 2)[0]
+          
+            n.madd(
+            "Generator",
+            ds.indexes["bus"],
+            " " + tech,
+            bus=["onebus"],
+            carrier=tech,
+            p_nom_extendable=tech in extendable_carriers["Generator"],
+            p_nom_max=ds["p_nom_max"].to_pandas(), #look at the config 
+            weight=ds["weight"].to_pandas(),
+            marginal_cost=costs.at[suptech, "marginal_cost"],
+            capital_cost=costs.at[tech, "capital_cost"],
+            efficiency=costs.at[suptech, "efficiency"],
+            p_set=ds["profile"].transpose("time", "bus").to_pandas().reindex(n.snapshots),
+            p_max_pu=ds["profile"].transpose("time", "bus").to_pandas().reindex(n.snapshots),
+            )
+
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -146,6 +177,15 @@ if __name__ == "__main__":
     Nyears,
     )
 
+
+    attach_wind_and_solar(
+        n,
+        costs,
+        snakemake.input,
+        snakemake.config["tech_modelling"]["general_vre"],
+        snakemake.config["electricity"]["extendable_carriers"],
+    )
+     
     n.export_to_netcdf(snakemake.output[0])
    
 

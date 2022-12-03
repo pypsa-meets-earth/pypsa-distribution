@@ -121,21 +121,25 @@ rule create_network:
 #         pypsaearth("scripts/build_renewable_profiles.py")
 
 
-# rule add_electricity:
-#     input:
-#         base_network="networks/base.nc",
-#         tech_costs=COSTS
-#     output:
-#         "networks/elec.nc",
-#     log:
-#         "logs/add_electricity.log",
-#     benchmark:
-#         "benchmarks/add_electricity"
-#     threads: 1
-#     resources:
-#         mem_mb=3000,
-#     script:
-#         "scripts/add_electricity.py"
+rule add_electricity:
+    input:
+        **{
+            f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
+            for tech in config["tech_modelling"]["general_vre"]
+        },
+        create_network="networks/base.nc",
+        tech_costs=COSTS
+    output:
+        "networks/elec.nc",
+    log:
+        "logs/add_electricity.log",
+    benchmark:
+        "benchmarks/add_electricity"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/add_electricity.py"
 
 
 # rule solve_network:
