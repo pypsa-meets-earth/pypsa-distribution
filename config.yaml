@@ -51,8 +51,10 @@ electricity:
 
   extendable_carriers:
     Generator: [solar, onwind]
-    StorageUnit: ["lithium"]  
-
+    StorageUnit: ["lithium", "lead_acid"]  
+  
+  conventional_carriers: [diesel]
+  renewable_carriers: [solar, onwind]
 
 
 # TODO: Needs to be adjusted for Africa
