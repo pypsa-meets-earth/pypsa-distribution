@@ -3,6 +3,7 @@ from _helpers import configure_logging, sets_path_to_root
 
 
 import geopandas as gpd
+import pandas as pd
 import fiona
 import rasterio
 import rasterio.mask
@@ -115,6 +116,13 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
 
     return(my_feature)
 
+# my_feature is converted into a .geojson file
+def writeToGeojsonFile(path, fileName, data):
+    filePathNameWExt = './' + path + '/' + fileName + '.geojson'
+    with open(filePathNameWExt, 'w') as fp:
+        geojson.dump(data, fp)
+
+
 def from_geojson_to_tif():
 
     gdf = gpd.read_file('microgrid_shape.geojson')
@@ -122,8 +130,8 @@ def from_geojson_to_tif():
 
     with fiona.open("microgrid_shape.shp", "r") as shapefile:
         shapes = [feature["geometry"] for feature in shapefile]
-
-    with rasterio.open('sle_ppp_2019_constrained.tif') as src:
+    
+    with rasterio.open(f"data/Worldpop/sle_ppp_2019_constrained.tif") as src:
         out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
         out_meta = src.meta
 
@@ -136,7 +144,7 @@ def from_geojson_to_tif():
         dest.write(out_image)
 
 def estimate_microgrid_population():
-    myRaster = 'sle_ppp_2019_constrained.tif'
+    myRaster = f"data/Worldpop/sle_ppp_2019_constrained.tif"
     total_pop= gr.from_file(myRaster)
     
     total_pop=total_pop.to_geopandas() 
@@ -151,8 +159,7 @@ def estimate_microgrid_population():
     pop_microgrid=(pop_microgrid['value'].sum()) #Microgrid population
 
 #I import the dataframe of electricity demand for Africa
-    import pandas as pd
-    df_demand=pd.read_excel(r'C://Users//denis//OneDrive//Desktop//NEWNEW//pypsa-distribution//data//Africa.xlsx', index_col = None)
+    df_demand=pd.read_excel(f"data/Africa.xlsx", index_col = None)
 
 #I select the rows related to Benin (since there are no data for SL) 
     df_demand_SL=df_demand.loc[26280:35039, :]
@@ -166,14 +173,12 @@ def estimate_microgrid_population():
 
     electric_load=df_demand_SL/p #Electric load of the minigrid
 
-    electric_load.to_excel('electric_load.xlsx', index=False) 
+    electric_load=electric_load.to_excel('electric_load.xlsx', index=False) 
 
-def writeToGeojsonFile(path, fileName, data):
-    filePathNameWExt = './' + path + '/' + fileName + '.geojson'
-    with open(filePathNameWExt, 'w') as fp:
-        geojson.dump(data, fp)
+    # if not os.path.exists('./ciao'):
+    #    os.makedirs(os.path.dirname('electric_load'), exist_ok=True)
 
-
+    return electric_load
 
 # './' represents the current directory so the directory save-file.py is in
 # 'test' is my file name
@@ -186,7 +191,8 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    
+    out = snakemake.output
+
     my_feature=create_microgrid_shape(
         snakemake.config["microgrids_list"]["Location"]["Centre"]["lon"],
         snakemake.config["microgrids_list"]["Location"]["Centre"]["lat"],
@@ -195,9 +201,9 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"]["micA"]["name"],
     )
 
-#%%
     writeToGeojsonFile('./','microgrid_shape', my_feature)
 
     from_geojson_to_tif()
     
-    estimate_microgrid_population()
+    electric_load=estimate_microgrid_population()
+    #%%

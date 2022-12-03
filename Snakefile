@@ -54,20 +54,23 @@ subworkflow pypsaearth:
 #         "scripts/build_shapes.py"
 
 
-# rule build_demand:
-#     input:
-#         shapes="resources/shapes/shapes.geojson",
-#     output:
-#         "resources/demand/electric_load.xlsx",
-#     log:
-#         "logs/build_demand.log",
-#     benchmark:
-#         "benchmarks/build_demand"
-#     threads: 1
-#     resources:
-#         mem_mb=3000,
-#     script:
-#         "scripts/build_demand.py"
+rule build_demand: 
+    input:
+        "data/Worldpop/sle_ppp_2019_constrained.tif"
+    output:
+        "resources/shapes/microgrid_shape.geojson"
+        "resources/shapes/microgrid_shape.shp"
+        "resources/shapes/SL.masked.tif"
+        "resources/demand/electric_load.xlsx"
+    log:
+        "logs/build_demand.log",
+    benchmark:
+        "benchmarks/build_demand"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/build_demand.py"
 
 
 rule create_network:
@@ -120,15 +123,8 @@ rule create_network:
 
 # rule add_electricity:
 #     input:
-#         base_network="networks/base.nc"
-#         ** {
-#             f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
-#             for tech in config["renewable"]
-#             if tech in config["electricity"]["renewable_carriers"]
-#         },
-#         demand="resources/demand/electric_load.xlsx",  # path for the nodal demand
-#         tech_costs=COSTS,
-#         regions="resources/bus_regions/regions_onshore.geojson",
+#         base_network="networks/base.nc",
+#         tech_costs=COSTS
 #     output:
 #         "networks/elec.nc",
 #     log:
