@@ -157,6 +157,48 @@ def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_c
             )
 
 
+def attach_conventional_generators(n, tech_modelling, conventional_carriers):
+
+    for tech in tech_modelling:
+
+        buses_i = n.buses.index
+        n.madd(
+            "Generator",
+            buses_i ,
+            " " + tech, 
+            bus=["onebus"], 
+            carrier=tech,
+            p_nom_extendable=True,
+            p_nom_max=100,
+            marginal_cost=10, #random number (to be corrected)
+            capital_cost=1000, #random number (to be corrected)
+            efficiency=0.3,
+            p_set=100,
+            p_max_pu=1,
+            )
+
+
+def attach_storageunits(n, costs, technologies, extendable_carriers ):
+
+    for tech in technologies:
+        buses_i = n.buses.index
+        n.madd(
+            "StorageUnit",
+            buses_i, 
+            " " + tech, 
+            bus=["onebus"],
+            carrier=tech,
+            p_nom_extendable=True,
+            capital_cost=costs.at[tech, "capital_cost"],
+            marginal_cost=costs.at[tech, "marginal_cost"],
+            # efficiency_store=costs.at[lookup_store[tech], "efficiency"],
+            # efficiency_dispatch=costs.at[lookup_dispatch[tech], "efficiency"],
+            # max_hours=max_hours[tech],
+            cyclic_state_of_charge=True
+            
+        )
+
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -186,6 +228,18 @@ if __name__ == "__main__":
         snakemake.config["electricity"]["extendable_carriers"],
     )
      
+    attach_conventional_generators(
+    n, 
+    snakemake.config["tech_modelling"]["conv_techs"],
+    snakemake.config["electricity"]["conventional_carriers"]
+    )
+
+    attach_storageunits(n, 
+                    costs,
+                    snakemake.config["tech_modelling"]["storage_techs"],
+                    snakemake.config["electricity"]["extendable_carriers"],
+    )
+
     n.export_to_netcdf(snakemake.output[0])
    
 
