@@ -76,9 +76,49 @@ costs:
     co2: 0.
 
 
+monte_carlo:
+  options:
+    add_to_snakefile: false
+    samples: 7    # number of optimizations
+    sampling_strategy: "chaospy"    # "pydoe2", "chaospy", "scipy", packages that are supported
+  pypsa_standard:
+      # User can add here flexibly more features for the Monte-Carlo sampling.
+      # Given as "key: value" format
+      # Key: add below the pypsa object for the monte_carlo sampling, "network" is only allowed for filtering!
+      # Value: currently supported format [l_bound, u_bound] or empty [], represent multiplication factors for the object
+    loads_t.p_set: [0.9, 1.1]
+    generators_t.p_max_pu.loc[:, n.generators.carrier == "wind"]: [0.9, 1.1]
+    generators_t.p_max_pu.loc[:, n.generators.carrier == "solar"]: [0.9, 1.1]
+
+solving:
+  options:
+    formulation: kirchhoff
+    load_shedding: true
+    noisy_costs: true
+    min_iterations: 4
+    max_iterations: 6
+    clip_p_max_pu: 0.01
+    skip_iterations: true
+    track_iterations: false
+    #nhours: 10
+  solver:
+    name: glpk
+
+
 tech_modelling:
   general_vre: ["onwind", "solar"]
   storage_techs: ["lithium", "lead acid"]
   conv_techs: ["diesel"]  
   load_carriers: ["AC load"]
+
+microgrids_list:
+  micA: #random place in Sierra Leone
+  name: ["nicename"]
+  Location:
+    Centre: 
+      lon: -11.6807
+      lat: 7.8697
+    Sides:
+      Deltalon: 0.3282
+      Deltalat: 0.1973
 
