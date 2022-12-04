@@ -128,7 +128,8 @@ rule add_electricity:
             for tech in config["tech_modelling"]["general_vre"]
         },
         create_network="networks/base.nc",
-        tech_costs=COSTS
+        tech_costs=COSTS,
+        load_file="resources/demand/electric_load.xlsx"
     output:
         "networks/elec.nc",
     log:
@@ -142,17 +143,21 @@ rule add_electricity:
         "scripts/add_electricity.py"
 
 
-# rule solve_network:
-#     input:
-#         "networks/elec.nc",
-#     output:
-#         "networks/results/elec.nc",
-#     log:
-#         "logs/solve_network.log",
-#     benchmark:
-#         "benchmarks/solve_network"
-#     threads: 1
-#     resources:
-#         mem_mb=3000,
-#     script:
-#         "scripts/solve_network.py"
+
+if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
+
+
+    rule solve_network:
+        input:
+            "networks/elec.nc",
+        output:
+            "networks/results/elec.nc",
+        log:
+            "logs/solve_network.log",
+        benchmark:
+            "benchmarks/solve_network"
+        threads: 1
+        resources:
+            mem_mb=3000,
+        script:
+            "scripts/solve_network.py"
