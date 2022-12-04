@@ -10,7 +10,7 @@ import rasterio.mask
 import georasters as gr
 import pandas as pd
 import geojson
-
+import shutil
 #%%
 # #This script downloads WorldPop data for SL country. 2019 data are taken, since 2020 data are not available for Sierra Leone
 
@@ -117,10 +117,21 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
     return(my_feature)
 
 # my_feature is converted into a .geojson file
+
 def writeToGeojsonFile(path, fileName, data):
     filePathNameWExt = './' + path + '/' + fileName + '.geojson'
     with open(filePathNameWExt, 'w') as fp:
         geojson.dump(data, fp)
+  
+    geojson_filename=f"microgrid_shape.geojson"
+
+    source = os.path.join(
+        os.getcwd(), geojson_filename)
+    destination = os.path.join(
+        os.path.abspath(os.curdir), "resources", "shapes"
+    )  
+
+    shutil.copy(source, destination)
 
 
 def from_geojson_to_tif():
@@ -174,14 +185,20 @@ def estimate_microgrid_population():
     electric_load=df_demand_SL/p #Electric load of the minigrid
 
     electric_load=electric_load.to_excel('electric_load.xlsx', index=False) 
+    
+    xlsx_filename=f"electric_load.xlsx"
 
-    # if not os.path.exists('./ciao'):
-    #    os.makedirs(os.path.dirname('electric_load'), exist_ok=True)
+    source = os.path.join(
+        os.getcwd(), xlsx_filename)
+    destination = os.path.join(
+        os.path.abspath(os.curdir), "resources", "demand"
+    )  
+
+    shutil.copy(source, destination)
 
     return electric_load
 
-# './' represents the current directory so the directory save-file.py is in
-# 'test' is my file name
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
