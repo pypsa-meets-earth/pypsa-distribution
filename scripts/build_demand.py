@@ -130,8 +130,10 @@ def writeToGeojsonFile(path, fileName, data):
     destination = os.path.join(
         os.path.abspath(os.curdir), "resources", "shapes"
     )  
-
+    #TODO: create the folder shapes if it does not exist
     shutil.copy(source, destination)
+
+
 
 
 def from_geojson_to_tif():

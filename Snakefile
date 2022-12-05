@@ -4,6 +4,12 @@ sys.path.append("./scripts")
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from _helpers import merge_yamls
+from os.path import normpath, exists, isdir
+import sys
+
+sys.path.append("./scripts")
+
+from os.path import normpath, exists, isdir
 
 HTTP = HTTPRemoteProvider()
 
@@ -39,19 +45,6 @@ subworkflow pypsaearth:
     configfile:
         "./config.yaml"
 
-
-# rule build_shapes:
-#     output:
-#         "resources/shapes/shapes.geojson",
-#     log:
-#         "logs/build_shapes.log",
-#     benchmark:
-#         "benchmarks/build_shapes"
-#     threads: 1
-#     resources:
-#         mem_mb=3000,
-#     script:
-#         "scripts/build_shapes.py"
 
 
 rule build_demand: 
@@ -144,20 +137,37 @@ rule add_electricity:
 
 
 
-if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
+# if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
+
+# rule solve_network:
+#     input:
+#         "networks/elec.nc",
+#     output:
+#         "networks/results/elec.nc",
+#     log:
+#         "logs/solve_network.log",
+#     benchmark:
+#         "benchmarks/solve_network"
+#     threads: 1
+#     resources:
+#         mem_mb=3000,
+#     script:
+#         "scripts/solve_network.py"
 
 
-    rule solve_network:
-        input:
-            "networks/elec.nc",
-        output:
-            "networks/results/elec.nc",
-        log:
-            "logs/solve_network.log",
-        benchmark:
-            "benchmarks/solve_network"
-        threads: 1
-        resources:
-            mem_mb=3000,
-        script:
-            "scripts/solve_network.py"
+rule solve_network:
+    input:
+        "networks/elec.nc",
+    output:
+        "networks/results/elec.nc",
+    log:
+        "logs/solve_network.log",
+    benchmark:
+        "benchmarks/solve_network"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/solve_network.py"
+
+
