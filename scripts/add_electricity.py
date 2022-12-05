@@ -180,6 +180,12 @@ def attach_conventional_generators(n, tech_modelling, conventional_carriers):
 
 def attach_storageunits(n, costs, technologies, extendable_carriers ):
 
+    elec_opts = snakemake.config["electricity"]
+    max_hours = elec_opts["max_hours"]
+
+    lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
+    lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
+
     for tech in technologies:
         buses_i = n.buses.index
         n.madd(
@@ -191,9 +197,9 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
             marginal_cost=costs.at[tech, "marginal_cost"],
-            # efficiency_store=costs.at[lookup_store[tech], "efficiency"],
-            # efficiency_dispatch=costs.at[lookup_dispatch[tech], "efficiency"],
-            # max_hours=max_hours[tech],
+            efficiency_store=costs.at[lookup_store["battery"], "efficiency"], #Lead_acid and lithium have the same value
+            efficiency_dispatch=costs.at[lookup_dispatch["battery"], "efficiency"], #Lead_acid and lithium have the same value
+            max_hours = max_hours["battery"], #Lead_acid and lithium have the same value
             cyclic_state_of_charge=True
             
         )
@@ -201,12 +207,12 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
 
 def create_load_df(load_file):
 
-    load_file=pd.read_excel("electric_load.xlsx")
+    load_file=pd.read_excel(snakemake.input.load_file)
 
     load_df=load_file.set_index([n.snapshots])
 
-    load_df.index.names=['time']
-
+    load_df.index.names=['time'] 
+    load_df=np.array(load_df)
     return load_df
 
 def attach_load(n, load_df, tech_modelling):
@@ -260,8 +266,3 @@ if __name__ == "__main__":
     
     n.export_to_netcdf(snakemake.output[0])
    
-
-
-
-
-
