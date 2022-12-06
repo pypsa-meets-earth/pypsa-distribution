@@ -205,19 +205,18 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
         )
 
 
-def create_load_df(load_file):
+def import_load():
+    load=pd.read_excel(r'C:\Users\denis\OneDrive\Desktop\snakemake\pypsa-distribution\electric_load.xlsx') #This works, build_demand has to be re examined!!
+    load_2=load.set_index([n.snapshots])
+    load_2.index.names=['time'] 
+    
+    return load_2
+    
 
-    load_file=pd.read_excel(snakemake.input.load_file)
-
-    load_df=load_file.set_index([n.snapshots])
-
-    load_df.index.names=['time'] 
-    load_df=np.array(load_df)
-    return load_df
-
-def attach_load(n, load_df, tech_modelling):
-
-    n.madd("Load", ["My_load"], bus=["onebus"], carrier="AC", p_set=load_df)
+def attach_load(n, load_2, tech_modelling):
+    n_load=1
+    index=pd.Index( list(range(n_load)))
+    n.madd("Load", index ,bus=["onebus"], carrier="AC", p_set=load_2)
 
 
 if __name__ == "__main__":
@@ -260,9 +259,8 @@ if __name__ == "__main__":
                     snakemake.config["electricity"]["extendable_carriers"],
     )
     
-    load_df=create_load_df(snakemake.input)
-    
-    attach_load(n, load_df, snakemake.config["tech_modelling"]["load_carriers"])
+    # load_file=snakemake.input.load_file
+    load_2=import_load()
+    attach_load(n, load_2, snakemake.config["tech_modelling"]["load_carriers"])
     
     n.export_to_netcdf(snakemake.output[0])
-   
