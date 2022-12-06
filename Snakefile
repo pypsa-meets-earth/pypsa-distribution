@@ -47,23 +47,23 @@ subworkflow pypsaearth:
 
 
 
-rule build_demand: 
-    input:
-        "data/Worldpop/sle_ppp_2019_constrained.tif"
-    output:
-        "resources/shapes/microgrid_shape.geojson"
-        "resources/shapes/microgrid_shape.shp"
-        "resources/shapes/SL.masked.tif"
-        "resources/demand/electric_load.xlsx"
-    log:
-        "logs/build_demand.log",
-    benchmark:
-        "benchmarks/build_demand"
-    threads: 1
-    resources:
-        mem_mb=3000,
-    script:
-        "scripts/build_demand.py"
+# rule build_demand: 
+#     input:
+#         "data/Worldpop/sle_ppp_2019_constrained.tif"
+#     output:
+#         "resources/shapes/microgrid_shape.geojson"
+#         "resources/shapes/microgrid_shape.shp"
+#         "resources/shapes/SL.masked.tif"
+#         "resources/demand/electric_load.xlsx"
+#     log:
+#         "logs/build_demand.log",
+#     benchmark:
+#         "benchmarks/build_demand"
+#     threads: 1
+#     resources:
+#         mem_mb=3000,
+#     script:
+#         "scripts/build_demand.py"
 
 
 rule create_network:
