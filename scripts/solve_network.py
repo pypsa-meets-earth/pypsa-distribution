@@ -1,21 +1,9 @@
 # Optimization
 import os
 from _helpers import configure_logging, sets_path_to_root
-
+import numpy as np
 import pypsa
 from pypsa.linopf import ilopf, network_lopf
-
-from vresutils.benchmark import memory_logger
-from pathlib import Path
-
-
-# def solve_network(n, **kwargs):
-
-#     solver_name="gurobi"
-
-#     network_lopf(n.snapshots, solver_name=solver_name, **kwargs)
-
-#     return n
 
 def solve_network(n, solver_name):
     # solver_options = config["solving"]["solver"].copy()
@@ -44,10 +32,11 @@ if __name__ == "__main__":
     #     Path(tmpdir).mkdir(parents=True, exist_ok=True)
 
     n = pypsa.Network(snakemake.input[0])
-    a=15
+
     n = solve_network(
             n,
             "gurobi",
         )
 
     n.export_to_netcdf(snakemake.output[0]) 
+ 
