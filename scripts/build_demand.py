@@ -130,9 +130,8 @@ def writeToGeojsonFile(path, fileName, data):
     destination = os.path.join(
         os.path.abspath(os.curdir), "resources", "shapes"
     )  
-    #TODO: create the folder shapes if it does not exist
-    shutil.copy(source, destination)
 
+    shutil.copy(source, destination)
 
 
 
@@ -194,7 +193,7 @@ def estimate_microgrid_population():
         os.getcwd(), xlsx_filename)
     destination = os.path.join(
         os.path.abspath(os.curdir), "resources", "demand"
-    )  
+    )  #TODO: demand folder that creates automatically
 
     shutil.copy(source, destination)
 

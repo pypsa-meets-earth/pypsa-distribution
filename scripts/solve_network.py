@@ -50,7 +50,4 @@ if __name__ == "__main__":
             "gurobi",
         )
 
-
-
-    n.export_to_netcdf(snakemake.output[0]) #Since the objective value is zero, I get the error "Nonetype object has no attribute etc..."
-
+    n.export_to_netcdf(snakemake.output[0]) 
