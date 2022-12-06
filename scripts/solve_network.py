@@ -17,16 +17,16 @@ from pathlib import Path
 
 #     return n
 
-def solve_network(n, config, opts="", **kwargs):
-    solver_options = config["solving"]["solver"].copy()
-    solver_name = solver_options.pop("name")
+def solve_network(n, solver_name):
+    # solver_options = config["solving"]["solver"].copy()
+    # solver_name = solver_options.pop("name")
 
     network_lopf(
             n,
-            solver_name=solver_name,
-            solver_options=solver_options,
-            **kwargs
+            solver_name=solver_name
         )
+
+    return n
     
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -39,17 +39,18 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    tmpdir = snakemake.config["solving"].get("tmpdir")
-    if tmpdir is not None:
-        Path(tmpdir).mkdir(parents=True, exist_ok=True)
+    # tmpdir = snakemake.config["solving"].get("tmpdir")
+    # if tmpdir is not None:
+    #     Path(tmpdir).mkdir(parents=True, exist_ok=True)
 
     n = pypsa.Network(snakemake.input[0])
-
+    a=15
     n = solve_network(
             n,
-            config=snakemake.config,
-            solver_dir=tmpdir,
+            "gurobi",
         )
 
-    n.export_to_netcdf(snakemake.output[0])
+
+
+    n.export_to_netcdf(snakemake.output[0]) #Since the objective value is zero, I get the error "Nonetype object has no attribute etc..."
 
