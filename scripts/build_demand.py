@@ -124,13 +124,11 @@ def create_load_file():
 
     xlsx_filename=f"electric_load.xlsx"
 
-    source = os.path.join(
-        os.getcwd(), xlsx_filename)
-    destination = os.path.join(
-        os.path.abspath(os.curdir), "resources", "demand")  
-
-    shutil.copy(source, destination)
-
+      
+    shutil.copy(os.path.join(
+        os.getcwd(), xlsx_filename), os.path.join(
+        os.path.abspath(os.curdir), "resources", "demand") )
+        
     return electric_load
     
 
