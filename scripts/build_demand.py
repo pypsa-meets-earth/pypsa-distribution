@@ -63,7 +63,7 @@ def writeToGeojsonFile(path, fileName, data):
 
 def from_geojson_to_tif():
 
-    gdf = gpd.read_file('microgrid_shape.geojson')
+    gdf = gpd.read_file(f"resources/shapes/microgrid_shape.geojson")
     gdf.to_file('microgrid_shape.shp')
 
     with fiona.open("microgrid_shape.shp", "r") as shapefile:
@@ -109,21 +109,30 @@ def estimate_microgrid_population():
 
     p=(pop_microgrid/total_pop)*100 #Coefficient
 
-    electric_load=df_demand_SL/p #Electric load of the minigrid
+    demand_microgrid=df_demand_SL/p #Electric load of the minigrid
 
-    electric_load=electric_load.to_excel('electric_load.xlsx', index=False) 
+    return demand_microgrid
     
+
+
+def create_load_file():
+    
+    if not os.path.exists(os.path.join(os.getcwd(), "resources", "demand")):
+        os.makedirs("resources/demand")
+
+    electric_load=demand_microgrid.to_excel('electric_load.xlsx', index=False) 
+
     xlsx_filename=f"electric_load.xlsx"
 
     source = os.path.join(
         os.getcwd(), xlsx_filename)
     destination = os.path.join(
-        os.path.abspath(os.curdir), "resources", "demand"
-    )  #TODO: demand folder that creates automatically
+        os.path.abspath(os.curdir), "resources", "demand")  
 
     shutil.copy(source, destination)
 
     return electric_load
+    
 
 
 if __name__ == "__main__":
@@ -147,7 +156,9 @@ if __name__ == "__main__":
 
     writeToGeojsonFile('./','microgrid_shape', my_feature)
 
-    # from_geojson_to_tif()
+    from_geojson_to_tif()
     
-    # electric_load=estimate_microgrid_population()
+    demand_microgrid=estimate_microgrid_population()
+
+    electric_load_file=create_load_file()
     #%%
