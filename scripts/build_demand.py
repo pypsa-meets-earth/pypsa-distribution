@@ -11,72 +11,6 @@ import georasters as gr
 import pandas as pd
 import geojson
 import shutil
-#%%
-# #This script downloads WorldPop data for SL country. 2019 data are taken, since 2020 data are not available for Sierra Leone
-
-# import requests 
-# import shutil
-# import os
-
-# def download_WorldPop_standard(
-#     country_code,
-#     year=2019,
-#     update=False,
-#     size_min=300
-# ):
-#     """
-#     Download tiff file for each country code using the standard method from worldpop datastore with 1kmx1km resolution.
-
-#     Parameters
-#     ----------
-#     country_code : str
-#         Two letter country codes of the downloaded files.
-        # Files downloaded from https://data.worldpop.org/ datasets WorldPop UN adjusted
-#     year : int
-#         Year of the data to download
-#     update : bool
-#         Update = true, forces re-download of files
-#     size_min : int
-#         Minimum size of each file to download
-#     Returns
-#     -------
-#     WorldPop_inputfile : str
-#         Path of the file
-#     WorldPop_filename : str
-#         Name of the file
-#     """
-#     WorldPop_filename = f"sle_ppp_{year}_constrained.tif"
-#     WorldPop_urls = [
-#             f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2019/BSGM/SLE/{WorldPop_filename}"]
-#     WorldPop_inputfile = os.path.join(
-#         os.getcwd(), "data", "WorldPop", WorldPop_filename
-#     )  # Input filepath tif
-
-#     if not os.path.exists(WorldPop_inputfile) or update is True:
-    
-#         #  create data/osm directory
-#         os.makedirs(os.path.dirname(WorldPop_inputfile), exist_ok=True)
-
-#         loaded = False
-#         for WorldPop_url in WorldPop_urls:
-#             with requests.get(WorldPop_url, stream=True) as r:
-#                 with open(WorldPop_inputfile, "wb") as f:
-#                     if float(r.headers["Content-length"]) > size_min:
-#                         shutil.copyfileobj(r.raw, f)
-#                         loaded = True
-#                         break
-
-#     return WorldPop_inputfile, WorldPop_filename
-
-
-# download_WorldPop_standard(
-#                     config["countries"], config["year"], False, 300)
-
-
-#****
-
-#The vertexes of the rectangular are defined: they are the point P1=(x1,y1), P2=(x2,y2), P3=(x3,y3), P4=(x4,y4)
-#x stands for longitude, y stands for latitude
 
 def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
 
@@ -116,23 +50,15 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
 
     return(my_feature)
 
-# my_feature is converted into a .geojson file
-
+# my_feature is converted into a .geojson file 
 def writeToGeojsonFile(path, fileName, data):
-    filePathNameWExt = './' + path + '/' + fileName + '.geojson'
+
+    if not os.path.exists(os.path.join(os.getcwd(), "resources", "shapes")):
+        os.makedirs("resources/shapes")
+   
+    filePathNameWExt = './' + path + '/resources/shapes/' + fileName + '.geojson'
     with open(filePathNameWExt, 'w') as fp:
         geojson.dump(data, fp)
-  
-    geojson_filename=f"microgrid_shape.geojson"
-
-    source = os.path.join(
-        os.getcwd(), geojson_filename)
-    destination = os.path.join(
-        os.path.abspath(os.curdir), "resources", "shapes"
-    )  
-
-    shutil.copy(source, destination)
-
 
 
 def from_geojson_to_tif():
@@ -221,7 +147,7 @@ if __name__ == "__main__":
 
     writeToGeojsonFile('./','microgrid_shape', my_feature)
 
-    from_geojson_to_tif()
+    # from_geojson_to_tif()
     
-    electric_load=estimate_microgrid_population()
+    # electric_load=estimate_microgrid_population()
     #%%
