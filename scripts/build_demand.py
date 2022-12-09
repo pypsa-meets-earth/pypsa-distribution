@@ -93,13 +93,13 @@ def estimate_microgrid_population(sample_profile):
 
     pop_microgrid=(pop_microgrid['value'].sum())  #Microgrid population
 
-    #I import the file of electricity demand per-person
+    #I import the sample_profile file
     total_load=pd.read_csv(sample_profile)
-    total_load=total_load["bus 0"]
-    per_person_load=total_load*(1/150)
+    total_load=total_load["0"]
+    per_person_load=total_load*(1/1500) #file of electricity demand per-person
     
     per_person_load=pd.DataFrame(per_person_load)
-    microgrid_load=per_person_load*pop_microgrid #Electric load of the minigrid
+    microgrid_load=per_person_load*pop_microgrid #Electric load of the microgrid
         
     if not os.path.exists(os.path.join(os.getcwd(), "resources", "demand")):
         os.makedirs("resources/demand")
@@ -107,6 +107,7 @@ def estimate_microgrid_population(sample_profile):
     microgrid_load=microgrid_load.to_csv("./resources/demand/microgrid_load.csv", index=False) 
     
     return microgrid_load
+
   
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -133,3 +134,4 @@ if __name__ == "__main__":
     create_masked_file(WorldPop_data)
 
     microgrid_load=estimate_microgrid_population(sample_profile)
+

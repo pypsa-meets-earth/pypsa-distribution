@@ -208,7 +208,7 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
 def attach_load(n, load_file, tech_modelling):
 
     load=pd.read_csv(load_file).set_index([n.snapshots])
-    
+
     n_load=1
     index=pd.Index( list(range(n_load)))
 
