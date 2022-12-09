@@ -64,10 +64,13 @@ def writeToGeojsonFile(path, fileName, data):
 
 def create_masked_file(WorldPop_data):
 
-    gdf = gpd.read_file(f"resources/shapes/microgrid_shape.geojson")
-    gdf.to_file('microgrid_shape.shp')
+    if not os.path.exists(os.path.join(os.getcwd(), "resources", "file_dir")):
+        os.makedirs("resources/file_dir") #I created a directory for the following files to be stored
 
-    with fiona.open("microgrid_shape.shp", "r") as shapefile:
+    gdf = gpd.read_file(f"resources/shapes/microgrid_shape.geojson")
+    gdf.to_file('./resources/file_dir/microgrid_shape.shp')
+
+    with fiona.open(f"resources/file_dir/microgrid_shape.shp", "r") as shapefile:
         shapes = [feature["geometry"] for feature in shapefile]
     
     with rasterio.open(WorldPop_data) as src:
@@ -78,16 +81,15 @@ def create_masked_file(WorldPop_data):
                      "height": out_image.shape[1],
                      "width": out_image.shape[2],
                     "transform": out_transform})
-
-    with rasterio.open("SL.masked.tif", "w", **out_meta) as dest:
+   
+    with rasterio.open("./resources/file_dir/SL.masked.tif", "w", **out_meta) as dest:
         dest.write(out_image)
 
     
 
 def estimate_microgrid_population(sample_profile):
 
-    myRaster = 'SL.masked.tif'
-    pop_microgrid = gr.from_file(myRaster)
+    pop_microgrid = gr.from_file(f"resources/SL.masked.tif")
     
     pop_microgrid=pop_microgrid.to_geopandas() 
 
@@ -108,7 +110,7 @@ def estimate_microgrid_population(sample_profile):
     
     return microgrid_load
 
-  
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -134,4 +136,4 @@ if __name__ == "__main__":
     create_masked_file(WorldPop_data)
 
     microgrid_load=estimate_microgrid_population(sample_profile)
-
+ 
