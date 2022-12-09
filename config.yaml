@@ -60,7 +60,7 @@ electricity:
 
   extendable_carriers:
     Generator: [solar, onwind]
-    StorageUnit: ["lithium", "lead_acid"]  
+    StorageUnit: ["lithium", "lead acid"]  
   
   conventional_carriers: [diesel]
   renewable_carriers: [solar, onwind]
