@@ -18,7 +18,7 @@ configfile: "config.yaml"
 
 
 COSTS = "data/costs.csv"
-
+PROFILE = "data/sample_profile.csv"
 
 # prepare pypsa-earth config
 merge_yamls(
@@ -49,12 +49,11 @@ subworkflow pypsaearth:
 
 rule build_demand: 
     input:
-        "data/Worldpop/sle_ppp_2019_constrained.tif"
+        WorldPop = "data/Worldpop/sle_ppp_2019_constrained.tif",
+        sample_profile= PROFILE,
     output:
-        "resources/shapes/microgrid_shape.geojson"
-        # "resources/shapes/microgrid_shape.shp" #TODO: adjust this
-        # "resources/shapes/SL.masked.tif" #TODO: adjust this
-        "resources/demand/electric_load.xlsx"
+        microgrid_shape="resources/shapes/microgrid_shape.geojson",
+        electric_load="resources/demand/microgrid_load.csv",
     log:
         "logs/build_demand.log",
     benchmark:
@@ -70,9 +69,9 @@ rule create_network:
     output:
         "networks/base.nc",
     log:
-        "logs/base_network.log",
+        "logs/create_network.log",
     benchmark:
-        "benchmarks/base_network"
+        "benchmarks/create_network"
     threads: 1
     resources:
         mem_mb=3000,
@@ -122,7 +121,7 @@ rule add_electricity:
         },
         create_network="networks/base.nc",
         tech_costs=COSTS,
-        load_file="resources/demand/electric_load.xlsx"
+        load_file="resources/demand/microgrid_load.csv"
     output:
         "networks/elec.nc",
     log:

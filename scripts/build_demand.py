@@ -11,6 +11,7 @@ import georasters as gr
 import pandas as pd
 import geojson
 import shutil
+import pypsa
 
 def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
 
@@ -61,7 +62,7 @@ def writeToGeojsonFile(path, fileName, data):
         geojson.dump(data, fp)
 
 
-def from_geojson_to_tif():
+def create_masked_file(WorldPop_data):
 
     gdf = gpd.read_file(f"resources/shapes/microgrid_shape.geojson")
     gdf.to_file('microgrid_shape.shp')
@@ -69,7 +70,7 @@ def from_geojson_to_tif():
     with fiona.open("microgrid_shape.shp", "r") as shapefile:
         shapes = [feature["geometry"] for feature in shapefile]
     
-    with rasterio.open(f"data/Worldpop/sle_ppp_2019_constrained.tif") as src:
+    with rasterio.open(WorldPop_data) as src:
         out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
         out_meta = src.meta
 
@@ -81,68 +82,43 @@ def from_geojson_to_tif():
     with rasterio.open("SL.masked.tif", "w", **out_meta) as dest:
         dest.write(out_image)
 
-def estimate_microgrid_population():
-    myRaster = f"data/Worldpop/sle_ppp_2019_constrained.tif"
-    total_pop= gr.from_file(myRaster)
     
-    total_pop=total_pop.to_geopandas() 
 
-    total_pop=(total_pop['value'].sum()) #Total SL population
+def estimate_microgrid_population(sample_profile):
 
     myRaster = 'SL.masked.tif'
     pop_microgrid = gr.from_file(myRaster)
     
     pop_microgrid=pop_microgrid.to_geopandas() 
 
-    pop_microgrid=(pop_microgrid['value'].sum()) #Microgrid population
+    pop_microgrid=(pop_microgrid['value'].sum())  #Microgrid population
 
-#I import the dataframe of electricity demand for Africa
-    df_demand=pd.read_excel(f"data/Africa.xlsx", index_col = None)
-
-#I select the rows related to Benin (since there are no data for SL) 
-    df_demand_SL=df_demand.loc[26280:35039, :]
-
-# I select the column "electricity demand"
-    df_demand_SL=df_demand_SL["Electricity demand"]
-
-    df_demand_SL=pd.DataFrame(df_demand_SL)
-
-    p=(pop_microgrid/total_pop)*100 #Coefficient
-
-    demand_microgrid=df_demand_SL/p #Electric load of the minigrid
-
-    return demand_microgrid
+    #I import the file of electricity demand per-person
+    total_load=pd.read_csv(sample_profile)
+    total_load=total_load["bus 0"]
+    per_person_load=total_load*(1/150)
     
-
-
-def create_load_file():
-    
+    per_person_load=pd.DataFrame(per_person_load)
+    microgrid_load=per_person_load*pop_microgrid #Electric load of the minigrid
+        
     if not os.path.exists(os.path.join(os.getcwd(), "resources", "demand")):
         os.makedirs("resources/demand")
 
-    electric_load=demand_microgrid.to_excel('electric_load.xlsx', index=False) 
-
-    xlsx_filename=f"electric_load.xlsx"
-
-      
-    shutil.copy(os.path.join(
-        os.getcwd(), xlsx_filename), os.path.join(
-        os.path.abspath(os.curdir), "resources", "demand") )
-        
-    return electric_load
+    microgrid_load=microgrid_load.to_csv("./resources/demand/microgrid_load.csv", index=False) 
     
-
-
+    return microgrid_load
+  
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake("build_demand")
+        configure_logging(snakemake)
 
-    configure_logging(snakemake)
 
-    out = snakemake.output
+    WorldPop_data=snakemake.input["WorldPop"]
+    sample_profile=snakemake.input["sample_profile"]
 
     my_feature=create_microgrid_shape(
         snakemake.config["microgrids_list"]["Location"]["Centre"]["lon"],
@@ -154,9 +130,6 @@ if __name__ == "__main__":
 
     writeToGeojsonFile('./','microgrid_shape', my_feature)
 
-    from_geojson_to_tif()
-    
-    demand_microgrid=estimate_microgrid_population()
+    create_masked_file(WorldPop_data)
 
-    electric_load_file=create_load_file()
-    #%%
+    microgrid_load=estimate_microgrid_population(sample_profile)
