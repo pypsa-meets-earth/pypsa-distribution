@@ -121,7 +121,7 @@ rule add_electricity:
         },
         create_network="networks/base.nc",
         tech_costs=COSTS,
-        load_file="resources/demand/microgrid_load.csv"
+        load_file="resources/demand/microgrid_load.csv",
     output:
         "networks/elec.nc",
     log:

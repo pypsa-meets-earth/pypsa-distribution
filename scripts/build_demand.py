@@ -89,7 +89,7 @@ def create_masked_file(WorldPop_data):
 
 def estimate_microgrid_population(sample_profile):
 
-    pop_microgrid = gr.from_file(f"resources/SL.masked.tif")
+    pop_microgrid = gr.from_file(f"resources/file_dir/SL.masked.tif")
     
     pop_microgrid=pop_microgrid.to_geopandas() 
 
@@ -98,7 +98,7 @@ def estimate_microgrid_population(sample_profile):
     #I import the sample_profile file
     total_load=pd.read_csv(sample_profile)
     total_load=total_load["0"]
-    per_person_load=total_load*(1/1500) #file of electricity demand per-person
+    per_person_load=total_load*(1/15000) #file of electricity demand per-person
     
     per_person_load=pd.DataFrame(per_person_load)
     microgrid_load=per_person_load*pop_microgrid #Electric load of the microgrid
