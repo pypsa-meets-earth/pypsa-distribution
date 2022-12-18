@@ -14,44 +14,32 @@ import shutil
 import pypsa
 
 def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
+    x1 = xcenter - DeltaX * 0.5
+    y1 = ycenter + DeltaY * 0.5
 
-    x1 = xcenter - DeltaX*0.5
-    y1 = ycenter + DeltaY*0.5
+    x2 = xcenter + DeltaX * 0.5
+    y2 = ycenter + DeltaY * 0.5
 
-    x2 = xcenter + DeltaX*0.5
-    y2 = ycenter + DeltaY*0.5
+    x3 = xcenter - DeltaX * 0.5
+    y3 = ycenter - DeltaY * 0.5
 
-    x3 = xcenter - DeltaX*0.5 
-    y3 = ycenter - DeltaY*0.5
+    x4 = xcenter + DeltaX * 0.5
+    y4 = ycenter - DeltaY * 0.5
 
-    x4 = xcenter + DeltaX*0.5
-    y4 = ycenter - DeltaY*0.5
-
-    microgrid_name=name
-    my_feature=[]
-
-    my_feature={
-      "type": "Feature",
-      "geometry": {
-        "type": "Polygon",
-        "coordinates":  [
-            [
-              [x1,y1],
-              [x2,y2],
-              [x3,y3],         
-              [x4,y4],
-            ]
-        ]
-      },
-
-      "properties": {
-        "Microgrid": [microgrid_name]
-      }
+    microgrid_name = name
+    my_feature = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[x1, y1], [x2, y2], [x3, y3], [x4, y4]]]
+        },
+        "properties": {"Microgrid": microgrid_name},
     }
 
-    return(my_feature)
+    return my_feature
 
-# my_feature is converted into a .geojson file 
+
+#my_feature is converted into a .geojson file 
 def writeToGeojsonFile(path, fileName, data):
 
     if not os.path.exists(os.path.join(os.getcwd(), "resources", "shapes")):
@@ -98,7 +86,7 @@ def estimate_microgrid_population(sample_profile):
     #I import the sample_profile file
     total_load=pd.read_csv(sample_profile)
     total_load=total_load["0"]
-    per_person_load=total_load*(1/15000) #file of electricity demand per-person
+    per_person_load=total_load*(1/1500) #file of electricity demand per-person
     
     per_person_load=pd.DataFrame(per_person_load)
     microgrid_load=per_person_load*pop_microgrid #Electric load of the microgrid
