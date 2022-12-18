@@ -13,7 +13,9 @@ import geojson
 import shutil
 import pypsa
 
-def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
+
+def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name, output_path):
+    # define the coordinates of the rectangle
     x1 = xcenter - DeltaX * 0.5
     y1 = ycenter + DeltaY * 0.5
 
@@ -27,27 +29,24 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name):
     y4 = ycenter - DeltaY * 0.5
 
     microgrid_name = name
+    
+
     my_feature = {
-        "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [[[x1, y1], [x2, y2], [x3, y3], [x4, y4]]]
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {"col1": "name1"},
+            "geometry": {"type": "Polygon", "coordinates": [[[x1, y1], [x2, y2], [x3, y3], [x4, y4]]]
         },
-        "properties": {"Microgrid": microgrid_name},
-    }
-
-    return my_feature
-
-
-#my_feature is converted into a .geojson file 
-def writeToGeojsonFile(path, fileName, data):
-
-    if not os.path.exists(os.path.join(os.getcwd(), "resources", "shapes")):
-        os.makedirs("resources/shapes")
-   
-    filePathNameWExt = './' + path + '/resources/shapes/' + fileName + '.geojson'
-    with open(filePathNameWExt, 'w') as fp:
-        geojson.dump(data, fp)
+    },
+    
+    ],
+}
+    
+    #my_feature is converted into a .geojson file 
+    gdf = gpd.GeoDataFrame.from_features(my_feature)
+    gdf.to_file(output_path)
 
 
 def create_masked_file(WorldPop_data):
@@ -108,20 +107,21 @@ if __name__ == "__main__":
         configure_logging(snakemake)
 
 
-    WorldPop_data=snakemake.input["WorldPop"]
-    sample_profile=snakemake.input["sample_profile"]
+    # WorldPop_data=snakemake.input["WorldPop"]
+    # sample_profile=snakemake.input["sample_profile"]
 
-    my_feature=create_microgrid_shape(
+    create_microgrid_shape(
         snakemake.config["microgrids_list"]["Location"]["Centre"]["lon"],
         snakemake.config["microgrids_list"]["Location"]["Centre"]["lat"],
         snakemake.config["microgrids_list"]["Location"]["Sides"]["Deltalon"],
         snakemake.config["microgrids_list"]["Location"]["Sides"]["Deltalat"],
         snakemake.config["microgrids_list"]["micA"]["name"],
+        snakemake.output["microgrid_shape"],
     )
 
-    writeToGeojsonFile('./','microgrid_shape', my_feature)
+    
 
-    create_masked_file(WorldPop_data)
+    # create_masked_file(WorldPop_data)
 
-    microgrid_load=estimate_microgrid_population(sample_profile)
+    # microgrid_load=estimate_microgrid_population(sample_profile)
  
