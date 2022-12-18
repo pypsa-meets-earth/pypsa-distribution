@@ -49,10 +49,11 @@ subworkflow pypsaearth:
 
 rule build_demand: 
     input:
-        WorldPop = "data/Worldpop/sle_ppp_2019_constrained.tif",
+        WorldPop_data = "data/Worldpop/sle_ppp_2019_constrained.tif",
         sample_profile= PROFILE,
     output:
         microgrid_shape="resources/shapes/microgrid_shape.geojson",
+        country_masked="resources/file_dir/country_masked.tif",
         electric_load="resources/demand/microgrid_load.csv",
     log:
         "logs/build_demand.log",

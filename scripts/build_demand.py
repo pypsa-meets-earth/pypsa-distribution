@@ -36,47 +36,53 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name, output_path):
     "features": [
         {
             "type": "Feature",
-            "properties": {"col1": "name1"},
+            "properties": {"name": "microgrid_name"},
             "geometry": {"type": "Polygon", "coordinates": [[[x1, y1], [x2, y2], [x3, y3], [x4, y4]]]
         },
     },
     
     ],
 }
-    
+
     #my_feature is converted into a .geojson file 
     gdf = gpd.GeoDataFrame.from_features(my_feature)
     gdf.to_file(output_path)
 
 
-def create_masked_file(WorldPop_data):
+import os
+import rasterio
+import fiona
+import geopandas as gpd
 
-    if not os.path.exists(os.path.join(os.getcwd(), "resources", "file_dir")):
-        os.makedirs("resources/file_dir") #I created a directory for the following files to be stored
+def create_masked_file(raster_path, geojson_path, output_path):
 
     gdf = gpd.read_file(f"resources/shapes/microgrid_shape.geojson")
-    gdf.to_file('./resources/file_dir/microgrid_shape.shp')
+    gdf.to_file('microgrid_shape.shp')
+    with fiona.open("microgrid_shape.shp", "r") as shapefile:
+      shapes = [feature["geometry"] for feature in shapefile]
 
-    with fiona.open(f"resources/file_dir/microgrid_shape.shp", "r") as shapefile:
-        shapes = [feature["geometry"] for feature in shapefile]
-    
-    with rasterio.open(WorldPop_data) as src:
+    # open the raster and mask it using the shapes
+    with rasterio.open(raster_path) as src:
         out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
         out_meta = src.meta
 
+    # update the metadata for the output raster
     out_meta.update({"driver": "GTiff",
                      "height": out_image.shape[1],
                      "width": out_image.shape[2],
-                    "transform": out_transform})
-   
-    with rasterio.open("./resources/file_dir/SL.masked.tif", "w", **out_meta) as dest:
+                     "transform": out_transform})
+
+    # save the masked raster to the specified output path
+    with rasterio.open(output_path,"w", **out_meta) as dest:
         dest.write(out_image)
 
+
+ 
+#Estimattion of the population of the microgrid based on a mask file and a sample profile of electricity demand.
     
+def estimate_microgrid_population(masked_file,sample_profile, output_file):
 
-def estimate_microgrid_population(sample_profile):
-
-    pop_microgrid = gr.from_file(f"resources/file_dir/SL.masked.tif")
+    pop_microgrid = gr.from_file(masked_file)
     
     pop_microgrid=pop_microgrid.to_geopandas() 
 
@@ -90,12 +96,10 @@ def estimate_microgrid_population(sample_profile):
     per_person_load=pd.DataFrame(per_person_load)
     microgrid_load=per_person_load*pop_microgrid #Electric load of the microgrid
         
-    if not os.path.exists(os.path.join(os.getcwd(), "resources", "demand")):
-        os.makedirs("resources/demand")
-
-    microgrid_load=microgrid_load.to_csv("./resources/demand/microgrid_load.csv", index=False) 
+    microgrid_load.to_csv(output_file, index=False) 
     
     return microgrid_load
+    
 
 
 if __name__ == "__main__":
@@ -107,8 +111,8 @@ if __name__ == "__main__":
         configure_logging(snakemake)
 
 
-    # WorldPop_data=snakemake.input["WorldPop"]
-    # sample_profile=snakemake.input["sample_profile"]
+    WorldPop_data=snakemake.input["WorldPop_data"]
+    sample_profile=snakemake.input["sample_profile"]
 
     create_microgrid_shape(
         snakemake.config["microgrids_list"]["Location"]["Centre"]["lon"],
@@ -121,7 +125,9 @@ if __name__ == "__main__":
 
     
 
-    # create_masked_file(WorldPop_data)
+    create_masked_file(WorldPop_data,
+                    f"resources/shapes/microgrid_shape.geojson",
+                    snakemake.output["country_masked"])
 
-    # microgrid_load=estimate_microgrid_population(sample_profile)
+    estimate_microgrid_population(f"resources/file_dir/country_masked.tif", sample_profile, snakemake.output["electric_load"])
  
