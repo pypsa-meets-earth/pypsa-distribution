@@ -132,7 +132,6 @@ def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_c
 
     for tech in tech_modelling:
        
-        # with xr.open_dataset(f"renewable_profiles/profile_{tech}.nc") as ds:
         with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
             
             if ds.indexes["bus"].empty:
