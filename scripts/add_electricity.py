@@ -213,7 +213,6 @@ def attach_load(n, load_file, tech_modelling):
     index=pd.Index( list(range(n_load)))
 
     n.madd("Load", index, bus=["onebus"], carrier="AC", p_set=load)
-a=10
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
