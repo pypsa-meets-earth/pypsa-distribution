@@ -55,6 +55,7 @@ electricity:
     StorageUnit: ["lithium", "lead acid"]  
   
   conventional_carriers: [diesel]
+
   renewable_carriers: [solar, onwind]
 
 
@@ -122,3 +123,5 @@ microgrids_list:
       Deltalon: 0.3282
       Deltalat: 0.1973
 
+  
+scaling_factor: 15000

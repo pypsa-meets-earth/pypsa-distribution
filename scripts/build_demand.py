@@ -52,7 +52,7 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name, output_path):
 
 def create_masked_file(raster_path, geojson_path, output_path):
 
-    gdf = gpd.read_file(f"resources/shapes/microgrid_shape.geojson")
+    gdf = gpd.read_file(geojson_path)
     gdf.to_file('microgrid_shape.shp')
     with fiona.open("microgrid_shape.shp", "r") as shapefile:
       shapes = [feature["geometry"] for feature in shapefile]
@@ -75,8 +75,8 @@ def create_masked_file(raster_path, geojson_path, output_path):
 
  
 #Estimattion of the population of the microgrid based on a mask file and a sample profile of electricity demand.
-def estimate_microgrid_population(masked_file, sample_profile, output_file):
-
+def estimate_microgrid_population(masked_file, p, sample_profile, output_file):
+    
     pop_microgrid = gr.from_file(masked_file)
     
     pop_microgrid=pop_microgrid.to_geopandas() 
@@ -85,8 +85,8 @@ def estimate_microgrid_population(masked_file, sample_profile, output_file):
 
     #I import the sample_profile file
     total_load=pd.read_csv(sample_profile)
-    total_load=total_load["0"]
-    per_person_load=total_load*(1/15000) #file of electricity demand per-person
+    total_load = total_load["0"]
+    per_person_load=total_load*(1/p) #file of electricity demand per-person
     
     per_person_load=pd.DataFrame(per_person_load)
     microgrid_load=per_person_load*pop_microgrid #Electric load of the microgrid
@@ -125,6 +125,7 @@ if __name__ == "__main__":
                     snakemake.output["country_masked"])
 
     estimate_microgrid_population(f"resources/file_dir/country_masked.tif", 
+                                snakemake.config["scaling_factor"],       
                                 sample_profile, 
                                 snakemake.output["electric_load"])
  
