@@ -6,7 +6,8 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+import powerplantmatching as pm
+
 
 idx = pd.IndexSlice
 
@@ -35,6 +36,9 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
     suptechs = missing_carriers.str.split("-").str[0]
     emissions = costs.loc[suptechs, emissions_cols].fillna(0.0)
     emissions.index = missing_carriers
+    n.import_components_from_dataframe(emissions, "Carrier")
+
+#Last line of costs.csv file is totally invented, it should be reviewed.
 
 def load_costs(tech_costs, config, elec_config, Nyears=1):
     """
@@ -138,12 +142,13 @@ def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_c
                 continue   
 
             suptech = tech.split("-", 2)[0]
-          
+            buses_i = n.buses.index
+
             n.madd(
             "Generator",
             ds.indexes["bus"],
             " " + tech,
-            bus=["onebus"],
+            bus= buses_i,
             carrier=tech,
             p_nom_extendable=tech in extendable_carriers["Generator"],
             p_nom_max=ds["p_nom_max"].to_pandas(), #look at the config 
@@ -156,25 +161,82 @@ def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_c
             )
 
 
-def attach_conventional_generators(n, tech_modelling, conventional_carriers):
+def load_powerplants(ppl_fn):
+    carrier_dict = {
+        "ocgt": "OCGT",
+        "ccgt": "CCGT",
+        "bioenergy": "biomass",
+        "ccgt, thermal": "CCGT",
+        "hard coal": "coal",
+        #"oil" : "diesel" #This is something that could be done 
+    }
 
-    for tech in tech_modelling:
+    return (
+        pd.read_csv(ppl_fn, index_col=0, dtype={"bus": "str"})
+        .powerplant.to_pypsa_names()
+        .powerplant.convert_country_to_alpha2()
+        .rename(columns=str.lower)
+        .drop(columns=["efficiency"])
+        .replace({"carrier": carrier_dict})
+    )
 
-        buses_i = n.buses.index
-        n.madd(
-            "Generator",
-            buses_i ,
-            " " + tech, 
-            bus=["onebus"], 
-            carrier=tech,
-            p_nom_extendable=True,
-            p_nom_max=100,
-            marginal_cost=10, #random number (to be corrected)
-            capital_cost=1000, #random number (to be corrected)
-            efficiency=0.3,
-            p_set=100,
-            p_max_pu=1,
-            )
+
+def attach_conventional_generators(
+    n,
+    costs,
+    ppl,
+    conventional_carriers,
+    extendable_carriers,
+    conventional_config,
+    conventional_inputs,
+):
+    carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
+    _add_missing_carriers_from_costs(n, costs, carriers)
+
+    ppl = (
+        ppl.query("carrier in @carriers")
+        .join(costs, on="carrier", rsuffix="_r")
+        .rename(index=lambda s: "C" + str(s))
+    )
+    ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency)
+    
+    buses_i = n.buses.index
+    
+    n.madd(
+        "Generator",
+        ppl.index,
+        carrier=ppl.carrier,
+        bus=buses_i,
+        p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+        p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+        p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
+        efficiency=ppl.efficiency,
+        marginal_cost=ppl.marginal_cost,
+        capital_cost=ppl.capital_cost,
+        build_year=ppl.datein.fillna(0).astype(int),
+        lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
+    )
+
+    for carrier in conventional_config:
+
+        # Generators with technology affected
+        idx = n.generators.query("carrier == @carrier").index
+
+        for attr in list(set(conventional_config[carrier]) & set(n.generators)):
+
+            values = conventional_config[carrier][attr]
+
+            if f"conventional_{carrier}_{attr}" in conventional_inputs:
+                # Values affecting generators of technology k country-specific
+                # First map generator buses to countries; then map countries to p_max_pu
+                values = pd.read_csv(values, index_col=0).iloc[:, 0]
+                bus_values = n.buses.country.map(values)
+                n.generators[attr].update(
+                    n.generators.loc[idx].bus.map(bus_values).dropna()
+                )
+            else:
+                # Single value affecting all generators of technology k indiscriminantely of country
+                n.generators.loc[idx, attr] = values
 
 
 def attach_storageunits(n, costs, technologies, extendable_carriers ):
@@ -191,7 +253,7 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
             "StorageUnit",
             buses_i, 
             " " + tech, 
-            bus=["onebus"],
+            bus=buses_i,
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
@@ -210,8 +272,10 @@ def attach_load(n, load_file, tech_modelling):
 
     n_load=1
     index=pd.Index( list(range(n_load)))
+    
+    buses_i = n.buses.index
 
-    n.madd("Load", index, bus=["onebus"], carrier="AC", p_set=load)
+    n.madd("Load", index, bus=buses_i, carrier="AC", p_set=load)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -227,14 +291,15 @@ if __name__ == "__main__":
 
     load_file=snakemake.input["load_file"]
 
+    ppl = load_powerplants(snakemake.input.powerplants)
+
     costs = load_costs(
     snakemake.input.tech_costs,
     snakemake.config["costs"],
     snakemake.config["electricity"],
     Nyears,
     )
-
-
+    
     attach_wind_and_solar(
         n,
         costs,
@@ -242,11 +307,19 @@ if __name__ == "__main__":
         snakemake.config["tech_modelling"]["general_vre"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
-     
+
+    conventional_inputs = {
+        k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
+    }
+
     attach_conventional_generators(
-    n, 
-    snakemake.config["tech_modelling"]["conv_techs"],
-    snakemake.config["electricity"]["conventional_carriers"]
+        n,
+        costs,
+        ppl,
+        snakemake.config["electricity"]["conventional_carriers"],
+        snakemake.config["electricity"]["extendable_carriers"],
+        snakemake.config.get("conventional", {}),
+        conventional_inputs,
     )
 
     attach_storageunits(n, 
@@ -256,5 +329,5 @@ if __name__ == "__main__":
     )
       
     attach_load(n, load_file, snakemake.config["tech_modelling"]["load_carriers"])
-    
-    n.export_to_netcdf(snakemake.output[0])
+    n.export_to_netcdf(snakemake.output[0])   
+ 

@@ -1,0 +1,2 @@
+,Name,Fueltype,Technology,Set,Country,Capacity,Efficiency,Duration,Volume_Mm3,DamHeight_m,StorageCapacity_MWh,DateIn,DateRetrofit,DateOut,lat,lon,EIC,projectID,bus
+1,New_Diesel_Generator,Diesel,,PP,SL,14.0,,0.0,0.0,0.0,0.0,1986,1986.0,2031,-21.1667,27.5167,{nan},{'GPD': {'WRI1023018'}},1
