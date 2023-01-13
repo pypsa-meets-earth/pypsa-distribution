@@ -9,6 +9,42 @@ import numpy as np
 import powerplantmatching as pm
 
 
+"""
+Adds electrical generators, load and storage units to a base network.
+Relevant Settings
+-----------------
+.. code:: yaml
+    costs:
+        year:
+        USD2013_to_EUR2013:
+        dicountrate:
+    electricity:
+        max_hours:
+        conventional_carriers:
+        extendable_carriers:
+    tech_modelling:
+        general_vre:
+        storage_techs:
+        load_carries:
+
+Inputs
+------
+- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
+- ``resources/powerplants.csv``: confer :ref:`powerplants`
+- ``resources/profile_{}.nc``: all technologies in ``config["renewables"].keys()``, confer :ref:`renewableprofiles`
+- ``resources/demand/microgrid_load.csv``: microgrid electric demand 
+- ``networks/base.nc``: confer :ref:`base`
+     
+Outputs
+-------
+- ``networks/elec.nc``:
+
+Description
+-----------
+The rule :mod:`add_electricity` takes as input the network generated in the rule "create_network" and adds to it both renewable and conventional generation, storage units and load, resulting in a network that is stored in ``networks/elec.nc``. 
+
+"""
+
 idx = pd.IndexSlice
 
 def calculate_annuity(n, r):
@@ -132,18 +168,29 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
 
 def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_carriers):
 
+    """
+    This function adds wind and solar generators with the time series "profile_{tech}" to the power network
+
+    """
+
+    # Add any missing carriers from the costs data to the tech_modelling variable
     _add_missing_carriers_from_costs(n, costs, tech_modelling)
+
+    # Get the index of the buses in the power network
+    buses_i = n.buses.index
 
     for tech in tech_modelling:
        
+        # Open the dataset for the current technology from the input_profiles
         with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
             
+            # If the dataset's "bus" index is empty, skip to the next technology
             if ds.indexes["bus"].empty:
                 continue   
 
             suptech = tech.split("-", 2)[0]
-            buses_i = n.buses.index
 
+            # Add the wind and solar generators to the power network
             n.madd(
             "Generator",
             ds.indexes["bus"],
@@ -162,6 +209,7 @@ def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_c
 
 
 def load_powerplants(ppl_fn):
+
     carrier_dict = {
         "ocgt": "OCGT",
         "ccgt": "CCGT",
@@ -190,9 +238,14 @@ def attach_conventional_generators(
     conventional_config,
     conventional_inputs,
 ):
+    
+    # Create a set of all conventional and extendable carriers
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
+
+    # Add any missing carriers from the costs data to the "carriers" variable
     _add_missing_carriers_from_costs(n, costs, carriers)
 
+    # Filter the ppl dataframe to only include the relevant carriers
     ppl = (
         ppl.query("carrier in @carriers")
         .join(costs, on="carrier", rsuffix="_r")
@@ -200,8 +253,11 @@ def attach_conventional_generators(
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency)
     
+    # Get the index of the buses in the power network
     buses_i = n.buses.index
-    
+
+    # Add the conventional generators to the power network
+
     n.madd(
         "Generator",
         ppl.index,
@@ -240,6 +296,11 @@ def attach_conventional_generators(
 
 
 def attach_storageunits(n, costs, technologies, extendable_carriers ):
+    
+    """
+    This function adds different technologies of storage units to the power network
+
+    """
 
     elec_opts = snakemake.config["electricity"]
     max_hours = elec_opts["max_hours"]
@@ -247,8 +308,12 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
     lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
     lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
 
+    buses_i = n.buses.index
+
+    # Iterate through each storage technology
     for tech in technologies:
-        buses_i = n.buses.index
+
+        # Add the storage units to the power network
         n.madd(
             "StorageUnit",
             buses_i, 
@@ -270,12 +335,18 @@ def attach_load(n, load_file, tech_modelling):
 
     load=pd.read_csv(load_file).set_index([n.snapshots])
 
+    # Number of loads
     n_load=1
+
+    # Create an index for the loads
     index=pd.Index( list(range(n_load)))
-    
+
+    # Get the index of the buses in the power network
     buses_i = n.buses.index
 
+    # Add the load to the power network
     n.madd("Load", index, bus=buses_i, carrier="AC", p_set=load)
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
