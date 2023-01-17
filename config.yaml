@@ -34,18 +34,6 @@ crs:
 
 
 electricity:
-  voltages: [220., 300., 380.]
-  co2limit: 1.487e+9
-  co2base: 1.487e+9
-  agg_p_nom_limits: data/agg_p_nom_minmax.csv
-  hvdc_as_lines: false  # should HVDC lines be modeled as `Line` or as `Link` component?
-
-  operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
-    activate: false
-    epsilon_load: 0.02 # share of total load
-    epsilon_vres: 0.02 # share of total renewable supply
-    contingency: 0 # fixed capacity in MW
-
   max_hours:
     battery: 6
     H2: 168
@@ -108,5 +96,6 @@ microgrids_list:
       Deltalon: 0.3282
       Deltalat: 0.1973
 
-  
-scaling_factor: 15000
+
+load:
+  scaling_factor: 15000
