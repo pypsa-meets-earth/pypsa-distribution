@@ -5,6 +5,39 @@ import numpy as np
 import pypsa
 from pypsa.linopf import ilopf, network_lopf
 
+"""
+Solves linear optimal power flow for a network iteratively.
+-----------------
+.. code:: yaml
+    solving:
+        tmpdir:
+        options:
+            formulation:
+            clip_p_max_pu:
+            load_shedding:
+            noisy_costs:
+            nhours:
+            min_iterations:
+            max_iterations:
+            skip_iterations:
+            track_iterations:
+        
+Inputs
+------
+- ``networks/elec.nc
+Outputs
+-------
+- ``networks/results/networks/elec.nc : Solved PyPSA network including optimisation results
+  
+Description
+-----------
+Total annual system costs are minimised with PyPSA. The full formulation of the
+linear optimal power flow (plus investment planning
+is provided in the
+`documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow>`_.
+The optimization is based on the ``pyomo=False`` setting in the :func:`network.lopf` function.
+Additionally, some extra constraints specified in :mod:`prepare_network` are added.
+"""
 
 def prepare_network(n, solve_opts):
 
