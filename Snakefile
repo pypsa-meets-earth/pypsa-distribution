@@ -3,8 +3,10 @@ import sys
 sys.path.append("./scripts")
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+from snakemake.io import expand
 from _helpers import merge_yamls
 from os.path import normpath, exists, isdir
+
 import sys
 
 sys.path.append("./scripts")
@@ -46,12 +48,12 @@ subworkflow pypsaearth:
         "./config.yaml"
 
 
-
 rule build_demand: 
     input:
-        WorldPop_data = "data/Worldpop/sle_ppp_2019_constrained.tif",
-        sample_profile= PROFILE,
+        sample_profile = PROFILE,
+
     output:
+        Worldpop_data= f"data/Worldpop/population_file.tif",
         microgrid_shape="resources/shapes/microgrid_shape.geojson",
         country_masked="resources/file_dir/country_masked.tif",
         electric_load="resources/demand/microgrid_load.csv",

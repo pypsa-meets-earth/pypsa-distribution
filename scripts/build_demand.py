@@ -9,7 +9,23 @@ import rasterio
 import rasterio.mask
 import georasters as gr
 import pandas as pd
+import requests
+import shutil
+import logging
+import glob
 
+
+from _helpers import (
+    configure_logging,
+    sets_path_to_root,
+    three_2_two_digits_country,
+    two_2_three_digits_country,
+    two_digits_2_name_country,
+    get_country,
+)
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
 
 """
 Estimates the population and the electric load of the microgrid.
@@ -34,10 +50,14 @@ Relevant Settings
 
 Inputs
 ------
-- ``data/Worldpop/sle_ppp_2019_constrained.tif": a tif file of the population of the selected country
 - ``data/sample_profile.csv``: a load profile, which will be scaled through a scaling_factor to obtain the per person load
 
 Outputs
+-------
+- ``data/Worldpop/{country}_ppp_{year}_constrained.tif": a tif file of the population of the selected country,
+- ``microgrid_shape="resources/shapes/microgrid_shape.geojson": a geojson file of the shape of the microgrid,
+- ``country_masked="resources/file_dir/country_masked.tif",
+- ``electric_load="resources/demand/microgrid_load.csv": the electric load of the microgid,
 -------
 
 Description
@@ -92,6 +112,101 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name, output_path):
 
     #Save the GeoDataFrame to a .geojson file
     gdf.to_file(output_path)
+
+
+def download_WorldPop_standard(
+    output_path,
+    country_code,
+    year,
+    update,
+    out_logging,
+    size_min,
+    ):
+    """
+    Download tiff file for each country code using the standard method from worldpop datastore with 1kmx1km resolution.
+
+    Parameters
+    ----------
+    country_code : str
+        Two letter country codes of the downloaded files.
+        Files downloaded from https://data.worldpop.org/ datasets WorldPop UN adjusted
+    year : int
+        Year of the data to download
+    update : bool
+        Update = true, forces re-download of files
+    size_min : int
+        Minimum size of each file to download
+    Returns
+    -------
+    WorldPop_inputfile : str
+        Path of the file
+    WorldPop_filename : str
+        Name of the file
+    """
+
+    if out_logging:
+        _logger.info("Download WorldPop datasets")
+    
+    three_digits_code=get_country('alpha_3', alpha_2 = "SL")
+
+    def convert_to_lowercase(string):
+        return string.lower()
+
+    three_digits_code_lower=convert_to_lowercase(three_digits_code)
+
+    WorldPop_filename = f"{three_digits_code_lower}_ppp_{year}_constrained.tif"
+
+    if {year} == "2019":
+
+        WorldPop_urls = [
+               f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/{three_digits_code}/{WorldPop_filename}"
+        ]
+
+    # if {year} == "2020": 
+
+    #     WorldPop_urls = [
+    #            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/BSGM/{WorldPop_filename}"
+    #     ]
+    
+    WorldPop_inputfile = os.path.join(
+        os.getcwd(), "data", "WorldPop", f"{three_digits_code_lower}_ppp_{year}_constrained.tif" 
+    ) # Input filepath tif
+    
+
+    old_file_paths = glob.glob(os.path.join("data/Worldpop", "*_ppp_*_constrained.tif"))
+
+    for old_file_path in old_file_paths:
+       os.rename(old_file_path, output_path)
+
+    #os.remove(WorldPop_inputfile)
+
+    if not os.path.exists(WorldPop_inputfile) or update is True:
+        if out_logging:
+            _logger.warning(
+                f" {WorldPop_filename} does not exist, downloading to {WorldPop_inputfile}"
+            )
+        #  create data/osm directory
+        os.makedirs(os.path.dirname(WorldPop_inputfile), exist_ok=True)
+
+        loaded = False
+
+        WorldPop_urls = [
+        f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/{three_digits_code}/{WorldPop_filename}",
+        ]
+        #f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/{three_digits_code}/{WorldPop_filename}"
+
+    
+        
+        for WorldPop_url in WorldPop_urls:
+            with requests.get(WorldPop_url, stream=True) as r:
+                with open(WorldPop_inputfile, "wb") as f:
+                    if float(r.headers["Content-length"]) > size_min:
+                        shutil.copyfileobj(r.raw, f)
+                        loaded = True
+                        break
+        if not loaded:
+            _logger.error(f" Impossible to download {WorldPop_filename}")
+
 
 
 def create_masked_file(raster_path, geojson_path, output_path):
@@ -170,8 +285,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_demand")
         configure_logging(snakemake)
 
-
-    WorldPop_data=snakemake.input["WorldPop_data"]
     sample_profile=snakemake.input["sample_profile"]
 
     create_microgrid_shape(
@@ -183,9 +296,16 @@ if __name__ == "__main__":
         snakemake.output["microgrid_shape"],
     )
 
-    
+    download_WorldPop_standard(
+    snakemake.output["Worldpop_data"],
+    snakemake.config["countries"],
+    snakemake.config["year"],
+    False,
+    False,
+    300,
+)
 
-    create_masked_file(WorldPop_data,
+    create_masked_file(f"data/Worldpop/population_file.tif",
                     f"resources/shapes/microgrid_shape.geojson",
                     snakemake.output["country_masked"])
 
