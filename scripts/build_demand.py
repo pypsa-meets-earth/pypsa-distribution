@@ -1,32 +1,3 @@
-import os
-from _helpers import configure_logging, sets_path_to_root
-
-
-import geopandas as gpd
-import pandas as pd
-import fiona
-import rasterio
-import rasterio.mask
-import georasters as gr
-import pandas as pd
-import requests
-import shutil
-import logging
-import glob
-
-
-from _helpers import (
-    configure_logging,
-    sets_path_to_root,
-    three_2_two_digits_country,
-    two_2_three_digits_country,
-    two_digits_2_name_country,
-    get_country,
-)
-
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.INFO)
-
 """
 Estimates the population and the electric load of the microgrid.
 
@@ -54,10 +25,10 @@ Inputs
 
 Outputs
 -------
-- ``data/Worldpop/{country}_ppp_{year}_constrained.tif": a tif file of the population of the selected country,
-- ``microgrid_shape="resources/shapes/microgrid_shape.geojson": a geojson file of the shape of the microgrid,
-- ``country_masked="resources/file_dir/country_masked.tif",
-- ``electric_load="resources/demand/microgrid_load.csv": the electric load of the microgid,
+- ``data/Worldpop/population_file.tif: a tif file of the population of the selected country,
+- ``resources/shapes/microgrid_shape.geojson: a geojson file of the shape of the microgrid,
+- ``resources/file_dir/country_masked.tif,
+- ``resources/demand/microgrid_load.csv: the electric load of the microgid,
 -------
 
 Description
@@ -67,6 +38,33 @@ The rule :mod:`build_demand` contains functions that are used to create a shape 
 the population. Then the population is multiplied for the per person load and the microgrid load is then obtained.
 
 """ 
+
+import os
+from _helpers import configure_logging, sets_path_to_root
+
+
+import geopandas as gpd
+import pandas as pd
+import fiona
+import rasterio
+import rasterio.mask
+import georasters as gr
+import pandas as pd
+import requests
+import shutil
+import logging
+import glob
+
+
+from _helpers import (
+    configure_logging,
+    get_country,
+)
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
+
+
 
 def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name, output_path):
 
