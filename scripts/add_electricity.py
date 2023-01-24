@@ -1,14 +1,3 @@
-import os
-from _helpers import configure_logging, sets_path_to_root
-
-import pypsa
-import pandas as pd
-import xarray as xr
-import matplotlib.pyplot as plt
-import numpy as np
-import powerplantmatching as pm
-
-
 """
 Adds electrical generators, load and storage units to a base network.
 Relevant Settings
@@ -44,6 +33,18 @@ Description
 The rule :mod:`add_electricity` takes as input the network generated in the rule "create_network" and adds to it both renewable and conventional generation, storage units and load, resulting in a network that is stored in ``networks/elec.nc``. 
 
 """
+
+
+import os
+from _helpers import configure_logging, sets_path_to_root
+
+import pypsa
+import pandas as pd
+import xarray as xr
+import matplotlib.pyplot as plt
+import numpy as np
+import powerplantmatching as pm
+
 
 idx = pd.IndexSlice
 
@@ -293,7 +294,7 @@ def attach_conventional_generators(
             else:
                 # Single value affecting all generators of technology k indiscriminantely of country
                 n.generators.loc[idx, attr] = values
-
+    
 
 def attach_storageunits(n, costs, technologies, extendable_carriers ):
     
@@ -348,6 +349,7 @@ def attach_load(n, load_file, tech_modelling):
     n.madd("Load", index, bus=buses_i, carrier="AC", p_set=load)
 
 
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -392,6 +394,7 @@ if __name__ == "__main__":
         snakemake.config.get("conventional", {}),
         conventional_inputs,
     )
+    
 
     attach_storageunits(n, 
                     costs,
@@ -400,5 +403,7 @@ if __name__ == "__main__":
     )
       
     attach_load(n, load_file, snakemake.config["tech_modelling"]["load_carriers"])
+
+
     n.export_to_netcdf(snakemake.output[0])   
  

@@ -1,4 +1,3 @@
-#Creation of the network 
 """
 Creates a base network with one bus
 

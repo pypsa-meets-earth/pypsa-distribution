@@ -1,10 +1,3 @@
-# Optimization
-import os
-from _helpers import configure_logging, sets_path_to_root
-import numpy as np
-import pypsa
-from pypsa.linopf import ilopf, network_lopf
-
 """
 Solves linear optimal power flow for a network iteratively.
 -----------------
@@ -38,6 +31,13 @@ is provided in the
 The optimization is based on the ``pyomo=False`` setting in the :func:`network.lopf` function.
 Additionally, some extra constraints specified in :mod:`prepare_network` are added.
 """
+
+import os
+from _helpers import configure_logging, sets_path_to_root
+import numpy as np
+import pypsa
+from pypsa.linopf import ilopf, network_lopf
+
 
 def prepare_network(n, solve_opts):
 
