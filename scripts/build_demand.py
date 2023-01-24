@@ -311,4 +311,3 @@ if __name__ == "__main__":
                                 snakemake.config["load"]["scaling_factor"],       
                                 sample_profile, 
                                 snakemake.output["electric_load"])
- 

@@ -56,10 +56,3 @@ if __name__ == "__main__":
     add_bus_to_network(n)
     n.export_to_netcdf(snakemake.output[0])
     
-
-
-
-
-
-
-
