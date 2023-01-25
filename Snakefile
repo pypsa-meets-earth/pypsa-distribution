@@ -3,7 +3,15 @@ import sys
 sys.path.append("./scripts")
 
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+from snakemake.io import expand
 from _helpers import merge_yamls
+from os.path import normpath, exists, isdir
+
+import sys
+
+sys.path.append("./scripts")
+
+from os.path import normpath, exists, isdir
 
 HTTP = HTTPRemoteProvider()
 
@@ -12,14 +20,14 @@ configfile: "config.yaml"
 
 
 COSTS = "data/costs.csv"
-
+PROFILE = "data/sample_profile.csv"
 
 # prepare pypsa-earth config
 merge_yamls(
     "./pypsa-earth/config.default.yaml", "./config.yaml", "./config.pypsa-earth.yaml"
 )
 
-ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 20)
+# ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 20)
 
 
 wildcard_constraints:
@@ -40,25 +48,15 @@ subworkflow pypsaearth:
         "./config.yaml"
 
 
-rule build_shapes:
-    output:
-        "resources/shapes/shapes.geojson",
-    log:
-        "logs/build_shapes.log",
-    benchmark:
-        "benchmarks/build_shapes"
-    threads: 1
-    resources:
-        mem_mb=3000,
-    script:
-        "scripts/build_shapes.py"
-
-
-rule build_demand:
+rule build_demand: 
     input:
-        shapes="resources/shapes/shapes.geojson",
+        sample_profile = PROFILE,
+
     output:
-        "resources/demand/electric_load.xlsx",
+        Worldpop_data= f"data/Worldpop/population_file.tif",
+        microgrid_shape="resources/shapes/microgrid_shape.geojson",
+        country_masked="resources/file_dir/country_masked.tif",
+        electric_load="resources/demand/microgrid_load.csv",
     log:
         "logs/build_demand.log",
     benchmark:
@@ -70,67 +68,64 @@ rule build_demand:
         "scripts/build_demand.py"
 
 
-rule base_network:
-    input:
-        shapes="resources/shapes/shapes.geojson",
+rule create_network:
     output:
         "networks/base.nc",
     log:
-        "logs/base_network.log",
+        "logs/create_network.log",
     benchmark:
-        "benchmarks/base_network"
+        "benchmarks/create_network"
     threads: 1
     resources:
         mem_mb=3000,
     script:
-        "scripts/base_network.py"
+        "scripts/create_network.py"
 
 
-rule build_renewable_profiles:
-    input:
-        base_network="networks/base.nc",
-        natura=pypsaearth("resources/natura.tiff"),
-        copernicus=pypsaearth(
-            "data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"
-        ),
-        gebco=pypsaearth("data/gebco/GEBCO_2021_TID.nc"),
-        country_shapes="resources/shapes/country_shapes.geojson",
-        offshore_shapes="resources/shapes/offshore_shapes.geojson",
-        hydro_capacities=pypsaearth("data/hydro_capacities.csv"),
-        eia_hydro_generation=pypsaearth("data/eia_hydro_annual_generation.csv"),
-        powerplants="resources/powerplants.csv",
-        regions=lambda w: (
-            "resources/bus_regions/regions_onshore.geojson"
-            if w.technology in ("onwind", "solar", "hydro")
-            else "resources/bus_regions/regions_offshore.geojson"
-        ),
-        cutout=lambda w: "cutouts/"
-        + config["renewable"][w.technology]["cutout"]
-        + ".nc",
-    output:
-        profile="resources/renewable_profiles/profile_{technology}.nc",
-    log:
-        "logs/build_renewable_profile_{technology}.log",
-    benchmark:
-        "benchmarks/build_renewable_profiles_{technology}"
-    threads: ATLITE_NPROCESSES
-    resources:
-        mem_mb=ATLITE_NPROCESSES * 5000,
-    script:
-        pypsaearth("scripts/build_renewable_profiles.py")
+# rule build_renewable_profiles:
+#     input:
+#         base_network="networks/base.nc",
+#         natura=pypsaearth("resources/natura.tiff"),
+#         copernicus=pypsaearth(
+#             "data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"
+#         ),
+#         gebco=pypsaearth("data/gebco/GEBCO_2021_TID.nc"),
+#         country_shapes="resources/shapes/country_shapes.geojson",
+#         offshore_shapes="resources/shapes/offshore_shapes.geojson",
+#         hydro_capacities=pypsaearth("data/hydro_capacities.csv"),
+#         eia_hydro_generation=pypsaearth("data/eia_hydro_annual_generation.csv"),
+#         powerplants="resources/powerplants.csv",
+#         regions=lambda w: (
+#             "resources/bus_regions/regions_onshore.geojson"
+#             if w.technology in ("onwind", "solar", "hydro")
+#             else "resources/bus_regions/regions_offshore.geojson"
+#         ),
+#         cutout=lambda w: "cutouts/"
+#         + config["renewable"][w.technology]["cutout"]
+#         + ".nc",
+#     output:
+#         profile="resources/renewable_profiles/profile_{technology}.nc",
+#     log:
+#         "logs/build_renewable_profile_{technology}.log",
+#     benchmark:
+#         "benchmarks/build_renewable_profiles_{technology}"
+#     threads: ATLITE_NPROCESSES
+#     resources:
+#         mem_mb=ATLITE_NPROCESSES * 5000,
+#     script:
+#         pypsaearth("scripts/build_renewable_profiles.py")
 
 
 rule add_electricity:
     input:
-        base_network="networks/base.nc"
-        ** {
+        **{
             f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
-            for tech in config["renewable"]
-            if tech in config["electricity"]["renewable_carriers"]
+            for tech in config["tech_modelling"]["general_vre"]
         },
-        demand="resources/demand/electric_load.xlsx",  # path for the nodal demand
+        create_network="networks/base.nc",
         tech_costs=COSTS,
-        regions="resources/bus_regions/regions_onshore.geojson",
+        load_file="resources/demand/microgrid_load.csv",
+        powerplants="resources/powerplants.csv",
     output:
         "networks/elec.nc",
     log:
@@ -142,6 +137,25 @@ rule add_electricity:
         mem_mb=3000,
     script:
         "scripts/add_electricity.py"
+
+
+
+# if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
+
+# rule solve_network:
+#     input:
+#         "networks/elec.nc",
+#     output:
+#         "networks/results/elec.nc",
+#     log:
+#         "logs/solve_network.log",
+#     benchmark:
+#         "benchmarks/solve_network"
+#     threads: 1
+#     resources:
+#         mem_mb=3000,
+#     script:
+#         "scripts/solve_network.py"
 
 
 rule solve_network:
@@ -158,3 +172,5 @@ rule solve_network:
         mem_mb=3000,
     script:
         "scripts/solve_network.py"
+
+

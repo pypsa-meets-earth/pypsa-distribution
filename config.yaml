@@ -14,11 +14,15 @@ scenario:
   simpl: ['']
   ll: ['copt']
   clusters: [55]
-  opts: [Co2L-3H]
+  opts: [Co2L-3H] #Co2L adds an overall absolute carbon-dioxide emissions limi
+                  #3H resamples the time-resolution by averaging over every 3 snapshots
 
 countries: ["SL"]
 # Can be replaced by country ["NG", "BJ"] or user specific region, more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
+year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
+
+ 
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
@@ -30,3 +34,71 @@ crs:
   geo_crs: EPSG:4326  # general geographic projection, not used for metric measures. "EPSG:4326" is the standard used by OSM and google maps
   distance_crs: EPSG:3857  # projection for distance measurements only. Possible recommended values are "EPSG:3857" (used by OSM and Google Maps)
   area_crs: ESRI:54009  # projection for area measurements only. Possible recommended values are Global Mollweide "ESRI:54009"
+
+
+electricity:
+  max_hours:
+    battery: 6
+    H2: 168
+
+  extendable_carriers:
+    Generator: [solar, onwind]
+    StorageUnit: ["lithium", "lead acid"]  
+  
+  conventional_carriers: [diesel]
+
+  renewable_carriers: [solar, onwind]
+
+
+# TODO: Needs to be adjusted for Africa
+costs:
+  year: 2030
+  discountrate: 0.07 # From a Lion Hirth paper, also reflects average of Noothout et al 2016
+  USD2013_to_EUR2013: 0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
+  marginal_cost: # EUR/MWh
+    solar: 0.01
+    onwind: 0.015
+    offwind: 0.015
+    hydro: 0.
+    H2: 0.
+    electrolysis: 0.
+    fuel cell: 0.
+    battery: 0.
+    battery inverter: 0.
+  emission_prices: # in currency per tonne emission, only used with the option Ep
+    co2: 0.
+
+solving:
+  options:
+    formulation: kirchhoff
+    load_shedding: true
+    noisy_costs: true
+    min_iterations: 4
+    max_iterations: 6
+    clip_p_max_pu: 0.01
+    skip_iterations: true
+    track_iterations: false
+    #nhours: 10
+  solver:
+    name: gurobi
+
+tech_modelling:
+  general_vre: ["onwind", "solar"]
+  storage_techs: ["lithium", "lead acid"]
+  conv_techs: ["diesel"]  
+  load_carriers: ["AC load"]
+
+microgrids_list:
+  micA: #random place in Sierra Leone
+    name: ["nicename"]
+  Location:
+    Centre: 
+      lon: -11.6807
+      lat: 7.8697
+    Sides:
+      Deltalon: 0.3282
+      Deltalat: 0.1973
+
+
+load:
+  scaling_factor: 15000
