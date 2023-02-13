@@ -236,10 +236,9 @@ def estimate_microgrid_population(masked_file, p, sample_profile, output_file):
     and the output file for the estimated microgrid population is specified with the output_file.
     """
 
-    pop_microgrid = gpd.from_file(masked_file)
-
-    # Sum the values of the mask file to get the total population of the microgrid
-    pop_microgrid = pop_microgrid["value"].sum()
+    with rasterio.open(masked_file) as fp:
+        data = fp.read(1)
+        pop_microgrid = data[data >= 0].sum()
 
     # Read the sample profile of electricity demand
     total_load = pd.read_csv(sample_profile)
@@ -295,7 +294,7 @@ if __name__ == "__main__":
     )
 
     estimate_microgrid_population(
-        f"resources/file_dir/country_masked.tif",
+        snakemake.output["country_masked"],
         snakemake.config["load"]["scaling_factor"],
         sample_profile,
         snakemake.output["electric_load"],
