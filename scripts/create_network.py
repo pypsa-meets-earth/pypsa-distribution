@@ -52,6 +52,7 @@ if __name__ == "__main__":
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake("create_network")
+        sets_path_to_root("pypsa-distribution")
 
     configure_logging(snakemake)
 

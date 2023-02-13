@@ -47,7 +47,6 @@ import shutil
 
 import fiona
 import geopandas as gpd
-import georasters as gr
 import pandas as pd
 import rasterio
 import rasterio.mask
@@ -165,7 +164,7 @@ def download_WorldPop_standard(
     old_file_paths = glob.glob(os.path.join("data/Worldpop", "*_ppp_*_constrained.tif"))
 
     for old_file_path in old_file_paths:
-        os.rename(old_file_path, output_path)
+        shutil.move(old_file_path, output_path)
 
     # os.remove(WorldPop_inputfile)
 
@@ -237,10 +236,7 @@ def estimate_microgrid_population(masked_file, p, sample_profile, output_file):
     and the output file for the estimated microgrid population is specified with the output_file.
     """
 
-    pop_microgrid = gr.from_file(masked_file)
-
-    # Read the pop_mircrogid file and convert it to a geopandas dataframe
-    pop_microgrid = pop_microgrid.to_geopandas()
+    pop_microgrid = gpd.from_file(masked_file)
 
     # Sum the values of the mask file to get the total population of the microgrid
     pop_microgrid = pop_microgrid["value"].sum()
@@ -268,7 +264,9 @@ if __name__ == "__main__":
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake("build_demand")
-        configure_logging(snakemake)
+        sets_path_to_root("pypsa-distribution")
+
+    configure_logging(snakemake)
 
     sample_profile = snakemake.input["sample_profile"]
 
@@ -291,8 +289,8 @@ if __name__ == "__main__":
     )
 
     create_masked_file(
-        f"data/Worldpop/population_file.tif",
-        f"resources/shapes/microgrid_shape.geojson",
+        "data/Worldpop/population_file.tif",
+        snakemake.output["microgrid_shape"],
         snakemake.output["country_masked"],
     )
 
