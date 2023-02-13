@@ -78,7 +78,7 @@ solving:
     track_iterations: false
     #nhours: 10
   solver:
-    name: gurobi
+    name: glpk
 
 tech_modelling:
   general_vre: ["onwind", "solar"]
