@@ -106,13 +106,12 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    solve_opts = snakemake.config["solving"]["options"]
+    solver_options = snakemake.config["solving"]["solver"].copy()
+    solver_name = solver_options.pop("name")
 
     n = pypsa.Network(snakemake.input[0])
-    n = prepare_network(n, solve_opts)
-    n = solve_network(
-        n,
-        "gurobi",
-    )
+    n = prepare_network(n, snakemake.config["solving"]["options"])
+
+    n = solve_network(n, solver_name, **solver_options)
 
     n.export_to_netcdf(snakemake.output[0])
