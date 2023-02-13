@@ -39,3 +39,5 @@ rules:
   new-line-at-end-of-file: enable
   truthy:
     check-keys: false       # Disable truthy check hits on keys like "on": ...
+  new-lines:
+    type: platform

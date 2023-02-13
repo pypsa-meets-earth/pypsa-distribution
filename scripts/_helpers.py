@@ -245,7 +245,6 @@ def aggregate_p_curtailed(n):
 
 
 def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
-
     components = dict(
         Link=("p_nom", "p0"),
         Generator=("p_nom", "p"),
@@ -649,7 +648,6 @@ def read_geojson(fn):
 
 
 def merge_yamls(path_base, path_changes, path_output):
-
     import collections.abc
     import copy
     import os

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Solves linear optimal power flow for a network iteratively.
 -----------------
@@ -33,14 +34,14 @@ Additionally, some extra constraints specified in :mod:`prepare_network` are add
 """
 
 import os
-from _helpers import configure_logging, sets_path_to_root
+
 import numpy as np
 import pypsa
+from _helpers import configure_logging, sets_path_to_root
 from pypsa.linopf import ilopf, network_lopf
 
 
 def prepare_network(n, solve_opts):
-
     if "clip_p_max_pu" in solve_opts:
         for df in (n.generators_t.p_max_pu, n.storage_units_t.inflow):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
@@ -76,10 +77,10 @@ def prepare_network(n, solve_opts):
     #                 np.random.random(len(t.df)) - 0.5
     #             )
 
-        # for t in n.iterate_components(["Line", "Link"]):
-        #     t.df["capital_cost"] += (
-        #         1e-1 + 2e-2 * (np.random.random(len(t.df)) - 0.5)
-        #     ) * t.df["length"]
+    # for t in n.iterate_components(["Line", "Link"]):
+    #     t.df["capital_cost"] += (
+    #         1e-1 + 2e-2 * (np.random.random(len(t.df)) - 0.5)
+    #     ) * t.df["length"]
 
     # if solve_opts.get("nhours"):
     #     nhours = solve_opts["nhours"]
@@ -89,24 +90,18 @@ def prepare_network(n, solve_opts):
     return n
 
 
-
 def solve_network(n, solver_name):
-
-    network_lopf(
-            n,
-            solver_name=solver_name
-        )
+    network_lopf(n, solver_name=solver_name)
 
     return n
-    
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        snakemake = mock_snakemake(
-            "solve_network"
-        )
+        snakemake = mock_snakemake("solve_network")
 
     configure_logging(snakemake)
 
@@ -115,9 +110,8 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input[0])
     n = prepare_network(n, solve_opts)
     n = solve_network(
-            n,
-            "gurobi",
-        )
+        n,
+        "gurobi",
+    )
 
-    n.export_to_netcdf(snakemake.output[0]) 
- 
+    n.export_to_netcdf(snakemake.output[0])

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Adds electrical generators, load and storage units to a base network.
 Relevant Settings
@@ -36,17 +37,17 @@ The rule :mod:`add_electricity` takes as input the network generated in the rule
 
 
 import os
-from _helpers import configure_logging, sets_path_to_root
 
-import pypsa
-import pandas as pd
-import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import powerplantmatching as pm
-
+import pypsa
+import xarray as xr
+from _helpers import configure_logging, sets_path_to_root
 
 idx = pd.IndexSlice
+
 
 def calculate_annuity(n, r):
     """
@@ -62,6 +63,7 @@ def calculate_annuity(n, r):
     else:
         return 1 / n
 
+
 def _add_missing_carriers_from_costs(n, costs, carriers):
     missing_carriers = pd.Index(carriers).difference(n.carriers.index)
     if missing_carriers.empty:
@@ -75,7 +77,9 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
     emissions.index = missing_carriers
     n.import_components_from_dataframe(emissions, "Carrier")
 
-#Last line of costs.csv file is totally invented, it should be reviewed.
+
+# Last line of costs.csv file is totally invented, it should be reviewed.
+
 
 def load_costs(tech_costs, config, elec_config, Nyears=1):
     """
@@ -138,20 +142,24 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
         return pd.Series(
             dict(capital_cost=capital_cost, marginal_cost=0.0, co2_emissions=0.0)
         )
-    
-    max_hours = elec_config["max_hours"]           
-    costs.loc["battery"] = costs_for_storage(                      
-            costs.loc["lithium"],                            #line 119 in file costs.csv' which was battery storage was modified into lithium (same values left)
-            costs.loc["battery inverter"],
-            max_hours=max_hours["battery"],
+
+    max_hours = elec_config["max_hours"]
+    costs.loc["battery"] = costs_for_storage(
+        costs.loc[
+            "lithium"
+        ],  # line 119 in file costs.csv' which was battery storage was modified into lithium (same values left)
+        costs.loc["battery inverter"],
+        max_hours=max_hours["battery"],
     )
     max_hours = elec_config["max_hours"]
     costs.loc["battery"] = costs_for_storage(
-            costs.loc["lead acid"],                          #line 120 in file 'costs.csv' which was battery storage was modified into lithium (same values left)
-            costs.loc["battery inverter"],
-            max_hours=max_hours["battery"],
+        costs.loc[
+            "lead acid"
+        ],  # line 120 in file 'costs.csv' which was battery storage was modified into lithium (same values left)
+        costs.loc["battery inverter"],
+        max_hours=max_hours["battery"],
     )
-    
+
     costs.loc["H2"] = costs_for_storage(
         costs.loc["hydrogen storage"],
         costs.loc["fuel cell"],
@@ -167,8 +175,10 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
 
     return costs
 
-def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_carriers):
 
+def attach_wind_and_solar(
+    n, costs, input_profiles, tech_modelling, extendable_carriers
+):
     """
     This function adds wind and solar generators with the time series "profile_{tech}" to the power network
 
@@ -181,43 +191,46 @@ def attach_wind_and_solar(n, costs, input_profiles, tech_modelling, extendable_c
     buses_i = n.buses.index
 
     for tech in tech_modelling:
-       
         # Open the dataset for the current technology from the input_profiles
         with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
-            
             # If the dataset's "bus" index is empty, skip to the next technology
             if ds.indexes["bus"].empty:
-                continue   
+                continue
 
             suptech = tech.split("-", 2)[0]
 
             # Add the wind and solar generators to the power network
             n.madd(
-            "Generator",
-            ds.indexes["bus"],
-            " " + tech,
-            bus= buses_i,
-            carrier=tech,
-            p_nom_extendable=tech in extendable_carriers["Generator"],
-            p_nom_max=ds["p_nom_max"].to_pandas(), #look at the config 
-            weight=ds["weight"].to_pandas(),
-            marginal_cost=costs.at[suptech, "marginal_cost"],
-            capital_cost=costs.at[tech, "capital_cost"],
-            efficiency=costs.at[suptech, "efficiency"],
-            p_set=ds["profile"].transpose("time", "bus").to_pandas().reindex(n.snapshots),
-            p_max_pu=ds["profile"].transpose("time", "bus").to_pandas().reindex(n.snapshots),
+                "Generator",
+                ds.indexes["bus"],
+                " " + tech,
+                bus=buses_i,
+                carrier=tech,
+                p_nom_extendable=tech in extendable_carriers["Generator"],
+                p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
+                weight=ds["weight"].to_pandas(),
+                marginal_cost=costs.at[suptech, "marginal_cost"],
+                capital_cost=costs.at[tech, "capital_cost"],
+                efficiency=costs.at[suptech, "efficiency"],
+                p_set=ds["profile"]
+                .transpose("time", "bus")
+                .to_pandas()
+                .reindex(n.snapshots),
+                p_max_pu=ds["profile"]
+                .transpose("time", "bus")
+                .to_pandas()
+                .reindex(n.snapshots),
             )
 
 
 def load_powerplants(ppl_fn):
-
     carrier_dict = {
         "ocgt": "OCGT",
         "ccgt": "CCGT",
         "bioenergy": "biomass",
         "ccgt, thermal": "CCGT",
         "hard coal": "coal",
-        #"oil" : "diesel" #This is something that could be done 
+        # "oil" : "diesel" #This is something that could be done
     }
 
     return (
@@ -239,7 +252,6 @@ def attach_conventional_generators(
     conventional_config,
     conventional_inputs,
 ):
-    
     # Create a set of all conventional and extendable carriers
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
 
@@ -253,7 +265,7 @@ def attach_conventional_generators(
         .rename(index=lambda s: "C" + str(s))
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency)
-    
+
     # Get the index of the buses in the power network
     buses_i = n.buses.index
 
@@ -275,12 +287,10 @@ def attach_conventional_generators(
     )
 
     for carrier in conventional_config:
-
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
         for attr in list(set(conventional_config[carrier]) & set(n.generators)):
-
             values = conventional_config[carrier][attr]
 
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
@@ -294,10 +304,9 @@ def attach_conventional_generators(
             else:
                 # Single value affecting all generators of technology k indiscriminantely of country
                 n.generators.loc[idx, attr] = values
-    
 
-def attach_storageunits(n, costs, technologies, extendable_carriers ):
-    
+
+def attach_storageunits(n, costs, technologies, extendable_carriers):
     """
     This function adds different technologies of storage units to the power network
 
@@ -313,41 +322,41 @@ def attach_storageunits(n, costs, technologies, extendable_carriers ):
 
     # Iterate through each storage technology
     for tech in technologies:
-
         # Add the storage units to the power network
         n.madd(
             "StorageUnit",
-            buses_i, 
-            " " + tech, 
+            buses_i,
+            " " + tech,
             bus=buses_i,
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
             marginal_cost=costs.at[tech, "marginal_cost"],
-            efficiency_store=costs.at[lookup_store["battery"], "efficiency"], #Lead_acid and lithium have the same value
-            efficiency_dispatch=costs.at[lookup_dispatch["battery"], "efficiency"], #Lead_acid and lithium have the same value
-            max_hours = max_hours["battery"], #Lead_acid and lithium have the same value
-            cyclic_state_of_charge=True
-            
+            efficiency_store=costs.at[
+                lookup_store["battery"], "efficiency"
+            ],  # Lead_acid and lithium have the same value
+            efficiency_dispatch=costs.at[
+                lookup_dispatch["battery"], "efficiency"
+            ],  # Lead_acid and lithium have the same value
+            max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
+            cyclic_state_of_charge=True,
         )
-    
+
 
 def attach_load(n, load_file, tech_modelling):
-
-    load=pd.read_csv(load_file).set_index([n.snapshots])
+    load = pd.read_csv(load_file).set_index([n.snapshots])
 
     # Number of loads
-    n_load=1
+    n_load = 1
 
     # Create an index for the loads
-    index=pd.Index( list(range(n_load)))
+    index = pd.Index(list(range(n_load)))
 
     # Get the index of the buses in the power network
     buses_i = n.buses.index
 
     # Add the load to the power network
     n.madd("Load", index, bus=buses_i, carrier="AC", p_set=load)
-
 
 
 if __name__ == "__main__":
@@ -362,17 +371,17 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.create_network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
-    load_file=snakemake.input["load_file"]
+    load_file = snakemake.input["load_file"]
 
     ppl = load_powerplants(snakemake.input.powerplants)
 
     costs = load_costs(
-    snakemake.input.tech_costs,
-    snakemake.config["costs"],
-    snakemake.config["electricity"],
-    Nyears,
+        snakemake.input.tech_costs,
+        snakemake.config["costs"],
+        snakemake.config["electricity"],
+        Nyears,
     )
-    
+
     attach_wind_and_solar(
         n,
         costs,
@@ -394,16 +403,14 @@ if __name__ == "__main__":
         snakemake.config.get("conventional", {}),
         conventional_inputs,
     )
-    
 
-    attach_storageunits(n, 
-                    costs,
-                    snakemake.config["tech_modelling"]["storage_techs"],
-                    snakemake.config["electricity"]["extendable_carriers"],
+    attach_storageunits(
+        n,
+        costs,
+        snakemake.config["tech_modelling"]["storage_techs"],
+        snakemake.config["electricity"]["extendable_carriers"],
     )
-      
+
     attach_load(n, load_file, snakemake.config["tech_modelling"]["load_carriers"])
 
-
-    n.export_to_netcdf(snakemake.output[0])   
- 
+    n.export_to_netcdf(snakemake.output[0])

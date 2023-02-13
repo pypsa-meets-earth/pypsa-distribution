@@ -22,7 +22,6 @@ countries: ["SL"]
 
 year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
 
- 
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
@@ -43,8 +42,7 @@ electricity:
 
   extendable_carriers:
     Generator: [solar, onwind]
-    StorageUnit: ["lithium", "lead acid"]  
-  
+    StorageUnit: ["lithium", "lead acid"]
   conventional_carriers: [diesel]
 
   renewable_carriers: [solar, onwind]
@@ -85,14 +83,14 @@ solving:
 tech_modelling:
   general_vre: ["onwind", "solar"]
   storage_techs: ["lithium", "lead acid"]
-  conv_techs: ["diesel"]  
+  conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
 microgrids_list:
   micA: #random place in Sierra Leone
     name: ["nicename"]
   Location:
-    Centre: 
+    Centre:
       lon: -11.6807
       lat: 7.8697
     Sides:

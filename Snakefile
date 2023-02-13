@@ -48,12 +48,11 @@ subworkflow pypsaearth:
         "./config.yaml"
 
 
-rule build_demand: 
+rule build_demand:
     input:
-        sample_profile = PROFILE,
-
+        sample_profile=PROFILE,
     output:
-        Worldpop_data= f"data/Worldpop/population_file.tif",
+        Worldpop_data=f"data/Worldpop/population_file.tif",
         microgrid_shape="resources/shapes/microgrid_shape.geojson",
         country_masked="resources/file_dir/country_masked.tif",
         electric_load="resources/demand/microgrid_load.csv",
@@ -139,7 +138,6 @@ rule add_electricity:
         "scripts/add_electricity.py"
 
 
-
 # if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
 
 # rule solve_network:
@@ -172,5 +170,3 @@ rule solve_network:
         mem_mb=3000,
     script:
         "scripts/solve_network.py"
-
-
