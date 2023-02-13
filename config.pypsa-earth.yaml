@@ -3,33 +3,31 @@
 # SPDX-License-Identifier: CC0-1.0
 
 
-version: 0.0.1
+version: 1.0.0
 tutorial: false
 
 logging:
   level: INFO
-  format: '%(levelname)s:%(name)s:%(message)s'
+  format: "%(levelname)s:%(name)s:%(message)s"
 
 run:
-  name: '' # use this to keep track of runs with different settings
+  name: "" # use this to keep track of runs with different settings
   shared_cutouts: true  # set to true to share the default cutout(s) across runs
                         # Note: value false requires build_cutout to be enabled
 
 scenario:
   simpl: ['']
-  ll: [copt]
-  clusters: [55]
-  opts: [Co2L-3H] #Co2L adds an overall absolute carbon-dioxide emissions limi
-                  #3H resamples the time-resolution by averaging over every 3 snapshots
+  ll: ['copt']
+  clusters: [10]
+  opts: [Co2L-3H]
 
-
-countries: [SL]
+countries: ["SL"]
 # Can be replaced by country ["NG", "BJ"], continent ["Africa"] or user-specific region, see more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
 snapshots:
-  start: '2013-01-01'
-  end: '2014-01-01'
-  inclusive: left   # end is not inclusive
+  start: "2013-01-01"
+  end: "2014-01-01"
+  inclusive: "left" # end is not inclusive
 
 enable:
   retrieve_databundle: true  #  Recommended 'true', for the first run. Otherwise data might be missing.
@@ -52,13 +50,13 @@ crs:
 augmented_line_connection:
   add_to_snakefile: false  # If True, includes this rule to the workflow
   connectivity_upgrade: 2  # Min. lines connection per node, https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation
-  new_line_type: [HVAC]    # Expanded lines can be either ["HVAC"] or ["HVDC"] or both ["HVAC", "HVDC"]
+  new_line_type: ["HVAC"]  # Expanded lines can be either ["HVAC"] or ["HVDC"] or both ["HVAC", "HVDC"]
   min_expansion: 1  # [MW] New created line expands by float/int input
   min_DC_length: 600  # [km] Minimum line length of DC line
 
 cluster_options:
   alternative_clustering: false  # "False" use Voronoi shapes, "True" use GADM shapes
-  distribute_cluster: [load]   # Distributes cluster nodes per country according to ['load'],['pop'] or ['gdp']
+  distribute_cluster: ['load'] # Distributes cluster nodes per country according to ['load'],['pop'] or ['gdp']
   out_logging: true  # When "True", logging is printed to console
   aggregation_strategies:
     generators:  # use "min" for more conservative assumptions
@@ -79,13 +77,13 @@ build_shape_options:
   year: 2020  # reference year used to derive shapes, info on population and info on GDP
   nprocesses: 3  # number of processes to be used in build_shapes
   nchunks: 3  # number of data chuncks for build_shapes. If not specified or smaller than nprocesses, specified as nprocesses
-  worldpop_method: standard    # "standard" pulls from web 1kmx1km raster, "api" pulls from API 100mx100m raster, false (not "false") no pop addition to shape which is useful when generating only cutout
-  gdp_method: standard    # "standard" pulls from web 1x1km raster, false (not "false") no gdp addition to shape which useful when generating only cutout
-  contended_flag: set_by_country   # "set_by_country" assigns the contended areas to the countries according to the GADM database, "drop" drops these contended areas from the model
+  worldpop_method: "standard"  # "standard" pulls from web 1kmx1km raster, "api" pulls from API 100mx100m raster, false (not "false") no pop addition to shape which is useful when generating only cutout
+  gdp_method: "standard"  # "standard" pulls from web 1x1km raster, false (not "false") no gdp addition to shape which useful when generating only cutout
+  contended_flag: "set_by_country" # "set_by_country" assigns the contended areas to the countries according to the GADM database, "drop" drops these contended areas from the model
 clean_osm_data_options:  # osm = OpenStreetMap
   names_by_shapes: true  # Set the country name based on the extended country shapes
   threshold_voltage: 35000  # [V] assets below that voltage threshold will not be used (cable, line, generator, etc.)
-  tag_substation: transmission    # Filters only substations with 'transmission' tag, ('distribution' also available)
+  tag_substation: "transmission"  # Filters only substations with 'transmission' tag, ('distribution' also available)
   add_line_endings: true  # When "True", then line endings are added to the dataset of the substations
   generator_name_method: OSM  # Methodology to specify the name to the generator. Options: OSM (name as by OSM dataset), closest_city (name by the closest city)
 
@@ -100,7 +98,7 @@ base_network:
   min_voltage_rebase_voltage: 35000  # [V] minimum voltage in base network
 
 load_options:
-  ssp: ssp2-2.6   # shared socio-economic pathway (GDP and population growth) scenario to consider
+  ssp: "ssp2-2.6" # shared socio-economic pathway (GDP and population growth) scenario to consider
   weather_year: 2013  # Load scenarios available with different weather year (different renewable potentials)
   prediction_year: 2030  # Load scenarios available with different prediction year (GDP, population)
   scale: 1  # scales all load time-series, i.e. 2 = doubles load
@@ -123,19 +121,19 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, onwind]
-    StorageUnit: [lithium, lead acid] # battery, H2
+    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
+    StorageUnit: []  # battery, H2
     Store: [battery, H2]
     Link: []  # H2 pipeline
 
   powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
   custom_powerplants: false
 
-  conventional_carriers: [diesel]
-  renewable_carriers: [solar, onwind]
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
 
   estimate_renewable_capacities:
-    stats: irena    # False, = greenfield expansion, 'irena' uses IRENA stats to add expansion limits
+    stats: "irena"  # False, = greenfield expansion, 'irena' uses IRENA stats to add expansion limits
     year: 2020  # Reference year, available years for IRENA stats are 2000 to 2020
     p_nom_min: 1  # any float, scales the minimum expansion acquired from stats, i.e. 110% of <years>'s capacities => p_nom_min: 1.1
     p_nom_max: false  # sets the expansion constraint, False to deactivate this option and use estimated renewable potentials determine by the workflow, float scales the p_nom_min factor accordingly
@@ -147,25 +145,25 @@ electricity:
 
 lines:
   types:
-    220.: Al/St 240/40 2-bundle 220.0
-    300.: Al/St 240/40 3-bundle 300.0
-    380.: Al/St 240/40 4-bundle 380.0
-  dc_type: HVDC XLPE 1000
+    220.: "Al/St 240/40 2-bundle 220.0"
+    300.: "Al/St 240/40 3-bundle 300.0"
+    380.: "Al/St 240/40 4-bundle 380.0"
+  dc_type: "HVDC XLPE 1000"
   s_max_pu: 0.7
   s_nom_max: .inf
   length_factor: 1.25
-  under_construction: zero   # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: "zero" # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 links:
   p_max_pu: 1.0
   p_nom_max: .inf
   include_tyndp: true
-  under_construction: zero   # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: "zero" # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 transformers:
   x: 0.1
   s_nom: 2000.
-  type: ''
+  type: ""
 
 atlite:
   nprocesses: 4
@@ -279,7 +277,7 @@ renewable:
       normalization: hydro_capacities # 'hydro_capacities' to normalize country production by using hydro_capacities, 'eia' to normalize by eia data, false for no normalization
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
-    hydro_max_hours: energy_capacity_totals_by_country    # not active
+    hydro_max_hours: "energy_capacity_totals_by_country"  # not active
     clip_min_inflow: 1.0
     extendable: true
     normalization_multiplier: 1.1  # multiplier applied after the normalization of the hydro production
@@ -313,12 +311,11 @@ costs:
     co2: 0.
 
 
-  discountrate: 0.07
 monte_carlo:
   options:
     add_to_snakefile: false
     samples: 7    # number of optimizations
-    sampling_strategy: chaospy      # "pydoe2", "chaospy", "scipy", packages that are supported
+    sampling_strategy: "chaospy"    # "pydoe2", "chaospy", "scipy", packages that are supported
   pypsa_standard:
       # User can add here flexibly more features for the Monte-Carlo sampling.
       # Given as "key: value" format
@@ -367,86 +364,68 @@ plotting:
   energy_min: -10000.
   energy_threshold: 50.
 
-  vre_techs: [onwind, offwind-ac, offwind-dc, solar, ror]
-  conv_techs: [OCGT, CCGT, nuclear, coal, oil]
-  storage_techs: [hydro+PHS, battery, H2]
-  load_carriers: [AC load]
-  AC_carriers: [AC line, AC transformer]
-  link_carriers: [DC line, Converter AC-DC]
+  vre_techs: ["onwind", "offwind-ac", "offwind-dc", "solar", "ror"]
+  conv_techs: ["OCGT", "CCGT", "nuclear", "coal", "oil"]
+  storage_techs: ["hydro+PHS", "battery", "H2"]
+  load_carriers: ["AC load"]
+  AC_carriers: ["AC line", "AC transformer"]
+  link_carriers: ["DC line", "Converter AC-DC"]
   tech_colors:
-    onwind: '#235ebc'
-    onshore wind: '#235ebc'
-    offwind: '#6895dd'
-    offwind-ac: '#6895dd'
-    offshore wind: '#6895dd'
-    offshore wind ac: '#6895dd'
-    offwind-dc: '#74c6f2'
-    offshore wind dc: '#74c6f2'
-    hydro: '#08ad97'
-    hydro+PHS: '#08ad97'
-    PHS: '#08ad97'
-    hydro reservoir: '#08ad97'
-    hydroelectricity: '#08ad97'
-    ror: '#4adbc8'
-    run of river: '#4adbc8'
-    solar: '#f9d002'
-    solar PV: '#f9d002'
-    solar thermal: '#ffef60'
-    biomass: '#0c6013'
-    solid biomass: '#06540d'
-    biogas: '#23932d'
-    waste: '#68896b'
-    geothermal: '#ba91b1'
-    OCGT: '#d35050'
-    gas: '#d35050'
-    natural gas: '#d35050'
-    CCGT: '#b20101'
-    nuclear: '#ff9000'
-    coal: '#707070'
-    lignite: '#9e5a01'
-    oil: '#262626'
-    H2: '#ea048a'
-    hydrogen storage: '#ea048a'
-    battery: '#b8ea04'
-    Electric load: '#f9d002'
-    electricity: '#f9d002'
-    lines: '#70af1d'
-    transmission lines: '#70af1d'
-    AC-AC: '#70af1d'
-    AC line: '#70af1d'
-    links: '#8a1caf'
-    HVDC links: '#8a1caf'
-    DC-DC: '#8a1caf'
-    DC link: '#8a1caf'
-    load: '#FF0000'
+    "onwind": "#235ebc"
+    "onshore wind": "#235ebc"
+    "offwind": "#6895dd"
+    "offwind-ac": "#6895dd"
+    "offshore wind": "#6895dd"
+    "offshore wind ac": "#6895dd"
+    "offwind-dc": "#74c6f2"
+    "offshore wind dc": "#74c6f2"
+    "hydro": "#08ad97"
+    "hydro+PHS": "#08ad97"
+    "PHS": "#08ad97"
+    "hydro reservoir": "#08ad97"
+    "hydroelectricity": "#08ad97"
+    "ror": "#4adbc8"
+    "run of river": "#4adbc8"
+    "solar": "#f9d002"
+    "solar PV": "#f9d002"
+    "solar thermal": "#ffef60"
+    "biomass": "#0c6013"
+    "solid biomass": "#06540d"
+    "biogas": "#23932d"
+    "waste": "#68896b"
+    "geothermal": "#ba91b1"
+    "OCGT": "#d35050"
+    "gas": "#d35050"
+    "natural gas": "#d35050"
+    "CCGT": "#b20101"
+    "nuclear": "#ff9000"
+    "coal": "#707070"
+    "lignite": "#9e5a01"
+    "oil": "#262626"
+    "H2": "#ea048a"
+    "hydrogen storage": "#ea048a"
+    "battery": "#b8ea04"
+    "Electric load": "#f9d002"
+    "electricity": "#f9d002"
+    "lines": "#70af1d"
+    "transmission lines": "#70af1d"
+    "AC-AC": "#70af1d"
+    "AC line": "#70af1d"
+    "links": "#8a1caf"
+    "HVDC links": "#8a1caf"
+    "DC-DC": "#8a1caf"
+    "DC link": "#8a1caf"
+    "load": "#FF0000"
   nice_names:
-    OCGT: Open-Cycle Gas
-    CCGT: Combined-Cycle Gas
-    offwind-ac: Offshore Wind (AC)
-    offwind-dc: Offshore Wind (DC)
-    onwind: Onshore Wind
-    solar: Solar
-    PHS: Pumped Hydro Storage
-    hydro: Reservoir & Dam
-    battery: Battery Storage
-    H2: Hydrogen Storage
-    lines: Transmission Lines
-    ror: Run of River
-year: '2019'
-tech_modelling:
-  general_vre: [onwind, solar]
-  storage_techs: [lithium, lead acid]
-  conv_techs: [diesel]
-  load_carriers: [AC load]
-microgrids_list:
-  micA:
-    name: [nicename]
-  Location:
-    Centre:
-      lon: -11.6807
-      lat: 7.8697
-    Sides:
-      Deltalon: 0.3282
-      Deltalat: 0.1973
-load:
-  scaling_factor: 15000
+    OCGT: "Open-Cycle Gas"
+    CCGT: "Combined-Cycle Gas"
+    offwind-ac: "Offshore Wind (AC)"
+    offwind-dc: "Offshore Wind (DC)"
+    onwind: "Onshore Wind"
+    solar: "Solar"
+    PHS: "Pumped Hydro Storage"
+    hydro: "Reservoir & Dam"
+    battery: "Battery Storage"
+    H2: "Hydrogen Storage"
+    lines: "Transmission Lines"
+    ror: "Run of River"
