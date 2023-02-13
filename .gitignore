@@ -1,7 +1,40 @@
+
 # Byte-compiled / optimized / DLL files
-__pycache__/
+**/__pycache__
 *.py[cod]
 *$py.class
+.ipynb_checkpoints
 
-# Sphinx documentation
-docs/_build/
+# General untracked file formats
+*.log
+**/pbf
+*.pbf
+*.zip
+
+# Untracked files
+config.yaml
+dag.svg
+
+# Untracked folders (and files within)
+img/
+.snakemake/
+benchmarks/
+cutouts/
+data/
+data/osm/
+data/raw/
+data/base_network/
+results/summaries/
+results/plots/
+networks/
+scripts/temp
+scripts/test.py
+test/tmp/
+
+# Untrack test doc builds
+doc/_build
+
+# VS code related
+.vscode
+doc/.vscode/settings.json
+.vscode/settings.json

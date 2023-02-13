@@ -10,14 +10,21 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
+run:
+  name: '' # use this to keep track of runs with different settings
+  shared_cutouts: true  # set to true to share the default cutout(s) across runs
+                        # Note: value false requires build_cutout to be enabled
+
 scenario:
   simpl: ['']
   ll: [copt]
   clusters: [55]
-  opts: [Co2L-3H]
+  opts: [Co2L-3H] #Co2L adds an overall absolute carbon-dioxide emissions limi
+                  #3H resamples the time-resolution by averaging over every 3 snapshots
+
 
 countries: [SL]
-# Can be replaced by country ["NG", "BJ"] or user specific region, more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
+# Can be replaced by country ["NG", "BJ"], continent ["Africa"] or user-specific region, see more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
 snapshots:
   start: '2013-01-01'
@@ -26,6 +33,7 @@ snapshots:
 
 enable:
   retrieve_databundle: true  #  Recommended 'true', for the first run. Otherwise data might be missing.
+  retrieve_cost_data: true  # true: retrieves cost data from technology data and saves in resources/costs.csv, false: uses cost data in data/costs.csv
   download_osm_data: true  # If 'true', OpenStreetMap data will be downloaded for the above given countries
   build_natura_raster: false  # If True, than an exclusion raster will be build
   build_cutout: false
@@ -69,10 +77,11 @@ build_shape_options:
   update_file: false  # When true, all the input files are downloaded again and replace the existing files
   out_logging: true  # When true, logging is printed to console
   year: 2020  # reference year used to derive shapes, info on population and info on GDP
-  nprocesses: 5  # number of processes to be used in build_shapes
+  nprocesses: 3  # number of processes to be used in build_shapes
+  nchunks: 3  # number of data chuncks for build_shapes. If not specified or smaller than nprocesses, specified as nprocesses
   worldpop_method: standard    # "standard" pulls from web 1kmx1km raster, "api" pulls from API 100mx100m raster, false (not "false") no pop addition to shape which is useful when generating only cutout
   gdp_method: standard    # "standard" pulls from web 1x1km raster, false (not "false") no gdp addition to shape which useful when generating only cutout
-
+  contended_flag: set_by_country   # "set_by_country" assigns the contended areas to the countries according to the GADM database, "drop" drops these contended areas from the model
 clean_osm_data_options:  # osm = OpenStreetMap
   names_by_shapes: true  # Set the country name based on the extended country shapes
   threshold_voltage: 35000  # [V] assets below that voltage threshold will not be used (cable, line, generator, etc.)
@@ -114,16 +123,16 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT]
-    StorageUnit: []  # battery, H2
+    Generator: [solar, onwind]
+    StorageUnit: [lithium, lead acid] # battery, H2
     Store: [battery, H2]
     Link: []  # H2 pipeline
 
   powerplants_filter: (DateOut >= 2022 or DateOut != DateOut)
   custom_powerplants: false
 
-  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
+  conventional_carriers: [diesel]
+  renewable_carriers: [solar, onwind]
 
   estimate_renewable_capacities:
     stats: irena    # False, = greenfield expansion, 'irena' uses IRENA stats to add expansion limits
@@ -141,7 +150,7 @@ lines:
     220.: Al/St 240/40 2-bundle 220.0
     300.: Al/St 240/40 3-bundle 300.0
     380.: Al/St 240/40 4-bundle 380.0
-  dc_type: DC_custom_linetype
+  dc_type: HVDC XLPE 1000
   s_max_pu: 0.7
   s_nom_max: .inf
   length_factor: 1.25
@@ -278,8 +287,18 @@ renewable:
 # TODO: Needs to be adjusted for Africa
 costs:
   year: 2030
-  discountrate: 0.07 # From a Lion Hirth paper, also reflects average of Noothout et al 2016
+  version: v0.5.0
+  rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   USD2013_to_EUR2013: 0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
+  fill_values:
+    FOM: 0
+    VOM: 0
+    efficiency: 1
+    fuel: 0
+    investment: 0
+    lifetime: 25
+    CO2 intensity: 0
+    discount rate: 0.07
   marginal_cost: # EUR/MWh
     solar: 0.01
     onwind: 0.015
@@ -294,6 +313,7 @@ costs:
     co2: 0.
 
 
+  discountrate: 0.07
 monte_carlo:
   options:
     add_to_snakefile: false
@@ -412,3 +432,21 @@ plotting:
     H2: Hydrogen Storage
     lines: Transmission Lines
     ror: Run of River
+year: '2019'
+tech_modelling:
+  general_vre: [onwind, solar]
+  storage_techs: [lithium, lead acid]
+  conv_techs: [diesel]
+  load_carriers: [AC load]
+microgrids_list:
+  micA:
+    name: [nicename]
+  Location:
+    Centre:
+      lon: -11.6807
+      lat: 7.8697
+    Sides:
+      Deltalon: 0.3282
+      Deltalat: 0.1973
+load:
+  scaling_factor: 15000
