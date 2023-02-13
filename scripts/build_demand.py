@@ -51,7 +51,7 @@ import pandas as pd
 import rasterio
 import rasterio.mask
 import requests
-from _helpers import configure_logging, get_country, sets_path_to_root
+from _helpers_dist import configure_logging, get_country, sets_path_to_root
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)

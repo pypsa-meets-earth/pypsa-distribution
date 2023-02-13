@@ -37,7 +37,7 @@ import os
 
 import numpy as np
 import pypsa
-from _helpers import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, sets_path_to_root
 from pypsa.linopf import ilopf, network_lopf
 
 

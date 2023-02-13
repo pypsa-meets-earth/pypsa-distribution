@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-from _helpers import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, sets_path_to_root
 
 
 def main_template_rule(options):

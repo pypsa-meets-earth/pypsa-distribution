@@ -22,7 +22,7 @@ import os
 
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, sets_path_to_root
 
 
 def create_network():

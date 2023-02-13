@@ -44,7 +44,7 @@ import pandas as pd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
-from _helpers import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, sets_path_to_root
 
 idx = pd.IndexSlice
 
