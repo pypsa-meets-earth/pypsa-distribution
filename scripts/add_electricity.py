@@ -38,6 +38,7 @@ The rule :mod:`add_electricity` takes as input the network generated in the rule
 
 import os
 
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
