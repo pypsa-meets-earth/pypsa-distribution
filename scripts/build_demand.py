@@ -50,7 +50,7 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 import rasterio.mask
-import requests
+from rasterio.mask import mask
 from shapely.geometry import Polygon
 from _helpers import configure_logging, get_country, sets_path_to_root
 import json
@@ -104,39 +104,38 @@ def create_microgrid_shapes(microgrids_list, output_path):
         f.write(output_json)
 
 
-def create_masked_file(raster_path, geojson_path, output_path):
+def create_masked_file(raster_path, shapes_path, output_prefix):
+
     """
-    This function masks a raster with a shape defined in a geojson file.
-    The raster file is specified with the raster_path, the shape is specified with the geojson_path,
-    and the resulting masked raster is saved to the specified output_path.
+    Masks a raster with shapes contained in the GeoJSON file "resources/shapes/microgrid_shapes.geojson" and saves the resulting masked rasters.
+    
+    Parameters:
+    -----------
+    raster_path: str
+        Path to the raster file to mask.
+    shapes_path: str
+        Path to the GeoJSON file containing the shapes to use for masking the raster.
+    output_prefix: str
+        Prefix to use for the output file names. The output files will be named 
+        "{output_prefix}_{shape_index}.tif" 
     """
 
-    # Read the geojson file and convert it to a shapefile
-    gdf = gpd.read_file(geojson_path)
-    gdf.to_file("microgrid_shapes.shp")
+    # Load the GeoJSON file with the shapes to mask the raster
+    shapes = gpd.read_file(shapes_path)
 
-    # Open the shapefile and extract the shape geometry
-    with fiona.open("microgrid_shapes.shp", "r") as shapefile:
-        shapes = [feature["geometry"] for feature in shapefile]
+# Mask the raster with each shape and save each masked raster as a new file
+    for i, shape in shapes.iterrows():
+        with rasterio.open(raster_path) as src:
+            # Mask the raster with the current shape
+            masked, out_transform = rasterio.mask.mask(src, [shape.geometry], crop=True)
+            out_meta = src.meta.copy()
+            out_meta.update({"driver": "GTiff", "height": masked.shape[1], "width": masked.shape[2], "transform": out_transform})
 
-    # Open the raster and mask it using the shapes
-    with rasterio.open(raster_path) as src:
-        out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
-        out_meta = src.meta
+        out_raster_path = f"{output_prefix}_{i+1}.tif"
 
-    # update the metadata for the output raster
-    out_meta.update(
-        {
-            "driver": "GTiff",
-            "height": out_image.shape[1],
-            "width": out_image.shape[2],
-            "transform": out_transform,
-        }
-    )
-
-    # Save the masked raster to the specified output path
-    with rasterio.open(output_path, "w", **out_meta) as dest:
-        dest.write(out_image)
+        # Write the masked raster to a file
+        with rasterio.open(out_raster_path, "w", **out_meta) as dest:
+            dest.write(masked)   
 
 
 def estimate_microgrid_population(masked_file, p, sample_profile, output_file):
@@ -177,6 +176,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     
+    WorldPop=snakemake.input["WorldPop"]
     sample_profile = snakemake.input["sample_profile"]
 
     create_microgrid_shapes(
@@ -184,14 +184,14 @@ if __name__ == "__main__":
         snakemake.output["microgrid_shapes"],)
 
     create_masked_file(
-        "data/Worldpop/population_file.tif",
+        WorldPop, 
         snakemake.output["microgrid_shapes"],
         snakemake.output["country_masked"],
     )
 
-    estimate_microgrid_population(
-        snakemake.output["country_masked"],
-        snakemake.config["load"]["scaling_factor"],
-        sample_profile,
-        snakemake.output["electric_load"],
-    )
+    # estimate_microgrid_population(
+    #     snakemake.output["country_masked"],
+    #     snakemake.config["load"]["scaling_factor"],
+    #     sample_profile,
+    #     snakemake.output["electric_load"],
+    # )
