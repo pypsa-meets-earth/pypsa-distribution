@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Estimates the population and the electric load of the microgrid.
+Estimates the population and the electric load of each microgrid.
 
 Relevant Settings
 -----------------
 .. code:: yaml
 
     microgrids_list:
-        Location:
-            Centre:
-                lon:
-                lat:
-            Sides:
-                Deltalon:
-                Deltalat:
-        micA: 
-            name:
+        microgridX: 
+          lon_min:
+          lon_max: 
+          lat_min: 
+          lat_max: 
 
     load:
         scaling_factor:
@@ -26,17 +22,16 @@ Inputs
 
 Outputs
 -------
-- ``data/Worldpop/population_file.tif: a tif file of the population of the selected country,
-- ``resources/shapes/microgrid_shapes.geojson: a geojson file of the shape of the microgrid,
-- ``resources/file_dir/country_masked.tif,
-- ``resources/demand/microgrid_load.csv: the electric load of the microgid,
+- ``resources/shapes/microgrid_shapes.geojson: a geojson file of the shape of each microgrid,
+- ``resources/masked_files/masked_file_{i+1}.tif,
+- ``resources/demand/microgrid_load_{i+1}.csv: the electric load of the microgid,
 -------
 
 Description
 -----------
 
 The rule :mod:`build_demand` contains functions that are used to create a shape file of the microgrid, to mask a raster with the shape file and to estimate 
-the population. Then the population is multiplied for the per person load and the microgrid load is then obtained.
+the population. Then the population is multiplied for the per person load and the microgrid load is then obtained. The process applies to all the microgrids specified in config.yaml.
 
 """
 
@@ -47,7 +42,6 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 import rasterio.mask
-from rasterio.mask import mask
 from shapely.geometry import Polygon
 from _helpers import configure_logging, get_country, sets_path_to_root
 import json
