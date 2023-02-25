@@ -40,12 +40,9 @@ the population. Then the population is multiplied for the per person load and th
 
 """
 
-import glob
 import logging
 import os
-import shutil
 
-import fiona
 import geopandas as gpd
 import pandas as pd
 import rasterio
@@ -54,6 +51,7 @@ from rasterio.mask import mask
 from shapely.geometry import Polygon
 from _helpers import configure_logging, get_country, sets_path_to_root
 import json
+
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
@@ -138,17 +136,12 @@ def create_masked_file(raster_path, shapes_path, output_prefix):
             dest.write(masked)   
 
 
-def estimate_microgrid_population(masked_file, p, sample_profile, output_file):
+def estimate_microgrid_population(p, sample_profile, output_files):
+
     """
-    This function estimates the population of a microgrid based on a mask file and a sample profile of electricity demand.
-    The mask file is specified with the masked_file, the sample profile is specified with the sample_profile,
-    and the output file for the estimated microgrid population is specified with the output_file.
+    This function estimates the population of the microgrids based on mask files and a sample profile of electricity demand.
     """
 
-    with rasterio.open(masked_file) as fp:
-        data = fp.read(1)
-        pop_microgrid = data[data >= 0].sum()
-        
     # Read the sample profile of electricity demand
     total_load = pd.read_csv(sample_profile)
     total_load = total_load["0"]
@@ -157,14 +150,20 @@ def estimate_microgrid_population(masked_file, p, sample_profile, output_file):
     per_person_load = total_load * (1 / p)
     per_person_load = pd.DataFrame(per_person_load)
 
-    # Calculate the microgrid electric load
-    microgrid_load = per_person_load * pop_microgrid
+    number_microgrids = len(os.listdir("resources/masked_files"))
 
-    # Save the microgrid load to the specified output file
-    microgrid_load.to_csv(output_file, index=False)
-
-    return microgrid_load
-
+    for i in range(number_microgrids):
+        with rasterio.open(f"resources/masked_files/country_masked_{i+1}.tif") as fp:
+            data = fp.read(1)
+            pop_microgrid= data[data >= 0].sum()
+            
+            microgrid_load  = per_person_load * pop_microgrid
+            
+            # Save the microgrid load to the specified output file
+            output_file = os.path.join(output_files, f"microgrid_load_{i+1}.csv")
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            microgrid_load.to_csv(output_file, index=False)
+   
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -189,9 +188,8 @@ if __name__ == "__main__":
         snakemake.output["country_masked"],
     )
 
-    # estimate_microgrid_population(
-    #     snakemake.output["country_masked"],
-    #     snakemake.config["load"]["scaling_factor"],
-    #     sample_profile,
-    #     snakemake.output["electric_load"],
-    # )
+    estimate_microgrid_population(
+        snakemake.config["load"]["scaling_factor"],
+        sample_profile,
+        snakemake.output["electric_load"],
+    )

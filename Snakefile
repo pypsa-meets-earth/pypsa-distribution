@@ -55,7 +55,7 @@ rule build_demand:
     output:
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
         country_masked="resources/masked_files/country_masked",
-        #electric_load="resources/demand/microgrid_load.csv",
+        electric_load="resources/demand",
     log:
         "logs/build_demand.log",
     benchmark:
