@@ -67,49 +67,6 @@ rule build_demand:
         "scripts/build_demand.py"
 
 
-rule drawing:
-    input:
-        #sample_profile=PROFILE,
-        #gadm_shape="resources/shapes/gadm_shapes.geojson",
-    output:
-        microgrid_shape="resources/shapes/microgrid_shape.geojson",
-        country_masked="resources/file_dir/country_masked.tif",
-        electric_load="resources/demand/microgrid_load.csv",
-    log:
-        "logs/drawing.log",
-    benchmark:
-        "benchmarks/drawing"
-    threads: 1
-    resources:
-        mem_mb=3000,
-    script:
-        "scripts/drawing.py"
-
-
-rule build_shapes:
-    input:
-        # naturalearth='data/bundle/naturalearth/ne_10m_admin_0_countries.shp',
-        # eez='data/bundle/eez/World_EEZ_v8_2014.shp',
-        # nuts3='data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp',
-        # nuts3pop='data/bundle/nama_10r_3popgdp.tsv.gz',
-        # nuts3gdp='data/bundle/nama_10r_3gdp.tsv.gz',
-        #eez="data/eez/eez_v11.gpkg",
-    output:
-        #country_shapes="resources/shapes/country_shapes.geojson",
-        #offshore_shapes="resources/shapes/offshore_shapes.geojson",
-        #africa_shape="resources/shapes/africa_shape.geojson",
-        gadm_shapes="resources/shapes/gadm_shapes.geojson",
-    log:
-        "logs/build_shapes.log",
-    benchmark:
-        "benchmarks/build_shapes"
-    threads: 1
-    resources:
-        mem_mb=500,
-    script:
-        "scripts/build_shapes.py"
-
-
 rule create_network:
     output:
         "networks/base.nc",
