@@ -123,10 +123,3 @@ microgrids_list :
       lon_max: -8.3320
       lat_min: 8.800
       lat_max: 9.9905
-
-
-    
-
-
-load:
-  scaling_factor: 15000
