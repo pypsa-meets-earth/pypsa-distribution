@@ -100,30 +100,10 @@ tech_modelling:
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
-# microgrids_list:
-#   micA: #random place in Sierra Leone
-#     name: ["nicename"]
-#   Location:
-#     Centre:
-#       lon: -11.6807
-#       lat: 7.8697
-#     Sides:
-#       Deltalon: 0.3282
-#       Deltalat: 0.1973
 
-# number_microgrids: 2
-# microgrids_list:
-#   microgridA:   #random place in Sierra Leone
-#     lon_min: -11.6807    # minimum longitude of the rectangle
-#     lon_max: -11.3320   # max long
-#     lat_min: 7.8697    # minimum latitude of the rectangle
-#     lat_max: 7.9905   # max latitude 
+load:
+  scaling_factor: 15000
 
-#   microgridB:   #random place in Sierra Leone
-#     lon_min: -9.6807    # minimum longitude of the rectangle
-#     lon_max: -9.3320   # max long
-#     lat_min: 8.8697    # minimum latitude of the rectangle
-#     lat_max: 8.9905   # max latitude 
 
 microgrids_list : 
     microgridA: 
@@ -133,20 +113,14 @@ microgrids_list :
       lat_max: 7.9905
     
     microgridB: 
-      lon_min: -9.6807
-      lon_max: -9.3320
+      lon_min: -12.9856
+      lon_max: -12.3320
       lat_min: 8.8697
       lat_max: 8.9905
 
     microgridC: 
-      lon_min: -9.1235
-      lon_max: -8.3320
+      lon_min: -10.9999
+      lon_max: -10.8568
       lat_min: 8.800
       lat_max: 9.9905
 
-
-    
-
-
-load:
-  scaling_factor: 15000

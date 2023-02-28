@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Creates a base network with one bus
-
+Creates a base network with one bus for each microgrid indicated in the config.yaml file
 Relevant Settings
 -----------------
 .. code:: yaml
     snapshots:
-
+    microgrids_list
 Inputs
 ------
 Outputs
@@ -24,12 +23,11 @@ import pandas as pd
 import pypsa
 from _helpers import configure_logging, sets_path_to_root
 
-def create_networks(num_networks):
 
+def create_networks(num_networks):
     networks = []
 
     for i in range(num_networks):
-
         n = pypsa.Network()
 
         # Set the name of the network
@@ -48,7 +46,6 @@ def create_networks(num_networks):
 
 
 def add_bus_to_networks(networks):
-
     # Add one AC bus to each network
     for n in networks:
         n.madd("Bus", ["onebus"], carrier="AC", v_nom=0.220)
@@ -70,10 +67,7 @@ if __name__ == "__main__":
     add_bus_to_networks(networks)
 
     for i, n in enumerate(networks):
-        
-    # Export each network to a separate file, using the index i in the filename
+        # Export each network to a separate file, using the index i in the filename
         output_filename = f"networks/base_{i+1}.nc"
         n.export_to_netcdf(output_filename)
-
-
-    
+       
