@@ -70,4 +70,7 @@ if __name__ == "__main__":
         # Export each network to a separate file, using the index i in the filename
         output_filename = f"networks/base_{i+1}.nc"
         n.export_to_netcdf(output_filename)
+<<<<<<< HEAD
        
+=======
+>>>>>>> a31d75a364a358c4422ef030e34c86b983be079b

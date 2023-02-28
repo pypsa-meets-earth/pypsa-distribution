@@ -113,14 +113,20 @@ microgrids_list :
       lat_max: 7.9905
     
     microgridB: 
-      lon_min: -12.9856
-      lon_max: -12.3320
+      lon_min: -9.6807
+      lon_max: -9.3320
       lat_min: 8.8697
       lat_max: 8.9905
 
     microgridC: 
-      lon_min: -10.9999
-      lon_max: -10.8568
+      lon_min: -9.1235
+      lon_max: -8.3320
       lat_min: 8.800
       lat_max: 9.9905
 
+
+    
+
+
+load:
+  scaling_factor: 15000
