@@ -66,10 +66,11 @@ rule build_demand:
     script:
         "scripts/build_demand.py"
 
+
 rule create_network:
     output:
         # [f"networks/base_{i+1}.nc" for i in range(2)]
-        [f"networks/base_{i+1}.nc" for i in range(len(config['microgrids_list']))]
+        [f"networks/base_{i+1}.nc" for i in range(len(config["microgrids_list"]))],
     log:
         "logs/create_network.log",
     benchmark:
@@ -79,6 +80,7 @@ rule create_network:
         mem_mb=3000,
     script:
         "scripts/create_network.py"
+
 
 # rule create_network:
 #     output:
