@@ -220,7 +220,7 @@ if __name__ == "__main__":
     )
 
     worldpop_path = get_WorldPop_path(
-        snakemake.config["countries"],
+        snakemake.config["countries"][0],  # TODO: this needs fix to generalize the countries
         snakemake.config["year"],
         False,
     )
