@@ -29,7 +29,6 @@ if "config" not in globals() or not config:  # skip when used as sub-workflow
         )
         # copyfile("config.distribution.yaml", "config.yaml")
 
-    configfile: "config.pypsa-earth.yaml"
     configfile: "config.yaml"
 
 
