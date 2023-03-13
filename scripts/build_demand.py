@@ -83,7 +83,6 @@ def create_microgrid_shapes(microgrids_list, output_path):
         f.write(output_json)
 
 
-
 def create_masked_file(raster_path, shapes_path, output_prefix):
     """
     Masks a raster with shapes contained in the GeoJSON file "resources/shapes/microgrid_shapes.geojson" and saves the resulting masked rasters.
