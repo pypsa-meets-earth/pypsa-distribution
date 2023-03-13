@@ -1,38 +1,30 @@
 # -*- coding: utf-8 -*-
 """
 Estimates the population and the electric load of each microgrid.
-
 Relevant Settings
 -----------------
 .. code:: yaml
-
     microgrids_list:
         microgridX: 
           lon_min:
           lon_max: 
           lat_min: 
           lat_max: 
-
     load:
         scaling_factor:
-
 Inputs
 ------
 - ``data/sample_profile.csv``: a load profile, which will be scaled through a scaling_factor to obtain the per person load
-
 Outputs
 -------
 - ``resources/shapes/microgrid_shapes.geojson: a geojson file of the shape of each microgrid,
 - ``resources/masked_files/masked_file_{i+1}.tif,
 - ``resources/demand/microgrid_load_{i+1}.csv: the electric load of the microgid,
 -------
-
 Description
 -----------
-
 The rule :mod:`build_demand` contains functions that are used to create a shape file of the microgrid, to mask a raster with the shape file and to estimate 
 the population. Then the population is multiplied for the per person load and the microgrid load is then obtained. The process applies to all the microgrids specified in config.yaml.
-
 """
 
 import json
@@ -65,20 +57,14 @@ def create_microgrid_shapes(microgrids_list, output_path):
 
     for col in range(len(microgrids_list_df.columns)):
         values = microgrids_list_df.iloc[:, col]
+        
+        #Definition of the vertixes of the rectangle
+        Top_left = (values[0], values[3] )
+        Top_right = (values[1], values[3] )
+        Bottom_right = (values[1], values[2])
+        Bottom_left = (values[0], values[2])
 
-        x1 = values[1]  # lon_max
-        y1 = values[3]  # lat_max
-
-        x2 = values[0]  # lon_min
-        y2 = values[3]  # lat_max
-
-        x3 = values[0]  # lon_min
-        y3 = values[2]  # lat_min
-
-        x4 = values[1]  # lon_max
-        y4 = values[2]  # lat_min
-
-        microgrid_shape = Polygon([(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x1, y1)])
+        microgrid_shape = Polygon([Top_left, Top_right, Bottom_right, Bottom_left, Top_left])
 
         microgrid_name = f"microgrid_{col+1}"
         microgrid_shapes.append(microgrid_shape)
@@ -98,7 +84,6 @@ def create_microgrid_shapes(microgrids_list, output_path):
 def create_masked_file(raster_path, shapes_path, output_prefix):
     """
     Masks a raster with shapes contained in the GeoJSON file "resources/shapes/microgrid_shapes.geojson" and saves the resulting masked rasters.
-
     Parameters:
     -----------
     raster_path: str
@@ -136,6 +121,7 @@ def create_masked_file(raster_path, shapes_path, output_prefix):
 
 
 def estimate_microgrid_population(p, sample_profile, output_files):
+
     """
     This function estimates the population of the microgrids based on mask files and a sample profile of electricity demand.
     """
@@ -180,10 +166,11 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"],
         snakemake.output["microgrid_shapes"],
     )
-
+    #rectangle="rectangle.geojson"
     create_masked_file(
         WorldPop,
         snakemake.output["microgrid_shapes"],
+        #rectangle,
         snakemake.output["country_masked"],
     )
 
@@ -192,3 +179,4 @@ if __name__ == "__main__":
         sample_profile,
         snakemake.output["electric_load"],
     )
+    
