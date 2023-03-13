@@ -135,8 +135,8 @@ def get_WorldPop_path(
         os.getcwd(),
         "pypsa-earth",
         "data",
-        "WorldPop",
-        f"{three_digits_code.lower()}_ppp_{year}_constrained.tif",
+        "Worldpop",
+        f"{three_digits_code.lower()}_ppp_{year}_UNadj_constrained.tif",
     )  # Input filepath tif
 
 
