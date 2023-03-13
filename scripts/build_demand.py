@@ -149,15 +149,10 @@ def create_masked_file(raster_path, geojson_path, output_path):
 
     # Read the geojson file and convert it to a shapefile
     gdf = gpd.read_file(geojson_path)
-    gdf.to_file("microgrid_shape.shp")
-
-    # Open the shapefile and extract the shape geometry
-    with fiona.open("microgrid_shape.shp", "r") as shapefile:
-        shapes = [feature["geometry"] for feature in shapefile]
 
     # Open the raster and mask it using the shapes
     with rasterio.open(raster_path) as src:
-        out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
+        out_image, out_transform = rasterio.mask.mask(src, gdf.geometry, crop=True)
         out_meta = src.meta
 
     # update the metadata for the output raster
