@@ -166,11 +166,10 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"],
         snakemake.output["microgrid_shapes"],
     )
-    # rectangle="rectangle.geojson"
+
     create_masked_file(
         WorldPop,
         snakemake.output["microgrid_shapes"],
-        # rectangle,
         snakemake.output["country_masked"],
     )
 
