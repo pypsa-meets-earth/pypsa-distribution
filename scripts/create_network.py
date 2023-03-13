@@ -43,7 +43,6 @@ def create_network():
 
 
 def add_buses_to_network(n, number_microgrids):
-    
     # Add buses to the network based on the number of microgrids
     for i in range(number_microgrids):
         n.madd("Bus", [f"bus{i+1}"], carrier="AC", v_nom=0.220)

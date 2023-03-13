@@ -69,7 +69,7 @@ rule build_demand:
 
 rule create_network:
     output:
-        "networks/base.nc"
+        "networks/base.nc",
     log:
         "logs/create_network.log",
     benchmark:
