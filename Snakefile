@@ -69,8 +69,7 @@ rule build_demand:
 
 rule create_network:
     output:
-        # [f"networks/base_{i+1}.nc" for i in range(2)]
-        [f"networks/base_{i+1}.nc" for i in range(len(config["microgrids_list"]))],
+        "networks/base.nc"
     log:
         "logs/create_network.log",
     benchmark:
@@ -80,57 +79,6 @@ rule create_network:
         mem_mb=3000,
     script:
         "scripts/create_network.py"
-
-
-# rule create_network:
-#     output:
-#         #"networks/base.nc",
-#         #[f"networks/base_{i}.nc" for i in range(3)],
-#         [f"networks/base_{i+1}.nc" for i in range(0,2)],
-
-#     log:
-#         "logs/create_network.log",
-#     benchmark:
-#         "benchmarks/create_network"
-#     threads: 1
-#     resources:
-#         mem_mb=3000,
-#     script:
-#         "scripts/create_network.py"
-
-
-# rule build_renewable_profiles:
-#     input:
-#         base_network="networks/base.nc",
-#         natura=pypsaearth("resources/natura.tiff"),
-#         copernicus=pypsaearth(
-#             "data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"
-#         ),
-#         gebco=pypsaearth("data/gebco/GEBCO_2021_TID.nc"),
-#         country_shapes="resources/shapes/country_shapes.geojson",
-#         offshore_shapes="resources/shapes/offshore_shapes.geojson",
-#         hydro_capacities=pypsaearth("data/hydro_capacities.csv"),
-#         eia_hydro_generation=pypsaearth("data/eia_hydro_annual_generation.csv"),
-#         powerplants="resources/powerplants.csv",
-#         regions=lambda w: (
-#             "resources/bus_regions/regions_onshore.geojson"
-#             if w.technology in ("onwind", "solar", "hydro")
-#             else "resources/bus_regions/regions_offshore.geojson"
-#         ),
-#         cutout=lambda w: "cutouts/"
-#         + config["renewable"][w.technology]["cutout"]
-#         + ".nc",
-#     output:
-#         profile="resources/renewable_profiles/profile_{technology}.nc",
-#     log:
-#         "logs/build_renewable_profile_{technology}.log",
-#     benchmark:
-#         "benchmarks/build_renewable_profiles_{technology}"
-#     threads: ATLITE_NPROCESSES
-#     resources:
-#         mem_mb=ATLITE_NPROCESSES * 5000,
-#     script:
-#         pypsaearth("scripts/build_renewable_profiles.py")
 
 
 rule add_electricity:

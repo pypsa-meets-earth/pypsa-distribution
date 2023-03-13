@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Creates a base network with one bus
+Creates a base network with buses
 
 Relevant Settings
 -----------------
 .. code:: yaml
     snapshots:
+    microgrids_list
 
 Inputs
 ------
@@ -15,7 +16,7 @@ Outputs
    
 Description
 -----------
-This script creates a PyPSA network with one AC bus.
+This script creates a PyPSA network with as much AC buses as microgrids specified in the file config.yaml
 """
 
 import os
