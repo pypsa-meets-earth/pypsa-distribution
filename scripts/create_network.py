@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Creates a base network with one bus for each microgrid indicated in the config.yaml file
+Creates a base network with one bus
+
 Relevant Settings
 -----------------
 .. code:: yaml
     snapshots:
-    microgrids_list
+
 Inputs
 ------
 Outputs
 -------
-- ``networks/base_{i}.nc``
+- ``networks/base.nc``
    
 Description
 -----------
-This script creates a PyPSA network with one AC bus for each of the microgrids contained in config.yaml
+This script creates a PyPSA network with one AC bus.
 """
 
 import os
@@ -24,31 +25,27 @@ import pypsa
 from _helpers import configure_logging, sets_path_to_root
 
 
-def create_networks(num_networks):
-    networks = []
+def create_network():
+    n = pypsa.Network()
 
-    for i in range(num_networks):
-        n = pypsa.Network()
+    # Set the name of the network
+    n.name = "PyPSA-Distribution"
 
-        # Set the name of the network
-        n.name = f"PyPSA-Distribution-{i+1}"
+    # Set the snapshots for the network
+    n.set_snapshots(pd.date_range(freq="h", **snakemake.config["snapshots"]))
 
-        # Set the snapshots for the network
-        n.set_snapshots(pd.date_range(freq="h", **snakemake.config["snapshots"]))
+    # Normalize the snapshot weightings
+    n.snapshot_weightings[:] *= 8760.0 / n.snapshot_weightings.sum()
 
-        # Normalize the snapshot weightings
-        n.snapshot_weightings[:] *= 8760.0 / n.snapshot_weightings.sum()
-
-        networks.append(n)
-
-    # Return the list of created networks
-    return networks
+    # Return the created network
+    return n
 
 
-def add_bus_to_networks(networks):
-    # Add one AC bus to each network
-    for n in networks:
-        n.madd("Bus", ["onebus"], carrier="AC", v_nom=0.220)
+def add_buses_to_network(n, number_microgrids):
+    
+    # Add buses to the network based on the number of microgrids
+    for i in range(number_microgrids):
+        n.madd("Bus", [f"bus{i+1}"], carrier="AC", v_nom=0.220)
 
 
 if __name__ == "__main__":
@@ -62,11 +59,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     number_microgrids = len(snakemake.config["microgrids_list"])
-    networks = create_networks(number_microgrids)
 
-    add_bus_to_networks(networks)
-
-    for i, n in enumerate(networks):
-        # Export each network to a separate file, using the index i in the filename
-        output_filename = f"networks/base_{i+1}.nc"
-        n.export_to_netcdf(output_filename)
+    n = create_network()
+    add_buses_to_network(n, number_microgrids)
+    print(n)
+    n.export_to_netcdf(snakemake.output[0])
