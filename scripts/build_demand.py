@@ -101,13 +101,10 @@ def create_microgrid_shape(xcenter, ycenter, DeltaX, DeltaY, name, output_path):
     gdf.to_file(output_path)
 
 
-def download_WorldPop_standard(
-    output_path,
+def get_WorldPop_path(
     country_code,
     year,
-    update,
     out_logging,
-    size_min,
 ):
     """
     Download tiff file for each country code using the standard method from worldpop datastore with 1kmx1km resolution.
@@ -119,79 +116,24 @@ def download_WorldPop_standard(
         Files downloaded from https://data.worldpop.org/ datasets WorldPop UN adjusted
     year : int
         Year of the data to download
-    update : bool
-        Update = true, forces re-download of files
-    size_min : int
-        Minimum size of each file to download
     Returns
     -------
     WorldPop_inputfile : str
         Path of the file
-    WorldPop_filename : str
-        Name of the file
     """
 
     if out_logging:
         _logger.info("Download WorldPop datasets")
 
-    three_digits_code = get_country("alpha_3", alpha_2="SL")
+    three_digits_code = get_country("alpha_3", alpha_2=country_code)
 
-    def convert_to_lowercase(string):
-        return string.lower()
-
-    three_digits_code_lower = convert_to_lowercase(three_digits_code)
-
-    WorldPop_filename = f"{three_digits_code_lower}_ppp_{year}_constrained.tif"
-
-    if {year} == "2019":
-        WorldPop_urls = [
-            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/{three_digits_code}/{WorldPop_filename}"
-        ]
-
-    # if {year} == "2020":
-
-    #     WorldPop_urls = [
-    #            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/BSGM/{WorldPop_filename}"
-    #     ]
-
-    WorldPop_inputfile = os.path.join(
+    return os.path.join(
         os.getcwd(),
+        "pypsa-earth",
         "data",
         "WorldPop",
-        f"{three_digits_code_lower}_ppp_{year}_constrained.tif",
+        f"{three_digits_code.lower()}_ppp_{year}_constrained.tif",
     )  # Input filepath tif
-
-    old_file_paths = glob.glob(os.path.join("data/Worldpop", "*_ppp_*_constrained.tif"))
-
-    for old_file_path in old_file_paths:
-        shutil.move(old_file_path, output_path)
-
-    # os.remove(WorldPop_inputfile)
-
-    if not os.path.exists(WorldPop_inputfile) or update is True:
-        if out_logging:
-            _logger.warning(
-                f" {WorldPop_filename} does not exist, downloading to {WorldPop_inputfile}"
-            )
-        #  create data/osm directory
-        os.makedirs(os.path.dirname(WorldPop_inputfile), exist_ok=True)
-
-        loaded = False
-
-        WorldPop_urls = [
-            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/{three_digits_code}/{WorldPop_filename}",
-        ]
-        # f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/{year}/{three_digits_code}/{WorldPop_filename}"
-
-        for WorldPop_url in WorldPop_urls:
-            with requests.get(WorldPop_url, stream=True) as r:
-                with open(WorldPop_inputfile, "wb") as f:
-                    if float(r.headers["Content-length"]) > size_min:
-                        shutil.copyfileobj(r.raw, f)
-                        loaded = True
-                        break
-        if not loaded:
-            _logger.error(f" Impossible to download {WorldPop_filename}")
 
 
 def create_masked_file(raster_path, geojson_path, output_path):
@@ -259,7 +201,7 @@ def estimate_microgrid_population(masked_file, p, sample_profile, output_file):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from _helpers_dist import mock_snakemake
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake("build_demand")
@@ -278,17 +220,14 @@ if __name__ == "__main__":
         snakemake.output["microgrid_shape"],
     )
 
-    download_WorldPop_standard(
-        snakemake.output["Worldpop_data"],
+    worldpop_path = get_WorldPop_path(
         snakemake.config["countries"],
         snakemake.config["year"],
         False,
-        False,
-        300,
     )
 
     create_masked_file(
-        "data/Worldpop/population_file.tif",
+        worldpop_path,
         snakemake.output["microgrid_shape"],
         snakemake.output["country_masked"],
     )

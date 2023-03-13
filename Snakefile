@@ -57,8 +57,9 @@ subworkflow pypsaearth:
 rule build_demand:
     input:
         sample_profile=PROFILE,
+        country_shapes=pypsaearth("resources/shapes/country_shapes.geojson"),
+        # WorldPop folder is downloaded using pypsa-earth and loaded here
     output:
-        Worldpop_data=f"data/Worldpop/population_file.tif",
         microgrid_shape="resources/shapes/microgrid_shape.geojson",
         country_masked="resources/file_dir/country_masked.tif",
         electric_load="resources/demand/microgrid_load.csv",
@@ -96,8 +97,8 @@ rule build_renewable_profiles:
         gebco=pypsaearth("data/gebco/GEBCO_2021_TID.nc"),
         country_shapes=pypsaearth("resources/shapes/country_shapes.geojson"),
         offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
-        hydro_capacities=pypsaearth("data/hydro_capacities.csv"),
-        eia_hydro_generation=pypsaearth("data/eia_hydro_annual_generation.csv"),
+        hydro_capacities="pypsa-earth/data/hydro_capacities.csv",
+        eia_hydro_generation="pypsa-earth/data/eia_hydro_annual_generation.csv",
         powerplants="resources/powerplants.csv",
         regions=lambda w: (
             pypsaearth("resources/bus_regions/regions_onshore.geojson")
