@@ -57,14 +57,16 @@ def create_microgrid_shapes(microgrids_list, output_path):
 
     for col in range(len(microgrids_list_df.columns)):
         values = microgrids_list_df.iloc[:, col]
-        
-        #Definition of the vertixes of the rectangle
-        Top_left = (values[0], values[3] )
-        Top_right = (values[1], values[3] )
+
+        # Definition of the vertixes of the rectangle
+        Top_left = (values[0], values[3])
+        Top_right = (values[1], values[3])
         Bottom_right = (values[1], values[2])
         Bottom_left = (values[0], values[2])
 
-        microgrid_shape = Polygon([Top_left, Top_right, Bottom_right, Bottom_left, Top_left])
+        microgrid_shape = Polygon(
+            [Top_left, Top_right, Bottom_right, Bottom_left, Top_left]
+        )
 
         microgrid_name = f"microgrid_{col+1}"
         microgrid_shapes.append(microgrid_shape)
@@ -122,7 +124,6 @@ def create_masked_file(raster_path, shapes_path, output_prefix):
 
 
 def estimate_microgrid_population(p, sample_profile, output_files):
-
     """
     This function estimates the population of the microgrids based on mask files and a sample profile of electricity demand.
     """
@@ -165,11 +166,11 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"],
         snakemake.output["microgrid_shapes"],
     )
-    #rectangle="rectangle.geojson"
+    # rectangle="rectangle.geojson"
     create_masked_file(
         WorldPop,
         snakemake.output["microgrid_shapes"],
-        #rectangle,
+        # rectangle,
         snakemake.output["country_masked"],
     )
 
@@ -178,4 +179,3 @@ if __name__ == "__main__":
         sample_profile,
         snakemake.output["electric_load"],
     )
-    
