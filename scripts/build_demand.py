@@ -81,6 +81,7 @@ def create_microgrid_shapes(microgrids_list, output_path):
         f.write(output_json)
 
 
+
 def create_masked_file(raster_path, shapes_path, output_prefix):
     """
     Masks a raster with shapes contained in the GeoJSON file "resources/shapes/microgrid_shapes.geojson" and saves the resulting masked rasters.
@@ -126,13 +127,11 @@ def estimate_microgrid_population(p, sample_profile, output_files):
     This function estimates the population of the microgrids based on mask files and a sample profile of electricity demand.
     """
 
-    # Read the sample profile of electricity demand
-    total_load = pd.read_csv(sample_profile)
-    total_load = total_load["0"]
+    # Read the sample profile of electricity demand and extract the column corrisponding to the electric load
+    total_load = pd.read_csv(sample_profile)["0"]
 
     # Calculate the per-person electricity demand and convert it as a pandas dataframe
-    per_person_load = total_load * (1 / p)
-    per_person_load = pd.DataFrame(per_person_load)
+    per_person_load = pd.DataFrame(total_load * (1 / p))
 
     number_microgrids = len(os.listdir("resources/masked_files"))
 
