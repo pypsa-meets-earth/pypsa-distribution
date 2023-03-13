@@ -51,7 +51,11 @@ import pandas as pd
 import rasterio
 import rasterio.mask
 import requests
-from _helpers_dist import configure_logging, get_country, sets_path_to_root
+from _helpers_dist import (
+    configure_logging,
+    sets_path_to_root,
+    two_2_three_digits_country,
+)
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -125,7 +129,7 @@ def get_WorldPop_path(
     if out_logging:
         _logger.info("Download WorldPop datasets")
 
-    three_digits_code = get_country("alpha_3", alpha_2=country_code)
+    three_digits_code = two_2_three_digits_country(country_code)
 
     return os.path.join(
         os.getcwd(),

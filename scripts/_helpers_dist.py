@@ -5,9 +5,12 @@
 import os
 from pathlib import Path
 
+import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 
 
 def sets_path_to_root(root_directory_name):
@@ -412,78 +415,6 @@ def mock_snakemake(rulename, **wildcards):
     return snakemake
 
 
-def get_country(target, **keys):
-    """
-    Function to convert country codes using pycountry
-
-    Parameters
-    ----------
-    target: str
-        Desired type of country code.
-        Examples:
-            - 'alpha_3' for 3-digit
-            - 'alpha_2' for 2-digit
-            - 'name' for full country name
-
-    keys: dict
-        Specification of the country name and reference system.
-        Examples:
-            - alpha_3="ZAF" for 3-digit
-            - alpha_2="ZA" for 2-digit
-            - name="South Africa" for full country name
-
-    Returns
-    -------
-    country code as requested in keys or np.nan, when country code is not recognized
-
-    Example of usage
-    -------
-    - Convert 2-digit code to 3-digit codes: get_country('alpha_3', alpha_2="ZA")
-    - Convert 3-digit code to 2-digit codes: get_country('alpha_2', alpha_3="ZAF")
-    - Convert 2-digit code to full name: get_country('name', alpha_2="ZA")
-
-    """
-    import pycountry as pyc
-
-    assert len(keys) == 1
-    try:
-        return getattr(pyc.countries.get(**keys), target)
-    except (KeyError, AttributeError):
-        return np.nan
-
-
-def getContinent(code):
-    """
-    Returns continent names that contains list of iso-code countries
-
-    Parameters
-    ----------
-    code : str
-        List of two letter country ISO codes
-
-    Returns
-    -------
-    continent_list : str
-        List of continent names
-
-    Example
-    -------
-    from helpers import getContinent
-    code = ["DE", "GB", "NG", "ZA"]
-    getContinent(code)
-    >>> ["africa", "europe"]
-    """
-    from config_osm_data import world_iso
-
-    continent_list = []
-    code_set = set(code)
-    for continent in world_iso:
-        single_continent_set = set(world_iso[continent])
-        if code_set.intersection(single_continent_set):
-            continent_list.append(continent)
-    return continent_list
-
-
 def two_2_three_digits_country(two_code_country):
     """
     Convert 2-digit to 3-digit country code:
@@ -498,12 +429,7 @@ def two_2_three_digits_country(two_code_country):
     three_code_country: str
         3-digit country name
     """
-    if two_code_country == "SN-GM":
-        return f"{two_2_three_digits_country('SN')}-{two_2_three_digits_country('GM')}"
-    if two_code_country == "XK":  # fix for kosovo
-        return "XKO"
-
-    three_code_country = get_country("alpha_3", alpha_2=two_code_country)
+    three_code_country = coco.convert(two_code_country, to="ISO3")
     return three_code_country
 
 
@@ -524,7 +450,7 @@ def three_2_two_digits_country(three_code_country):
     if three_code_country == "SEN-GMB":
         return f"{three_2_two_digits_country('SN')}-{three_2_two_digits_country('GM')}"
 
-    two_code_country = get_country("alpha_2", alpha_3=three_code_country)
+    two_code_country = coco.convert(three_code_country, to="ISO2")
     return two_code_country
 
 
@@ -548,12 +474,7 @@ def two_digits_2_name_country(two_code_country, nocomma=False, remove_start_word
     full_name: str
         full country name
     """
-    if two_code_country == "SN-GM":
-        return f"{two_digits_2_name_country('SN')}-{two_digits_2_name_country('GM')}"
-    if two_code_country == "XK":
-        return "Kosovo"
-
-    full_name = get_country("name", alpha_2=two_code_country)
+    full_name = coco.convert(two_code_country, to="name_short")
 
     if nocomma:
         # separate list by delim
@@ -590,13 +511,7 @@ def country_name_2_two_digits(country_name):
     two_code_country: str
         2-digit country name
     """
-    if (
-        country_name
-        == f"{two_digits_2_name_country('SN')}-{two_digits_2_name_country('GM')}"
-    ):
-        return "SN-GM"
-
-    full_name = get_country("alpha_2", name=country_name)
+    full_name = coco.convert(country_name, to="ISO2")
     return full_name
 
 
@@ -677,3 +592,67 @@ def merge_yamls(path_base, path_changes, path_output):
             yaml.dump(test_config, path_output)
 
             return test_config
+
+
+def get_country_from_coords(lat, lon, min_delay_seconds=1, timeout=10):
+    """
+    Function to get the country code of a location by its gps coordinates
+
+    Parameters
+    ----------
+    lat : float
+        Latitude
+    lon : float
+        Longitude
+    min_delay_seconds : float (default 1s)
+        Minumum delay between requests in seconds
+    timeout : float (default 10s)
+        Timeout of requests in seconds
+    """
+    geolocator = Nominatim(timeout=timeout)
+    geocode = RateLimiter(
+        geolocator.reverse,
+        min_delay_seconds=min_delay_seconds,
+    )
+
+    location = geocode(f"{lat}, {lon}", language="en")
+
+    # extract country code
+    address = location.raw["address"]
+    country_code = address["country_code"]
+
+    return country_name_2_two_digits(country_code)
+
+
+def get_country_list_from_microgrids(microgrid_config, min_delay_seconds=1, timeout=10):
+    """
+    Function to get the country list from the configuration
+
+    Parameters
+    ----------
+    microgrid_config : dict
+        Dictionary of the microgrid list
+    min_delay_seconds : float (default 1s)
+        Minumum delay between requests in seconds
+    timeout : float (default 10s)
+        Timeout of requests in seconds
+
+    Output
+    ------
+    country_list : list
+        List of countries corresponding
+    """
+    country_list = []
+    for mg_name, mg_val in microgrid_config.items():
+        lon = mg_val["lon_min"] / 2 + mg_val["lon_max"] / 2
+        lat = mg_val["lat_min"] / 2 + mg_val["lat_max"] / 2
+
+        c_code = get_country_from_coords(
+            lat,
+            lon,
+            min_delay_seconds=min_delay_seconds,
+            timeout=timeout,
+        )
+        if c_code not in country_list:
+            country_list.append(c_code)
+    return country_list
