@@ -87,15 +87,24 @@ tech_modelling:
   load_carriers: ["AC load"]
 
 microgrids_list:
-  micA: #random place in Sierra Leone
-    name: ["nicename"]
-  Location:
-    Centre:
-      lon: 9.0777
-      lat: 8.6774
-    Sides:
-      Deltalon: 0.1
-      Deltalat: 0.1
+  microgridA:
+    lon_min: -11.6807
+    lon_max: -11.3320
+    lat_min: 7.8697
+    lat_max: 7.9905
+
+  microgridB:
+    lon_min: -9.6807
+    lon_max: -9.3320
+    lat_min: 8.8697
+    lat_max: 8.9905
+
+  microgridC:
+    lon_min: -9.1235
+    lon_max: -8.3320
+    lat_min: 8.800
+    lat_max: 9.9905
+
 
 
 load:

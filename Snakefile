@@ -59,8 +59,8 @@ rule build_demand:
         country_shapes=pypsaearth("resources/shapes/country_shapes.geojson"),
         # WorldPop folder is downloaded using pypsa-earth and loaded here
     output:
-        microgrid_shape="resources/shapes/microgrid_shape.geojson",
-        country_masked="resources/file_dir/country_masked.tif",
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+        country_masked="resources/masked_files/country_masked",
         electric_load="resources/demand/microgrid_load.csv",
     log:
         "logs/build_demand.log",
