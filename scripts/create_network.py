@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Creates a base network with one bus
+Creates a base network with buses
 
 Relevant Settings
 -----------------
 .. code:: yaml
     snapshots:
+    microgrids_list
 
 Inputs
 ------
@@ -15,14 +16,14 @@ Outputs
    
 Description
 -----------
-This script creates a PyPSA network with one AC bus.
+This script creates a PyPSA network with as much AC buses as microgrids specified in the file config.yaml
 """
 
 import os
 
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, sets_path_to_root
 
 
 def create_network():
@@ -41,14 +42,15 @@ def create_network():
     return n
 
 
-def add_bus_to_network(n):
-    # Add one AC bus to the network
-    n.madd("Bus", ["onebus"], carrier="AC", v_nom=0.220)
+def add_buses_to_network(n, number_microgrids):
+    # Add buses to the network based on the number of microgrids
+    for i in range(number_microgrids):
+        n.madd("Bus", [f"bus{i+1}"], carrier="AC", v_nom=0.220)
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from _helpers_dist import mock_snakemake
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake("create_network")
@@ -56,6 +58,9 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
+    number_microgrids = len(snakemake.config["microgrids_list"])
+
     n = create_network()
-    add_bus_to_network(n)
+    add_buses_to_network(n, number_microgrids)
+    print(n)
     n.export_to_netcdf(snakemake.output[0])

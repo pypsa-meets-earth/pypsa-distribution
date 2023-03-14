@@ -37,7 +37,7 @@ import os
 
 import numpy as np
 import pypsa
-from _helpers import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, sets_path_to_root
 from pypsa.linopf import ilopf, network_lopf
 
 
@@ -98,7 +98,7 @@ def solve_network(n, solver_name):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from _helpers_dist import mock_snakemake
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         snakemake = mock_snakemake("solve_network")
