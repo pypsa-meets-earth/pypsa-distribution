@@ -17,7 +17,7 @@ scenario:
   opts: [Co2L-3H] #Co2L adds an overall absolute carbon-dioxide emissions limi
                   #3H resamples the time-resolution by averaging over every 3 snapshots
 
-countries: ["NG"]
+countries: ["SL"]
 # Can be replaced by country ["NG", "BJ"] or user specific region, more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
 year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
@@ -86,25 +86,25 @@ tech_modelling:
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
+
 microgrids_list:
   microgridA:
-    lon_min: -11.6807
-    lon_max: -11.3320
+    lon_max: -11.6807
+    lon_min: -11.3320
     lat_min: 7.8697
     lat_max: 7.9905
 
   microgridB:
-    lon_min: -9.6807
-    lon_max: -9.3320
+    lon_min: -12.8862
+    lon_max: -12.7320
     lat_min: 8.8697
     lat_max: 8.9905
 
   microgridC:
-    lon_min: -9.1235
-    lon_max: -8.3320
-    lat_min: 8.800
-    lat_max: 9.9905
-
+    lon_min: -13.038116
+    lon_max: -12.903338
+    lat_min: 8.88930
+    lat_max: 8.994747
 
 load:
   scaling_factor: 15000
