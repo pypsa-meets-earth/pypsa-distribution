@@ -46,7 +46,6 @@ from shapely.geometry import Polygon
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
-
 def create_microgrid_shapes(microgrids_list, output_path):
     """
     This function creates a rectangular shape of the microgrid and saves it as a .geojson file.
@@ -76,6 +75,16 @@ def create_microgrid_shapes(microgrids_list, output_path):
         microgrid_name = f"microgrid_{col+1}"
         microgrid_shapes.append(microgrid_shape)
         microgrid_names.append(microgrid_name)
+
+    microgrid_gdf = gpd.GeoDataFrame(
+        {"name": microgrid_names, "geometry": microgrid_shapes}
+    )
+
+    output_dict = json.loads(microgrid_gdf.to_json())
+    output_json = json.dumps(output_dict, indent=4)
+
+    with open(output_path, "w") as f:
+        f.write(output_json)
 
 
 def get_WorldPop_path(
@@ -108,10 +117,10 @@ def get_WorldPop_path(
         os.getcwd(),
         "pypsa-earth",
         "data",
-        "Worldpop",
+        "WorldPop",
         f"{three_digits_code.lower()}_ppp_{year}_UNadj_constrained.tif",
     )  # Input filepath tif
-
+    
 
 def create_masked_file(raster_path, shapes_path, output_prefix):
     """
@@ -175,7 +184,7 @@ def estimate_microgrid_population(p, sample_profile, output_file):
     # Save the microgrid load to the specified output file
     microgrid_load.to_csv(output_file, index=False)
 
-
+    
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers_dist import mock_snakemake
@@ -199,6 +208,7 @@ if __name__ == "__main__":
         snakemake.config["year"],
         False,
     )
+    
 
     create_microgrid_shapes(
         snakemake.config["microgrids_list"],
