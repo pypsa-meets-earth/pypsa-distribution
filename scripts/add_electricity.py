@@ -269,7 +269,7 @@ def attach_conventional_generators(
     # Get the index of the buses in the power network
     buses_i = n.buses.index
 
-    # Add the conventional generators to the power network
+    # Add conventional generators to each bus in the power network (one for microgrid)
 
     n.madd(
         "Generator",
@@ -302,7 +302,7 @@ def attach_conventional_generators(
                     n.generators.loc[idx].bus.map(bus_values).dropna()
                 )
             else:
-                # Single value affecting all generators of technology k indiscriminantely of country
+                # Single value affecting all generators of technology k indiscriminately of country
                 n.generators.loc[idx, attr] = values
 
 
