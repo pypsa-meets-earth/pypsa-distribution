@@ -343,20 +343,24 @@ def attach_storageunits(n, costs, technologies, extendable_carriers):
         )
 
 
-def attach_load(n, load_file, tech_modelling):
+def attach_load(n, load_file, microgrids_list, tech_modelling):
     load = pd.read_csv(load_file).set_index([n.snapshots])
 
-    # Number of loads
-    n_load = 1
+    # Number of microgrids
+    num_microgrids=len(microgrids_list)
 
     # Create an index for the loads
-    index = pd.Index(list(range(n_load)))
+    index = pd.Index(list(range(num_microgrids)))
 
     # Get the index of the buses in the power network
     buses_i = n.buses.index
 
     # Add the load to the power network
-    n.madd("Load", index, bus=buses_i, carrier="AC", p_set=load)
+    n.madd("Load", 
+            index, 
+            bus=buses_i, 
+            carrier="AC", 
+            p_set=load)
 
 
 if __name__ == "__main__":
@@ -412,6 +416,6 @@ if __name__ == "__main__":
         snakemake.config["electricity"]["extendable_carriers"],
     )
 
-    attach_load(n, load_file, snakemake.config["tech_modelling"]["load_carriers"])
+    attach_load(n, load_file, snakemake.config["microgrids_list"], snakemake.config["tech_modelling"]["load_carriers"])
 
     n.export_to_netcdf(snakemake.output[0])
