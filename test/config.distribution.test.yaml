@@ -95,7 +95,7 @@ microgrids_list:  #MICROGRIDS IN NIGERIA
     lon_min: 5.3526
     lat_min: 12.2356
     lat_max: 12.0012
-    
+
   microgridB:
     lon_min: 8.6862
     lon_max: 8.7320
