@@ -184,7 +184,55 @@ def estimate_microgrid_population(p, sample_profile, output_file):
     # Save the microgrid load to the specified output file
     microgrid_load.to_csv(output_file, index=False)
 
-    
+
+def create_bus_regions(microgrids_list, output_path):
+    """
+    This function creates a geojson shape of the microgrid. 
+    The shape is defined by the coordinates of the angles of the rectangle and by another point, 
+    individuated by x and y which are the coordinates of the center of the microgrid.
+    The resulting file is saved to the specified output_path.
+    """
+
+    microgrids_list = microgrids_list
+    microgrids_list_df = pd.DataFrame(microgrids_list)
+
+    microgrid_shapes = []
+    microgrid_names = []
+    microgrid_x = []
+    microgrid_y = []
+
+    for col in range(len(microgrids_list_df.columns)):
+        values = microgrids_list_df.iloc[:, col]
+
+        # Definition of the vertices of the rectangle
+        Top_left = (values[0], values[3])
+        Top_right = (values[1], values[3])
+        Bottom_right = (values[1], values[2])
+        Bottom_left = (values[0], values[2])
+
+        microgrid_shape = Polygon(
+            [Top_left, Top_right, Bottom_right, Bottom_left, Top_left]
+        )
+
+        microgrid_name = f"microgrid_{col+1}"
+        microgrid_shapes.append(microgrid_shape)
+        microgrid_names.append(microgrid_name)
+        
+        x = (values[0] + values[1])*0.5
+        y = (values[2] + values[3])*0.5
+        microgrid_x.append(x)
+        microgrid_y.append(y)
+
+    microgrid_gdf = gpd.GeoDataFrame(
+        {"name": microgrid_names, "x": microgrid_x, "y": microgrid_y, "geometry": microgrid_shapes}
+    )
+
+    output_dict = json.loads(microgrid_gdf.to_json())
+    output_json = json.dumps(output_dict, indent=4)
+
+    with open(output_path, "w") as f:
+        f.write(output_json)
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers_dist import mock_snakemake
@@ -225,4 +273,9 @@ if __name__ == "__main__":
         snakemake.config["load"]["scaling_factor"],
         sample_profile,
         snakemake.output["electric_load"],
+    )
+
+    create_bus_regions(
+        snakemake.config["microgrids_list"],
+        snakemake.output["microgrid_bus_shapes"],
     )
