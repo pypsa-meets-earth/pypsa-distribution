@@ -344,13 +344,12 @@ def attach_storageunits(n, costs, technologies, extendable_carriers):
 
 
 def attach_load(n, load_file, microgrids_list, tech_modelling):
+
+    #Upload the load csv file
     load = pd.read_csv(load_file).set_index([n.snapshots])
 
-    # Number of microgrids
-    num_microgrids=len(microgrids_list)
-
     # Create an index for the loads
-    index = pd.Index(list(range(num_microgrids)))
+    index=load.columns
 
     # Get the index of the buses in the power network
     buses_i = n.buses.index
