@@ -56,7 +56,6 @@ subworkflow pypsaearth:
 rule build_demand:
     input:
         sample_profile=PROFILE,
-        country_shapes=pypsaearth("resources/shapes/country_shapes.geojson"),
         # WorldPop folder is downloaded using pypsa-earth and loaded here
     output:
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
