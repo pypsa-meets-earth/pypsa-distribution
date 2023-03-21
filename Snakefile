@@ -60,6 +60,7 @@ rule build_demand:
         # WorldPop folder is downloaded using pypsa-earth and loaded here
     output:
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+        microgrid_bus_shapes="resources/shapes/microgrid_bus_shapes.geojson",
         country_masked="resources/masked_files/country_masked",
         electric_load="resources/demand/microgrid_load.csv",
     log:
@@ -99,11 +100,7 @@ rule build_renewable_profiles:
         hydro_capacities="pypsa-earth/data/hydro_capacities.csv",
         eia_hydro_generation="pypsa-earth/data/eia_hydro_annual_generation.csv",
         powerplants="resources/powerplants.csv",
-        regions=lambda w: (
-            pypsaearth("resources/bus_regions/regions_onshore.geojson")
-            if w.technology in ("onwind", "solar", "hydro")
-            else pypsaearth("resources/bus_regions/regions_offshore.geojson")
-        ),
+        regions="resources/shapes/microgrid_bus_shapes.geojson",
         cutout=lambda w: pypsaearth(
             "cutouts/" + config["renewable"][w.technology]["cutout"] + ".nc"
         ),
