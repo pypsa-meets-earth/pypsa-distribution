@@ -86,7 +86,7 @@ tech_modelling:
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
-microgrids_list:  #MICROGRIDS FOR NIGERIA
+microgrids_list:  #MICROGRIDS IN NIGERIA
   microgridA:
     lon_max: 5.9998
     lon_min: 5.3526
@@ -105,7 +105,7 @@ microgrids_list:  #MICROGRIDS FOR NIGERIA
     lat_min: 6.9402
     lat_max: 8.994747
 
-# microgrids_list:  #MICROGRIDS FOR SIERRA LEONE
+# microgrids_list:  #MICROGRIDS IN SIERRA LEONE
 #   microgridA:
 #     lon_max: -11.6807
 #     lon_min: -11.3320
