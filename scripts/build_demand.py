@@ -35,6 +35,7 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 import rasterio.mask
+from rasterio.io import MemoryFile
 import requests
 from _helpers_dist import (
     configure_logging,
@@ -123,20 +124,15 @@ def get_WorldPop_path(
     )  # Input filepath tif
 
 
-def create_masked_file(raster_path, shapes_path, output_prefix):
-    """
-    Masks a raster with shapes contained in the GeoJSON file "resources/shapes/microgrid_shapes.geojson" and saves the resulting masked rasters.
-    Parameters:
-    -----------
-    raster_path: str
-        Path to the raster file to mask.
-    shapes_path: str
-        Path to the GeoJSON file containing the shapes to use for masking the raster.
-    output_prefix: str
-        Prefix to use for the output file names. The output files will be named
-        "{output_prefix}_{shape_index}.tif"
-    """
+def estimate_microgrid_population(p, raster_path, shapes_path, sample_profile, output_prefix, output_file):
 
+    # Read the sample profile of electricity demand and extract the column corrisponding to the electric load
+    per_unit_load = pd.read_csv(sample_profile)["0"] / p
+
+    # Dataframe of the load
+    microgrid_load = pd.DataFrame()
+
+    number_microgrids = 3  #len(os.listdir("resources/masked_files"))
     # Load the GeoJSON file with the shapes to mask the raster
     shapes = gpd.read_file(shapes_path)
 
@@ -155,32 +151,13 @@ def create_masked_file(raster_path, shapes_path, output_prefix):
                 }
             )
 
-        out_raster_path = f"{output_prefix}_{i+1}.tif"
+        with MemoryFile() as memfile:
+            with memfile.open(**out_meta) as dest:
+                dest.write(masked)
 
-        # Write the masked raster to a file
-        with rasterio.open(out_raster_path, "w", **out_meta) as dest:
-            dest.write(masked)
+                pop_microgrid = masked[masked >= 0].sum()
 
-
-def estimate_microgrid_population(p, sample_profile, output_file):
-    """
-    This function estimates the population of the microgrids based on mask files and a sample profile of electricity demand.
-    """
-
-    # Read the sample profile of electricity demand and extract the column corrisponding to the electric load
-    per_unit_load = pd.read_csv(sample_profile)["0"] / p
-
-    # Dataframe of the load
-    microgrid_load = pd.DataFrame()
-
-    number_microgrids = len(os.listdir("resources/masked_files"))
-
-    for i in range(number_microgrids):
-        with rasterio.open(f"resources/masked_files/country_masked_{i+1}.tif") as fp:
-            data = fp.read(1)
-            pop_microgrid = data[data >= 0].sum()
-
-            microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
+                microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
 
     # Save the microgrid load to the specified output file
     microgrid_load.to_csv(output_file, index=False)
@@ -250,7 +227,7 @@ if __name__ == "__main__":
         sets_path_to_root("pypsa-distribution")
 
     configure_logging(snakemake)
-
+    
     sample_profile = snakemake.input["sample_profile"]
 
     assert (
@@ -270,19 +247,16 @@ if __name__ == "__main__":
         snakemake.output["microgrid_shapes"],
     )
 
-    create_masked_file(
-        worldpop_path,
-        snakemake.output["microgrid_shapes"],
-        snakemake.output["country_masked"],
-    )
+estimate_microgrid_population(snakemake.config["load"]["scaling_factor"],
+                            worldpop_path, 
+                            snakemake.output["microgrid_shapes"], 
+                            sample_profile, 
+                            "mask",
+                            snakemake.output["electric_load"], 
+)
 
-    estimate_microgrid_population(
-        snakemake.config["load"]["scaling_factor"],
-        sample_profile,
-        snakemake.output["electric_load"],
-    )
+create_bus_regions(
+    snakemake.config["microgrids_list"],
+    snakemake.output["microgrid_bus_shapes"],
+)
 
-    create_bus_regions(
-        snakemake.config["microgrids_list"],
-        snakemake.output["microgrid_bus_shapes"],
-    )
