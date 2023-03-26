@@ -1,40 +1,38 @@
+# -*- coding: utf-8 -*-
 import json
-import numpy as np
-from scipy.spatial import Delaunay
-import matplotlib.pyplot as plt
-import json
-import numpy as np
-from scipy.spatial import Delaunay
 import os
 
+import matplotlib.pyplot as plt
+import numpy as np
 from _helpers_dist import configure_logging, sets_path_to_root
+from scipy.spatial import Delaunay
 
 
 def build_plot_from_points(input_file):
-
     with open(input_file) as f:
         data = json.load(f)
 
-# extract point coordinates from GeoJSON data
+    # extract point coordinates from GeoJSON data
     points = []
-    for feature in data['Data']['Node'].values():
-        coords = feature['lonlat']
+    for feature in data["Data"]["Node"].values():
+        coords = feature["lonlat"]
         points.append(coords)
 
-# convert to numpy array
+    # convert to numpy array
     points = np.array(points)
 
-# create Delaunay triangulation
+    # create Delaunay triangulation
     tri = Delaunay(points)
 
     # Plot the points
-    plt.plot(points[:, 0], points[:, 1], 'ko')
+    plt.plot(points[:, 0], points[:, 1], "ko")
 
     # Plot the triangulation
     plt.triplot(points[:, 0], points[:, 1], tri.simplices)
 
     # Show the plot
     plt.show()
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
