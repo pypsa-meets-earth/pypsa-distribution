@@ -138,6 +138,20 @@ rule add_electricity:
         "scripts/add_electricity.py"
 
 
+rule earth_osm:
+    input:
+        building_json="resources/building.json",
+    output:
+    log:
+        "logs/earth_osm.log",
+    benchmark:
+        "benchmarks/earth_osm"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/earth_osm.py"
+
 # if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
 
 # rule solve_network:
