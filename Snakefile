@@ -140,8 +140,17 @@ rule add_electricity:
 
 rule earth_osm:
     input:
-        building_json="resources/building.json",
+        buildings_json="resources/buildings/buildings.json",
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
     output:
+        buildings_geojson="resources/buildings/buildings.geojson",
+        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
+        # **{
+        #     f"plot_delaunay_{microgrid_name}": f"resources/buildings/plot_delaunay_{microgrid_name}.png"
+        #     for microgrid_name in config["microgrids_list"]
+        # },
+        plot_delaunay="resources/buildings",
+
     log:
         "logs/earth_osm.log",
     benchmark:
