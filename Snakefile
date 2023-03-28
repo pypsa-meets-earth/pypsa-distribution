@@ -150,7 +150,6 @@ rule earth_osm:
         #     for microgrid_name in config["microgrids_list"]
         # },
         plot_delaunay="resources/buildings",
-
     log:
         "logs/earth_osm.log",
     benchmark:
@@ -160,6 +159,7 @@ rule earth_osm:
         mem_mb=3000,
     script:
         "scripts/earth_osm.py"
+
 
 # if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
 

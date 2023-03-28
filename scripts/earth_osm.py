@@ -89,8 +89,6 @@ def extract_points_inside_microgrids(
 
 
 def build_plot_from_points(input_file, output_path):
-
-
     with open(input_file) as f:
         data = json.load(f)
 
@@ -108,17 +106,20 @@ def build_plot_from_points(input_file, output_path):
     triangulations = {}
     for microgrid_name in set(microgrid_names):
         # select points of the current microgrid
-        indices = [i for i, name in enumerate(microgrid_names) if name == microgrid_name]
+        indices = [
+            i for i, name in enumerate(microgrid_names) if name == microgrid_name
+        ]
         microgrid_points = np.array([points[i] for i in indices])
 
         # create Delaunay triangulation for the current microgrid
         triangulations[microgrid_name] = Delaunay(microgrid_points)
 
-
     # Plot the points and triangulations for each microgrid
     for microgrid_name, tri in triangulations.items():
         # select points of the current microgrid
-        indices = [i for i, name in enumerate(microgrid_names) if name == microgrid_name]
+        indices = [
+            i for i, name in enumerate(microgrid_names) if name == microgrid_name
+        ]
         microgrid_points = np.array([points[i] for i in indices])
 
         # plot the points
@@ -132,7 +133,7 @@ def build_plot_from_points(input_file, output_path):
 
         # save the plot
         plt.savefig(f"{output_path}/{microgrid_name}.png")
-        
+
         # close the figure
         plt.close()
 
@@ -157,5 +158,6 @@ if __name__ == "__main__":
         snakemake.output["microgrids_buildings"],
     )
 
-    build_plot_from_points(snakemake.output["microgrids_buildings"],
-                           snakemake.output["plot_delaunay"])
+    build_plot_from_points(
+        snakemake.output["microgrids_buildings"], snakemake.output["plot_delaunay"]
+    )
