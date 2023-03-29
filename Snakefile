@@ -76,7 +76,7 @@ rule create_network:
     input:
         microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
     output:
-        "networks/base_1.nc",
+        "networks/base.nc",
     log:
         "logs/create_network.log",
     benchmark:
@@ -123,7 +123,7 @@ rule add_electricity:
             f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
             for tech in config["tech_modelling"]["general_vre"]
         },
-        create_network="networks/base_1.nc",
+        create_network="networks/base.nc",
         tech_costs=COSTS,
         load_file="resources/demand/microgrid_load.csv",
         powerplants="resources/powerplants.csv",
