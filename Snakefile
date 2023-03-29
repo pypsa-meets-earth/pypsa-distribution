@@ -74,7 +74,7 @@ rule build_demand:
 
 rule create_network:
     input:
-        microgrids_buildings = "resources/buildings/microgrids_buildings.geojson",
+        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
     output:
         "networks/base_1.nc",
     log:
