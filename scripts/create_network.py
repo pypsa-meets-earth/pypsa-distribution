@@ -1,29 +1,22 @@
 # -*- coding: utf-8 -*-
-"""
-Creates a base network with buses
+import json
 
-Relevant Settings
------------------
-.. code:: yaml
-    snapshots:
-    microgrids_list
-
-Inputs
-------
-Outputs
--------
-- ``networks/base.nc``
-   
-Description
------------
-This script creates a PyPSA network with as much AC buses as microgrids specified in the file config.yaml
-"""
-
-import os
-
-import pandas as pd
 import pypsa
-from _helpers_dist import configure_logging, sets_path_to_root
+from scipy.spatial import Delaunay
+import numpy as np
+from shapely.geometry import shape
+import pandas as pd
+import os
+from _helpers_dist import (
+    configure_logging,
+    sets_path_to_root,
+)
+import logging
+
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
+
 
 
 def create_network():
@@ -42,10 +35,38 @@ def create_network():
     return n
 
 
-def add_buses_to_network(n, number_microgrids):
-    # Add buses to the network based on the number of microgrids
-    for i in range(number_microgrids):
-        n.madd("Bus", [f"bus{i+1}"], carrier="AC", v_nom=0.220)
+def create_microgrid_network(n, input_file):
+# Load the GeoJSON file
+    with open(input_file) as f:
+        data = json.load(f)
+
+
+# Iterate over each feature in the GeoJSON file
+    for feature in data['features']:
+    # Get the point geometry
+        point_geom = shape(feature['geometry'])
+
+    # Create a bus at the point location with microgrid ID included in bus name
+        bus_name = f"{feature['properties']['microgrid_id']}_bus_{feature['id']}"
+        n.add("Bus", bus_name, x=point_geom.x, y=point_geom.y, v_nom=0.220)
+
+# Group the buses by microgrid ID
+    bus_groups = n.buses.groupby(lambda bus: bus.split("_")[0])
+
+# Iterate over each microgrid
+    for microgrid_id, buses in bus_groups:
+    # Select the buses belonging to this microgrid
+        microgrid_buses = n.buses.loc[buses.index[buses.index.str.contains(microgrid_id)]]
+
+    # Create a matrix of bus coordinates
+        coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
+
+    # Create a Delaunay triangulation
+        tri = Delaunay(coords)
+
+    # Add the edges of the triangulation to the network as lines
+        for edge in tri.simplices:
+            n.add("Line", f"{microgrid_id}_line_{edge[0]}_{edge[1]}", bus0=microgrid_buses.index[edge[0]], bus1=microgrid_buses.index[edge[1]])
 
 
 if __name__ == "__main__":
@@ -56,11 +77,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("create_network")
         sets_path_to_root("pypsa-distribution")
 
-    configure_logging(snakemake)
+    configure_logging(snakemake) 
 
-    number_microgrids = len(snakemake.config["microgrids_list"])
+    n = create_network()  
 
-    n = create_network()
-    add_buses_to_network(n, number_microgrids)
+    create_microgrid_network(n, snakemake.input["microgrids_buildings"])
+
     print(n)
     n.export_to_netcdf(snakemake.output[0])

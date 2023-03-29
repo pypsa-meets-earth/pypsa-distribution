@@ -72,9 +72,25 @@ rule build_demand:
         "scripts/build_demand.py"
 
 
+# rule create_network:
+#     output:
+#         "networks/base.nc",
+#     log:
+#         "logs/create_network.log",
+#     benchmark:
+#         "benchmarks/create_network"
+#     threads: 1
+#     resources:
+#         mem_mb=3000,
+#     script:
+#         "scripts/create_network.py"
+
+
 rule create_network:
+    input:
+        microgrids_buildings = "resources/buildings/microgrids_buildings.geojson",
     output:
-        "networks/base.nc",
+        "networks/base_1.nc",
     log:
         "logs/create_network.log",
     benchmark:
@@ -84,22 +100,6 @@ rule create_network:
         mem_mb=3000,
     script:
         "scripts/create_network.py"
-
-
-rule create_network_bis:
-    input:
-        microgrids_buildings = "resources/buildings/microgrids_buildings.geojson",
-    output:
-        "networks/base.nc",
-    log:
-        "logs/create_network_bis.log",
-    benchmark:
-        "benchmarks/create_network_bis"
-    threads: 1
-    resources:
-        mem_mb=3000,
-    script:
-        "scripts/create_network_bis.py"
 
 
 rule build_renewable_profiles:
@@ -137,7 +137,7 @@ rule add_electricity:
             f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
             for tech in config["tech_modelling"]["general_vre"]
         },
-        create_network="networks/base.nc",
+        create_network="networks/base_1.nc",
         tech_costs=COSTS,
         load_file="resources/demand/microgrid_load.csv",
         powerplants="resources/powerplants.csv",
@@ -161,11 +161,6 @@ rule earth_osm:
     output:
         buildings_geojson="resources/buildings/buildings.geojson",
         microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
-        # **{
-        #     f"plot_delaunay_{microgrid_name}": f"resources/buildings/plot_delaunay_{microgrid_name}.png"
-        #     for microgrid_name in config["microgrids_list"]
-        # },
-        plot_delaunay="resources/buildings",
     log:
         "logs/earth_osm.log",
     benchmark:

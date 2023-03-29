@@ -88,54 +88,54 @@ def extract_points_inside_microgrids(
         json.dump(result_geojson, f)
 
 
-def build_plot_from_points(input_file, output_path):
-    with open(input_file) as f:
-        data = json.load(f)
+# def build_plot_from_points(input_file, output_path):
+#     with open(input_file) as f:
+#         data = json.load(f)
 
-    # extract point coordinates and microgrid names from GeoJSON data
-    points = []
-    microgrid_names = []
-    for feature in data["features"]:
-        coords = feature["geometry"]["coordinates"]
-        microgrid_name = feature["properties"].get("microgrid_id")
-        if microgrid_name is not None:
-            points.append(coords)
-            microgrid_names.append(microgrid_name)
+#     # extract point coordinates and microgrid names from GeoJSON data
+#     points = []
+#     microgrid_names = []
+#     for feature in data["features"]:
+#         coords = feature["geometry"]["coordinates"]
+#         microgrid_name = feature["properties"].get("microgrid_id")
+#         if microgrid_name is not None:
+#             points.append(coords)
+#             microgrid_names.append(microgrid_name)
 
-    # create separate triangulations for each microgrid
-    triangulations = {}
-    for microgrid_name in set(microgrid_names):
-        # select points of the current microgrid
-        indices = [
-            i for i, name in enumerate(microgrid_names) if name == microgrid_name
-        ]
-        microgrid_points = np.array([points[i] for i in indices])
+#     # create separate triangulations for each microgrid
+#     triangulations = {}
+#     for microgrid_name in set(microgrid_names):
+#         # select points of the current microgrid
+#         indices = [
+#             i for i, name in enumerate(microgrid_names) if name == microgrid_name
+#         ]
+#         microgrid_points = np.array([points[i] for i in indices])
 
-        # create Delaunay triangulation for the current microgrid
-        triangulations[microgrid_name] = Delaunay(microgrid_points)
+#         # create Delaunay triangulation for the current microgrid
+#         triangulations[microgrid_name] = Delaunay(microgrid_points)
 
-    # Plot the points and triangulations for each microgrid
-    for microgrid_name, tri in triangulations.items():
-        # select points of the current microgrid
-        indices = [
-            i for i, name in enumerate(microgrid_names) if name == microgrid_name
-        ]
-        microgrid_points = np.array([points[i] for i in indices])
+#     # Plot the points and triangulations for each microgrid
+#     for microgrid_name, tri in triangulations.items():
+#         # select points of the current microgrid
+#         indices = [
+#             i for i, name in enumerate(microgrid_names) if name == microgrid_name
+#         ]
+#         microgrid_points = np.array([points[i] for i in indices])
 
-        # plot the points
-        plt.plot(microgrid_points[:, 0], microgrid_points[:, 1], "ko")
+#         # plot the points
+#         plt.plot(microgrid_points[:, 0], microgrid_points[:, 1], "ko")
 
-        # plot the triangulation
-        plt.triplot(microgrid_points[:, 0], microgrid_points[:, 1], tri.simplices)
+#         # plot the triangulation
+#         plt.triplot(microgrid_points[:, 0], microgrid_points[:, 1], tri.simplices)
 
-        # add title
-        plt.title(f"Triangulation for {microgrid_name}")
+#         # add title
+#         plt.title(f"Triangulation for {microgrid_name}")
 
-        # save the plot
-        plt.savefig(f"{output_path}/{microgrid_name}.png")
+#         # save the plot
+#         plt.savefig(f"{output_path}/{microgrid_name}.png")
 
-        # close the figure
-        plt.close()
+#         # close the figure
+#         plt.close()
 
 
 if __name__ == "__main__":
@@ -158,6 +158,6 @@ if __name__ == "__main__":
         snakemake.output["microgrids_buildings"],
     )
 
-    build_plot_from_points(
-        snakemake.output["microgrids_buildings"], snakemake.output["plot_delaunay"]
-    )
+    # build_plot_from_points(
+    #     snakemake.output["microgrids_buildings"], snakemake.output["plot_delaunay"]
+    # )
