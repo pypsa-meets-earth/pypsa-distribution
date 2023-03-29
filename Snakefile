@@ -88,7 +88,7 @@ rule create_network:
 
 rule create_network_bis:
     input:
-        microgrids_buildings = "resources/buildings/microgrids_buildings.geojson",
+        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
     output:
         "networks/base.nc",
     log:
