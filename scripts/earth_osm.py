@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
+#TODO: Add docstring
+
 import json
 import os
-import matplotlib.pyplot as plt
-import numpy as np
 from _helpers_dist import configure_logging, sets_path_to_root
-from scipy.spatial import Delaunay
 from shapely.geometry import Point, Polygon
 
 
@@ -13,16 +12,10 @@ def transform_json_to_geojson(input_file, output_file):
     """
     Transform a custom JSON file of building data to a GeoJSON file.
 
-    Parameters:
-        input_file (str): The path to the input JSON file.
-        output_file (str): The path to the output GeoJSON file.
-
+    Input:
+        input_file: The path to the input JSON file
     Returns:
-        None
-
-    Example:
-        >>> transform_json_to_geojson("building.json", "output_building.geojson")
-
+        output_file: The path to the output GeoJSON file.
     """
     # Load the custom JSON data
     with open(input_file) as f:
@@ -45,6 +38,7 @@ def transform_json_to_geojson(input_file, output_file):
 
 
 def extract_points_inside_microgrids(input_building_file, input_microgrid_file, output_file):
+    #TODO: Add description!!!
     with open(input_building_file) as f:
         points_geojson = json.load(f)
 
