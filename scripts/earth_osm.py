@@ -2,6 +2,7 @@
 
 import json
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 from _helpers_dist import configure_logging, sets_path_to_root
@@ -33,7 +34,12 @@ def transform_json_to_geojson(input_file, output_file):
     for node_id, node_data in data["Data"]["Node"].items():
         lon, lat = node_data["lonlat"]
         geometry = {"type": "Point", "coordinates": [lon, lat]}
-        feature = {"type": "Feature", "id": node_id, "geometry": geometry, "properties": node_data["tags"]}
+        feature = {
+            "type": "Feature",
+            "id": node_id,
+            "geometry": geometry,
+            "properties": node_data["tags"],
+        }
         features.append(feature)
 
     # Create a FeatureCollection from the features
@@ -44,7 +50,9 @@ def transform_json_to_geojson(input_file, output_file):
         json.dump(feature_collection, f)
 
 
-def extract_points_inside_microgrids(input_building_file, input_microgrid_file, output_file):
+def extract_points_inside_microgrids(
+    input_building_file, input_microgrid_file, output_file
+):
     with open(input_building_file) as f:
         points_geojson = json.load(f)
 
@@ -55,7 +63,9 @@ def extract_points_inside_microgrids(input_building_file, input_microgrid_file, 
     points_inside_rectangles = []
     for feature in rectangle_geojson["features"]:
         rectangle_coords = feature["geometry"]["coordinates"][0]
-        rectangle_coords = [(lon, lat) for lat, lon in rectangle_coords]  # Swap lat and lon
+        rectangle_coords = [
+            (lon, lat) for lat, lon in rectangle_coords
+        ]  # Swap lat and lon
         rectangle_polygon = Polygon(rectangle_coords)
 
         # Extract the points inside the rectangle
@@ -66,7 +76,9 @@ def extract_points_inside_microgrids(input_building_file, input_microgrid_file, 
             point = Point(point_coords)
             if rectangle_polygon.contains(point):
                 # Add the microgrid_id property to the point feature
-                point_feature["properties"]["microgrid_id"] = feature["properties"]["name"]
+                point_feature["properties"]["microgrid_id"] = feature["properties"][
+                    "name"
+                ]
                 points_in_rectangle.append(point_feature)
 
         # Add the points to the list of points inside all rectangles
