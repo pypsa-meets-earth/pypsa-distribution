@@ -41,6 +41,7 @@ def create_network():
 #         # Get the point geometry
 #         point_geom = shape(feature["geometry"])
 
+
 #         # Create a bus at the point location with microgrid ID included in bus name
 #         bus_name = f"{feature['properties']['microgrid_id']}_bus_{feature['id']}"
 #         n.add("Bus", bus_name, x=point_geom.x, y=point_geom.y, v_nom=0.220)
@@ -65,12 +66,16 @@ def create_microgrid_network(n, input_file):
 
         # Check for overlapping microgrids and raise an error if happening
         if (x, y) in bus_coords:
-            raise ValueError("Overlapping microgrids detected, adjust the coordinates in the config.yaml file")
+            raise ValueError(
+                "Overlapping microgrids detected, adjust the coordinates in the config.yaml file"
+            )
 
         # Add the bus to the network and update the set of bus coordinates and microgrid IDs
         n.add("Bus", bus_name, x=x, y=y, v_nom=0.220)
         bus_coords.add((x, y))
-        microgrid_ids.add(feature["properties"]["microgrid_id"])
+
+    # Group the buses by microgrid ID
+    bus_groups = n.buses.groupby(lambda bus: bus.split("_")[0])
 
     # Iterate over each microgrid
     for microgrid_id in microgrid_ids:
