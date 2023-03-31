@@ -214,7 +214,7 @@ def attach_wind_and_solar(
 
     # Get the index of the buses in the power network
     buses_i = n.buses.index
-    #Identify the microgrids 
+    # Identify the microgrids
     number_microgrids = len(number_microgrids.keys())
     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
 
@@ -228,28 +228,28 @@ def attach_wind_and_solar(
             suptech = tech.split("-", 2)[0]
 
             for microgrid_id in microgrid_ids:
-            # Add the wind and solar generators to the power network
+                # Add the wind and solar generators to the power network
                 n.madd(
-                "Generator",
-                ds.indexes["bus"],
-                " " + tech,
-                bus=f"new_bus_{microgrid_id}",
-                carrier=tech,
-                p_nom_extendable=tech in extendable_carriers["Generator"],
-                p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
-                weight=ds["weight"].to_pandas(),
-                marginal_cost=costs.at[suptech, "marginal_cost"],
-                capital_cost=costs.at[tech, "capital_cost"],
-                efficiency=costs.at[suptech, "efficiency"],
-                p_set=ds["profile"]
-                .transpose("time", "bus")
-                .to_pandas()
-                .reindex(n.snapshots),
-                p_max_pu=ds["profile"]
-                .transpose("time", "bus")
-                .to_pandas()
-                .reindex(n.snapshots),
-            )
+                    "Generator",
+                    ds.indexes["bus"],
+                    " " + tech,
+                    bus=f"new_bus_{microgrid_id}",
+                    carrier=tech,
+                    p_nom_extendable=tech in extendable_carriers["Generator"],
+                    p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
+                    weight=ds["weight"].to_pandas(),
+                    marginal_cost=costs.at[suptech, "marginal_cost"],
+                    capital_cost=costs.at[tech, "capital_cost"],
+                    efficiency=costs.at[suptech, "efficiency"],
+                    p_set=ds["profile"]
+                    .transpose("time", "bus")
+                    .to_pandas()
+                    .reindex(n.snapshots),
+                    p_max_pu=ds["profile"]
+                    .transpose("time", "bus")
+                    .to_pandas()
+                    .reindex(n.snapshots),
+                )
 
 
 def load_powerplants(ppl_fn):
@@ -410,7 +410,10 @@ if __name__ == "__main__":
         Nyears,
     )
 
-    add_bus_at_center(n, snakemake.config["microgrids_list"],)
+    add_bus_at_center(
+        n,
+        snakemake.config["microgrids_list"],
+    )
 
     attach_wind_and_solar(
         n,
