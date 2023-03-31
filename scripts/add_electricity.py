@@ -202,7 +202,7 @@ def add_bus_at_center(n, number_microgrids):
 
 
 def attach_wind_and_solar(
-    n, costs, input_profiles, tech_modelling, extendable_carriers
+    n, costs, number_microgrids, input_profiles, tech_modelling, extendable_carriers
 ):
     """
     This function adds wind and solar generators with the time series "profile_{tech}" to the power network
@@ -214,6 +214,9 @@ def attach_wind_and_solar(
 
     # Get the index of the buses in the power network
     buses_i = n.buses.index
+    #Identify the microgrids 
+    number_microgrids = len(number_microgrids.keys())
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
 
     for tech in tech_modelling:
         # Open the dataset for the current technology from the input_profiles
@@ -224,12 +227,13 @@ def attach_wind_and_solar(
 
             suptech = tech.split("-", 2)[0]
 
+            for microgrid_id in microgrid_ids:
             # Add the wind and solar generators to the power network
-            n.madd(
+                n.madd(
                 "Generator",
                 ds.indexes["bus"],
                 " " + tech,
-                bus=buses_i,
+                bus=f"new_bus_{microgrid_id}",
                 carrier=tech,
                 p_nom_extendable=tech in extendable_carriers["Generator"],
                 p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
@@ -406,42 +410,43 @@ if __name__ == "__main__":
         Nyears,
     )
 
-    add_bus_at_center(n, snakemake.config["microgrids_list"])
+    add_bus_at_center(n, snakemake.config["microgrids_list"],)
 
     attach_wind_and_solar(
         n,
         costs,
+        snakemake.config["microgrids_list"],
         snakemake.input,
         snakemake.config["tech_modelling"]["general_vre"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
 
-    conventional_inputs = {
-        k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
-    }
+    # conventional_inputs = {
+    #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
+    # }
 
-    attach_conventional_generators(
-        n,
-        costs,
-        ppl,
-        snakemake.config["electricity"]["conventional_carriers"],
-        snakemake.config["electricity"]["extendable_carriers"],
-        snakemake.config.get("conventional", {}),
-        conventional_inputs,
-    )
+    # attach_conventional_generators(
+    #     n,
+    #     costs,
+    #     ppl,
+    #     snakemake.config["electricity"]["conventional_carriers"],
+    #     snakemake.config["electricity"]["extendable_carriers"],
+    #     snakemake.config.get("conventional", {}),
+    #     conventional_inputs,
+    # )
 
-    attach_storageunits(
-        n,
-        costs,
-        snakemake.config["tech_modelling"]["storage_techs"],
-        snakemake.config["electricity"]["extendable_carriers"],
-    )
+    # attach_storageunits(
+    #     n,
+    #     costs,
+    #     snakemake.config["tech_modelling"]["storage_techs"],
+    #     snakemake.config["electricity"]["extendable_carriers"],
+    # )
 
-    attach_load(
-        n,
-        load_file,
-        snakemake.config["microgrids_list"],
-        snakemake.config["tech_modelling"]["load_carriers"],
-    )
+    # attach_load(
+    #     n,
+    #     load_file,
+    #     snakemake.config["microgrids_list"],
+    #     snakemake.config["tech_modelling"]["load_carriers"],
+    # )
 
     n.export_to_netcdf(snakemake.output[0])
