@@ -181,7 +181,7 @@ def add_bus_at_center(n, number_microgrids):
     Adds a new bus to each network at the center of the existing buses.
     """
 
-    #Identify the microgrids 
+    # Identify the microgrids
     number_microgrids = len(number_microgrids.keys())
     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
 
