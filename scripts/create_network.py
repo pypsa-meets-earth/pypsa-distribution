@@ -3,13 +3,13 @@ import json
 import logging
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
 from _helpers_dist import configure_logging, sets_path_to_root
 from scipy.spatial import Delaunay
 from shapely.geometry import shape
-import matplotlib.pyplot as plt
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -92,26 +92,26 @@ def plot_microgrid_network(n):
 
     # Plot each bus in the network
     for bus_name, bus in n.buses.iterrows():
-        ax.plot(bus.x, bus.y, 'o', color='blue')
+        ax.plot(bus.x, bus.y, "o", color="blue")
 
     # Plot each line in the network
     for line_name, line in n.lines.iterrows():
         bus0 = n.buses.loc[line.bus0]
         bus1 = n.buses.loc[line.bus1]
-        ax.plot([bus0.x, bus1.x], [bus0.y, bus1.y], '-', color='black')
+        ax.plot([bus0.x, bus1.x], [bus0.y, bus1.y], "-", color="black")
 
     # Set the axis limits to include all buses in the network
-    ax.set_xlim(n.buses.x.min()-0.1, n.buses.x.max()+0.1)
-    ax.set_ylim(n.buses.y.min()-0.1, n.buses.y.max()+0.1)
+    ax.set_xlim(n.buses.x.min() - 0.1, n.buses.x.max() + 0.1)
+    ax.set_ylim(n.buses.y.min() - 0.1, n.buses.y.max() + 0.1)
 
     # Set the title and labels for the plot
-    ax.set_title('Networks of the microgrids')
-    ax.set_xlabel('X Coordinate')
-    ax.set_ylabel('Y Coordinate')
+    ax.set_title("Networks of the microgrids")
+    ax.set_xlabel("X Coordinate")
+    ax.set_ylabel("Y Coordinate")
 
     # Show the plot
     plt.show()
-        
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -128,5 +128,5 @@ if __name__ == "__main__":
     create_microgrid_network(n, snakemake.input["microgrids_buildings"])
 
     plot_microgrid_network(n)
-    
+
     n.export_to_netcdf(snakemake.output[0])
