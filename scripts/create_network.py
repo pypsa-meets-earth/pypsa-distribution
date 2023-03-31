@@ -31,21 +31,6 @@ def create_network():
     return n
 
 
-# def create_microgrid_network(n, input_file):
-#     # Load the GeoJSON file
-#     with open(input_file) as f:
-#         data = json.load(f)
-
-#     # Iterate over each feature in the GeoJSON file
-#     for feature in data["features"]:
-#         # Get the point geometry
-#         point_geom = shape(feature["geometry"])
-
-
-#         # Create a bus at the point location with microgrid ID included in bus name
-#         bus_name = f"{feature['properties']['microgrid_id']}_bus_{feature['id']}"
-#         n.add("Bus", bus_name, x=point_geom.x, y=point_geom.y, v_nom=0.220)
-
 def create_microgrid_network(n, input_file):
     # Load the GeoJSON file
     with open(input_file) as f:
@@ -127,7 +112,6 @@ def plot_microgrid_network(n):
     # Show the plot
     plt.show()
         
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
