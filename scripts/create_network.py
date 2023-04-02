@@ -3,13 +3,13 @@ import json
 import logging
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
 from _helpers_dist import configure_logging, sets_path_to_root
 from scipy.spatial import Delaunay
 from shapely.geometry import shape
-import matplotlib.pyplot as plt
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -51,7 +51,9 @@ def create_microgrid_network(n, input_file):
 
         # Check for overlapping microgrids and raise an error if happening
         if (x, y) in bus_coords:
-            raise ValueError("Overlapping microgrids detected, adjust the coordinates in the config.yaml file")
+            raise ValueError(
+                "Overlapping microgrids detected, adjust the coordinates in the config.yaml file"
+            )
 
         # Add the bus to the network and update the set of bus coordinates and microgrid IDs
         n.add("Bus", bus_name, x=x, y=y, v_nom=0.220)
