@@ -106,5 +106,7 @@ microgrids_list:  #MICROGRIDS IN NIGERIA
     lon_min: 3.58116
     lon_max: 4.10333
     lat_min: 6.5402
+    lat_max: 7.72474
+
 load:
   scaling_factor: 15000
