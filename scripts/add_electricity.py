@@ -412,14 +412,14 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"],
     )
 
-    # attach_wind_and_solar(
-    #     n,
-    #     costs,
-    #     snakemake.config["microgrids_list"],
-    #     snakemake.input,
-    #     snakemake.config["tech_modelling"]["general_vre"],
-    #     snakemake.config["electricity"]["extendable_carriers"],
-    # )
+    attach_wind_and_solar(
+        n,
+        costs,
+        snakemake.config["microgrids_list"],
+        snakemake.input,
+        snakemake.config["tech_modelling"]["general_vre"],
+        snakemake.config["electricity"]["extendable_carriers"],
+    )
     
     # conventional_inputs = {
     #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
