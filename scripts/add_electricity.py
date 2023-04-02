@@ -212,46 +212,45 @@ def attach_wind_and_solar(
     # Add any missing carriers from the costs data to the tech_modelling variable
     _add_missing_carriers_from_costs(n, costs, tech_modelling)
 
-
     number_microgrids = len(number_microgrids.keys())
     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
-    
-    #Iterate over each technology
+
+    # Iterate over each technology
     for tech in tech_modelling:
-    # Iterate through each microgrid
-        #for microgrid in microgrid_ids: #TODO: review this function
+        # Iterate through each microgrid
+        # for microgrid in microgrid_ids: #TODO: review this function
 
         # Open the dataset for the current technology from the input_profiles
-            with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
+        with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
             # If the dataset's "bus" index is empty, skip to the next technology
-                if ds.indexes["bus"].empty:
-                    continue
+            if ds.indexes["bus"].empty:
+                continue
 
-            suptech = tech.split("-", 2)[0]
-            # Add the wind and solar generators to the power network
-            n.madd(
-                "Generator",
-                ds.indexes["bus"],
-                #{microgrid},
-                ' ' + tech, #TODO: review indexes
-                #bus=f"new_bus_{microgrid}",
-                bus=ds.indexes["bus"],
-                carrier=tech,
-                p_nom_extendable=tech in extendable_carriers["Generator"],
-                p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
-                weight=ds["weight"].to_pandas(),
-                marginal_cost=costs.at[suptech, "marginal_cost"],
-                capital_cost=costs.at[tech, "capital_cost"],
-                efficiency=costs.at[suptech, "efficiency"],
-                p_set=ds["profile"]
-                .transpose("time", "bus")
-                .to_pandas()
-                .reindex(n.snapshots),
-                p_max_pu=ds["profile"]
-                .transpose("time", "bus")
-                .to_pandas()
-                .reindex(n.snapshots),
-            )
+        suptech = tech.split("-", 2)[0]
+        # Add the wind and solar generators to the power network
+        n.madd(
+            "Generator",
+            ds.indexes["bus"],
+            # {microgrid},
+            " " + tech,  # TODO: review indexes
+            # bus=f"new_bus_{microgrid}",
+            bus=ds.indexes["bus"],
+            carrier=tech,
+            p_nom_extendable=tech in extendable_carriers["Generator"],
+            p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
+            weight=ds["weight"].to_pandas(),
+            marginal_cost=costs.at[suptech, "marginal_cost"],
+            capital_cost=costs.at[tech, "capital_cost"],
+            efficiency=costs.at[suptech, "efficiency"],
+            p_set=ds["profile"]
+            .transpose("time", "bus")
+            .to_pandas()
+            .reindex(n.snapshots),
+            p_max_pu=ds["profile"]
+            .transpose("time", "bus")
+            .to_pandas()
+            .reindex(n.snapshots),
+        )
 
 
 def load_powerplants(ppl_fn):
@@ -351,32 +350,32 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
 
     number_microgrids = len(number_microgrids.keys())
     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
-    
+
     # Iterate through each microgrid
     for microgrid in microgrid_ids:
-
         # Iterate through each storage technology
         for tech in technologies:
-
-        # Add the storage units to the power network
+            # Add the storage units to the power network
             n.madd(
-            "StorageUnit",
-            {microgrid},
-            #buses_i
-            " " + tech,
-            bus=f"new_bus_{microgrid}",
-            carrier=tech,
-            p_nom_extendable=True,
-            capital_cost=costs.at[tech, "capital_cost"],
-            marginal_cost=costs.at[tech, "marginal_cost"],
-            efficiency_store=costs.at[
-                lookup_store["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            efficiency_dispatch=costs.at[
-                lookup_dispatch["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
-            cyclic_state_of_charge=True,
+                "StorageUnit",
+                {microgrid},
+                # buses_i
+                " " + tech,
+                bus=f"new_bus_{microgrid}",
+                carrier=tech,
+                p_nom_extendable=True,
+                capital_cost=costs.at[tech, "capital_cost"],
+                marginal_cost=costs.at[tech, "marginal_cost"],
+                efficiency_store=costs.at[
+                    lookup_store["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                efficiency_dispatch=costs.at[
+                    lookup_dispatch["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                max_hours=max_hours[
+                    "battery"
+                ],  # Lead_acid and lithium have the same value
+                cyclic_state_of_charge=True,
             )
 
 
@@ -459,7 +458,6 @@ if __name__ == "__main__":
         snakemake.config["tech_modelling"]["storage_techs"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
-
 
     attach_load(
         n,
