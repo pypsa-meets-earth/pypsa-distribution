@@ -223,27 +223,27 @@ def attach_wind_and_solar(
 
             # Add the wind and solar generators to the power network
             n.madd(
-                    "Generator",
-                    ds.indexes["bus"],
-                    " " + tech,  #TODO: review indexes
-                    bus=ds.indexes["bus"],
-                    carrier=tech,
-                    p_nom_extendable=tech in extendable_carriers["Generator"],
-                    p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
-                    weight=ds["weight"].to_pandas(),
-                    marginal_cost=costs.at[suptech, "marginal_cost"],
-                    capital_cost=costs.at[tech, "capital_cost"],
-                    efficiency=costs.at[suptech, "efficiency"],
-                    p_set=ds["profile"]
-                    .transpose("time", "bus")
-                    .to_pandas()
-                    .reindex(n.snapshots),
-                    p_max_pu=ds["profile"]
-                    .transpose("time", "bus")
-                    .to_pandas()
-                    .reindex(n.snapshots),
-                )
-            
+                "Generator",
+                ds.indexes["bus"],
+                " " + tech,  #TODO: review indexes
+                bus=ds.indexes["bus"],
+                carrier=tech,
+                p_nom_extendable=tech in extendable_carriers["Generator"],
+                p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
+                weight=ds["weight"].to_pandas(),
+                marginal_cost=costs.at[suptech, "marginal_cost"],
+                capital_cost=costs.at[tech, "capital_cost"],
+                efficiency=costs.at[suptech, "efficiency"],
+                p_set=ds["profile"]
+                .transpose("time", "bus")
+                .to_pandas()
+                .reindex(n.snapshots),
+                p_max_pu=ds["profile"]
+                .transpose("time", "bus")
+                .to_pandas()
+                .reindex(n.snapshots),
+            )
+
 
 def load_powerplants(ppl_fn):
     carrier_dict = {
@@ -420,7 +420,7 @@ if __name__ == "__main__":
         snakemake.config["tech_modelling"]["general_vre"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
-    
+
     # conventional_inputs = {
     #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     # }
