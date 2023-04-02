@@ -99,11 +99,11 @@ microgrids_list:  #MICROGRIDS IN SIERRA LEONE
     lat_min: 8.197
     lat_max: 8.9905
 
-  # microgridC:
-  #   lon_min: 3.58116
-  #   lon_max: 4.10333
-  #   lat_min: 6.5402
-  #   lat_max: 7.72474
+  microgridC:
+    lon_min: 3.58116
+    lon_max: 4.10333
+    lat_min: 6.5402
+    lat_max: 7.72474
 
 # microgrids_list:  #MICROGRIDS IN SIERRA LEONE
 #   microgridA:

@@ -202,7 +202,7 @@ def add_bus_at_center(n, number_microgrids):
 
 
 def attach_wind_and_solar(
-    n, costs, input_profiles, tech_modelling, extendable_carriers
+    n, costs, number_microgrids, input_profiles, tech_modelling, extendable_carriers
 ):
     """
     This function adds wind and solar generators with the time series "profile_{tech}" to the power network
@@ -212,20 +212,29 @@ def attach_wind_and_solar(
     # Add any missing carriers from the costs data to the tech_modelling variable
     _add_missing_carriers_from_costs(n, costs, tech_modelling)
 
+
+    number_microgrids = len(number_microgrids.keys())
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+    
+    #Iterate over each technology
     for tech in tech_modelling:
+    # Iterate through each microgrid
+        #for microgrid in microgrid_ids: #TODO: review this function
+
         # Open the dataset for the current technology from the input_profiles
-        with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
+            with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
             # If the dataset's "bus" index is empty, skip to the next technology
-            if ds.indexes["bus"].empty:
-                continue
+                if ds.indexes["bus"].empty:
+                    continue
 
             suptech = tech.split("-", 2)[0]
-
             # Add the wind and solar generators to the power network
             n.madd(
                 "Generator",
                 ds.indexes["bus"],
-                " " + tech,  #TODO: review indexes
+                #{microgrid},
+                ' ' + tech, #TODO: review indexes
+                #bus=f"new_bus_{microgrid}",
                 bus=ds.indexes["bus"],
                 carrier=tech,
                 p_nom_extendable=tech in extendable_carriers["Generator"],
@@ -297,7 +306,7 @@ def attach_conventional_generators(
         "Generator",
         ppl.index,
         carrier=ppl.carrier,
-        bus=buses_i,
+        bus=ppl.bus,
         p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
         p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
         p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
@@ -328,7 +337,7 @@ def attach_conventional_generators(
                 n.generators.loc[idx, attr] = values
 
 
-def attach_storageunits(n, costs, technologies, extendable_carriers):
+def attach_storageunits(n, costs, number_microgrids, technologies, extendable_carriers):
     """
     This function adds different technologies of storage units to the power network
 
@@ -340,16 +349,22 @@ def attach_storageunits(n, costs, technologies, extendable_carriers):
     lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
     lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
 
-    buses_i = n.buses.index
+    number_microgrids = len(number_microgrids.keys())
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+    
+    # Iterate through each microgrid
+    for microgrid in microgrid_ids:
 
-    # Iterate through each storage technology
-    for tech in technologies:
+        # Iterate through each storage technology
+        for tech in technologies:
+
         # Add the storage units to the power network
-        n.madd(
+            n.madd(
             "StorageUnit",
-            buses_i,
+            {microgrid},
+            #buses_i
             " " + tech,
-            bus=buses_i,
+            bus=f"new_bus_{microgrid}",
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
@@ -362,7 +377,7 @@ def attach_storageunits(n, costs, technologies, extendable_carriers):
             ],  # Lead_acid and lithium have the same value
             max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
             cyclic_state_of_charge=True,
-        )
+            )
 
 
 def attach_load(n, load_file, number_microgrids, tech_modelling):
@@ -421,26 +436,28 @@ if __name__ == "__main__":
         snakemake.config["electricity"]["extendable_carriers"],
     )
 
-    # conventional_inputs = {
-    #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
-    # }
+    conventional_inputs = {
+        k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
+    }
 
-    # attach_conventional_generators(
-    #     n,
-    #     costs,
-    #     ppl,
-    #     snakemake.config["electricity"]["conventional_carriers"],
-    #     snakemake.config["electricity"]["extendable_carriers"],
-    #     snakemake.config.get("conventional", {}),
-    #     conventional_inputs,
-    # )
+    attach_conventional_generators(
+        n,
+        costs,
+        ppl,
+        snakemake.config["electricity"]["conventional_carriers"],
+        snakemake.config["electricity"]["extendable_carriers"],
+        snakemake.config.get("conventional", {}),
+        conventional_inputs,
+    )
 
-    # attach_storageunits(
-    #     n,
-    #     costs,
-    #     snakemake.config["tech_modelling"]["storage_techs"],
-    #     snakemake.config["electricity"]["extendable_carriers"],
-    # )
+    attach_storageunits(
+        n,
+        costs,
+        snakemake.config["microgrids_list"],
+        snakemake.config["tech_modelling"]["storage_techs"],
+        snakemake.config["electricity"]["extendable_carriers"],
+    )
+
 
     attach_load(
         n,
