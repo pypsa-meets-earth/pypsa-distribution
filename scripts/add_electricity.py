@@ -225,7 +225,7 @@ def attach_wind_and_solar(
             n.madd(
                     "Generator",
                     ds.indexes["bus"],
-                    " " + tech,
+                    " " + tech,  #TODO: review indexes
                     bus=ds.indexes["bus"],
                     carrier=tech,
                     p_nom_extendable=tech in extendable_carriers["Generator"],
@@ -365,18 +365,22 @@ def attach_storageunits(n, costs, technologies, extendable_carriers):
         )
 
 
-def attach_load(n, load_file, microgrids_list, tech_modelling):
+def attach_load(n, load_file, number_microgrids, tech_modelling):
     # Upload the load csv file
     load = pd.read_csv(load_file).set_index([n.snapshots])
+    number_microgrids = len(number_microgrids.keys())
+    number_microgrids = range(0 , number_microgrids)
 
-    # Create an index for the loads
-    index = load.columns
-
-    # Get the index of the buses in the power network
-    buses_i = n.buses.index
+    #Rename the header of the demand df as the bus the load will be attached to
+    for i in number_microgrids:
+        load.rename(columns={f'{i+1}':f'new_bus_microgrid_{i+1}'}, inplace=True)
 
     # Add the load to the power network
-    n.madd("Load", index, bus=buses_i, carrier="AC", p_set=load)
+    n.madd("Load",
+            load.columns,  #TODO: Review indexes
+            bus=load.columns,
+            carrier="AC",
+            p_set=load)
 
 
 if __name__ == "__main__":
@@ -408,14 +412,14 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"],
     )
 
-    attach_wind_and_solar(
-        n,
-        costs,
-        snakemake.config["microgrids_list"],
-        snakemake.input,
-        snakemake.config["tech_modelling"]["general_vre"],
-        snakemake.config["electricity"]["extendable_carriers"],
-    )
+    # attach_wind_and_solar(
+    #     n,
+    #     costs,
+    #     snakemake.config["microgrids_list"],
+    #     snakemake.input,
+    #     snakemake.config["tech_modelling"]["general_vre"],
+    #     snakemake.config["electricity"]["extendable_carriers"],
+    # )
     
     # conventional_inputs = {
     #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
@@ -438,11 +442,11 @@ if __name__ == "__main__":
     #     snakemake.config["electricity"]["extendable_carriers"],
     # )
 
-    # attach_load(
-    #     n,
-    #     load_file,
-    #     snakemake.config["microgrids_list"],
-    #     snakemake.config["tech_modelling"]["load_carriers"],
-    # )
+    attach_load(
+        n,
+        load_file,
+        snakemake.config["microgrids_list"],
+        snakemake.config["tech_modelling"]["load_carriers"],
+    )
 
     n.export_to_netcdf(snakemake.output[0])
