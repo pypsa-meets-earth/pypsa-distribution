@@ -160,9 +160,8 @@ def estimate_microgrid_population(
 
                 microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
 
-               
     # Save the microgrid load to the specified output file
-    microgrid_load.to_csv(output_file, index=False)    
+    microgrid_load.to_csv(output_file, index=False)
 
 
 def create_bus_regions(microgrids_list, output_path):

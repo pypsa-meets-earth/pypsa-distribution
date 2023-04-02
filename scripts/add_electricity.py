@@ -225,7 +225,7 @@ def attach_wind_and_solar(
             n.madd(
                 "Generator",
                 ds.indexes["bus"],
-                " " + tech,  #TODO: review indexes
+                " " + tech,  # TODO: review indexes
                 bus=ds.indexes["bus"],
                 carrier=tech,
                 p_nom_extendable=tech in extendable_carriers["Generator"],
@@ -369,18 +369,20 @@ def attach_load(n, load_file, number_microgrids, tech_modelling):
     # Upload the load csv file
     load = pd.read_csv(load_file).set_index([n.snapshots])
     number_microgrids = len(number_microgrids.keys())
-    number_microgrids = range(0 , number_microgrids)
+    number_microgrids = range(0, number_microgrids)
 
-    #Rename the header of the demand df as the bus the load will be attached to
+    # Rename the header of the demand df as the bus the load will be attached to
     for i in number_microgrids:
-        load.rename(columns={f'{i+1}':f'new_bus_microgrid_{i+1}'}, inplace=True)
+        load.rename(columns={f"{i+1}": f"new_bus_microgrid_{i+1}"}, inplace=True)
 
     # Add the load to the power network
-    n.madd("Load",
-            load.columns,  #TODO: Review indexes
-            bus=load.columns,
-            carrier="AC",
-            p_set=load)
+    n.madd(
+        "Load",
+        load.columns,  # TODO: Review indexes
+        bus=load.columns,
+        carrier="AC",
+        p_set=load,
+    )
 
 
 if __name__ == "__main__":
