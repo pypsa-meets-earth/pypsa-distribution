@@ -193,7 +193,8 @@ def create_bus_regions(microgrids_list, output_path):
             [Top_left, Top_right, Bottom_right, Bottom_left, Top_left]
         )
 
-        microgrid_name = f"microgrid_{col+1}"
+        #The bus is the central bus of each microgrid
+        microgrid_name = f"new_bus_microgrid_{col+1}"
         microgrid_shapes.append(microgrid_shape)
         microgrid_names.append(microgrid_name)
 

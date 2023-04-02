@@ -202,7 +202,7 @@ def add_bus_at_center(n, number_microgrids):
 
 
 def attach_wind_and_solar(
-    n, costs, number_microgrids, input_profiles, tech_modelling, extendable_carriers
+    n, costs, input_profiles, tech_modelling, extendable_carriers
 ):
     """
     This function adds wind and solar generators with the time series "profile_{tech}" to the power network
@@ -211,12 +211,6 @@ def attach_wind_and_solar(
 
     # Add any missing carriers from the costs data to the tech_modelling variable
     _add_missing_carriers_from_costs(n, costs, tech_modelling)
-
-    # Get the index of the buses in the power network
-    buses_i = n.buses.index
-    # Identify the microgrids
-    number_microgrids = len(number_microgrids.keys())
-    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
 
     for tech in tech_modelling:
         # Open the dataset for the current technology from the input_profiles
@@ -227,13 +221,12 @@ def attach_wind_and_solar(
 
             suptech = tech.split("-", 2)[0]
 
-            for microgrid_id in microgrid_ids:
-                # Add the wind and solar generators to the power network
-                n.madd(
+            # Add the wind and solar generators to the power network
+            n.madd(
                     "Generator",
                     ds.indexes["bus"],
                     " " + tech,
-                    bus=f"new_bus_{microgrid_id}",
+                    bus=ds.indexes["bus"],
                     carrier=tech,
                     p_nom_extendable=tech in extendable_carriers["Generator"],
                     p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
@@ -250,7 +243,7 @@ def attach_wind_and_solar(
                     .to_pandas()
                     .reindex(n.snapshots),
                 )
-
+            
 
 def load_powerplants(ppl_fn):
     carrier_dict = {
@@ -423,7 +416,7 @@ if __name__ == "__main__":
         snakemake.config["tech_modelling"]["general_vre"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
-
+    
     # conventional_inputs = {
     #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     # }
