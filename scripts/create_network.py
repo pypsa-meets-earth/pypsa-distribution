@@ -123,9 +123,8 @@ if __name__ == "__main__":
 
     n = create_network()
 
-    create_microgrid_network(n, 
-                            snakemake.input["microgrids_buildings"])
-    
-    #plot_microgrid_network(n)
+    create_microgrid_network(n, snakemake.input["microgrids_buildings"])
+
+    # plot_microgrid_network(n)
 
     n.export_to_netcdf(snakemake.output[0])
