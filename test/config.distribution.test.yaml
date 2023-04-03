@@ -91,11 +91,11 @@ tech_modelling:
 
 microgrids_list:  #MICROGRIDS IN NIGERIA
   microgrid1:     #WORKING
-   lon_max: 5.0998
-   lon_min: 6.1700
-   lat_min: 8.2356
-   lat_max: 9.8012
- 
+    lon_max: 5.0998
+    lon_min: 6.1700
+    lat_min: 8.2356
+    lat_max: 9.8012
+
   # microgrid2:   #NOT WORKING
   #   lon_min: 3.58116
   #   lon_max: 4.10333
