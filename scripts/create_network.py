@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers_dist import configure_logging, sets_path_to_root, read_geojson
+from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
 from scipy.spatial import Delaunay
 from shapely.geometry import shape
 
@@ -29,17 +29,18 @@ def create_network():
     # Return the created network
     return n
 
-import os
+
 import json
+import os
+
 import geopandas as gpd
 from shapely.geometry import shape
 
 
 def create_microgrid_network(n, input_file):
-
     # Load the GeoJSON file using the read_geojson function
     data = read_geojson(input_file)
-    
+
     # Keep track of the bus coordinates and microgrid IDs
     bus_coords = set()
     microgrid_ids = set()
@@ -78,16 +79,16 @@ def create_microgrid_network(n, input_file):
         # Create a Delaunay triangulation
         tri = Delaunay(coords)
 
-        #Extract the edges of the triangulation for buses in the same microgrid
+        # Extract the edges of the triangulation for buses in the same microgrid
         edges = tri.simplices[(tri.simplices < len(microgrid_buses)).all(axis=1)]
 
-    # Add the edges of the triangulation to the network as lines, only between buses in the same microgrid
+        # Add the edges of the triangulation to the network as lines, only between buses in the same microgrid
         n.madd(
             "Line",
             [f"{microgrid_id}_line_{i}_{j}" for i, j, *_ in edges],
             bus0=microgrid_buses.index[edges[:, 0]],
             bus1=microgrid_buses.index[edges[:, 1]],
-    )
+        )
 
 
 def plot_microgrid_network(n):
