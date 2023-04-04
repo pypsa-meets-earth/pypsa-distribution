@@ -38,10 +38,11 @@ The rule :mod:`add_electricity` takes as input the network generated in the rule
 
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from shapely.geometry import Polygon
 import powerplantmatching as pm
+import geopandas
 import pypsa
 import xarray as xr
 from _helpers_dist import configure_logging, sets_path_to_root
@@ -180,8 +181,6 @@ def add_bus_at_center(n, number_microgrids):
     """
     Adds a new bus to each network at the center of the existing buses.
     """
-
-    # Identify the microgrids
     number_microgrids = len(number_microgrids.keys())
     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
 
@@ -189,16 +188,18 @@ def add_bus_at_center(n, number_microgrids):
     for microgrid_id in microgrid_ids:
         # Select the buses belonging to this microgrid
         microgrid_buses = n.buses.loc[
-            n.buses.index.str.contains(f"{microgrid_id}_bus_")
+            n.buses.index.str.startswith(f"{microgrid_id}_bus_")
         ]
 
-        # Compute the centroid of the microgrid buses
-        center_x = np.mean(microgrid_buses["x"].values)
-        center_y = np.mean(microgrid_buses["y"].values)
+        # Create a matrix of bus coordinates
+        coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
+        polygon = Polygon(coords)
+        s = geopandas.GeoSeries(polygon)
+        s=s.centroid
 
         # Create a new bus at the centroid
         center_bus_name = f"new_bus_{microgrid_id}"
-        n.add("Bus", center_bus_name, x=center_x, y=center_y, v_nom=0.220)
+        n.add("Bus", center_bus_name, x=s.x, y=s.y, v_nom=0.220)
 
 
 def attach_wind_and_solar(
@@ -404,46 +405,45 @@ if __name__ == "__main__":
         Nyears,
     )
 
-    add_bus_at_center(
-        n,
-        snakemake.config["microgrids_list"],
-    )
 
-    attach_wind_and_solar(
-        n,
-        costs,
-        snakemake.config["microgrids_list"],
-        snakemake.input,
-        snakemake.config["tech_modelling"]["general_vre"],
-        snakemake.config["electricity"]["extendable_carriers"],
-    )
+    add_bus_at_center(n, 
+                      snakemake.config["microgrids_list"])
 
-    conventional_inputs = {
-        k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
-    }
+    # attach_wind_and_solar(
+    #     n,
+    #     costs,
+    #     snakemake.config["microgrids_list"],
+    #     snakemake.input,
+    #     snakemake.config["tech_modelling"]["general_vre"],
+    #     snakemake.config["electricity"]["extendable_carriers"],
+    # )
 
-    attach_conventional_generators(
-        n,
-        costs,
-        ppl,
-        snakemake.config["electricity"]["conventional_carriers"],
-        snakemake.config["electricity"]["extendable_carriers"],
-        snakemake.config.get("conventional", {}),
-        conventional_inputs,
-    )
+    # conventional_inputs = {
+    #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
+    # }
 
-    attach_storageunits(
-        n,
-        costs,
-        snakemake.config["microgrids_list"],
-        snakemake.config["tech_modelling"]["storage_techs"],
-        snakemake.config["electricity"]["extendable_carriers"],
-    )
+    # attach_conventional_generators(
+    #     n,
+    #     costs,
+    #     ppl,
+    #     snakemake.config["electricity"]["conventional_carriers"],
+    #     snakemake.config["electricity"]["extendable_carriers"],
+    #     snakemake.config.get("conventional", {}),
+    #     conventional_inputs,
+    # )
 
-    attach_load(
-        n,
-        load_file,
-        snakemake.config["tech_modelling"]["load_carriers"],
-    )
+    # attach_storageunits(
+    #     n,
+    #     costs,
+    #     snakemake.config["microgrids_list"],
+    #     snakemake.config["tech_modelling"]["storage_techs"],
+    #     snakemake.config["electricity"]["extendable_carriers"],
+    # )
+
+    # attach_load(
+    #     n,
+    #     load_file,
+    #     snakemake.config["tech_modelling"]["load_carriers"],
+    # )
 
     n.export_to_netcdf(snakemake.output[0])
