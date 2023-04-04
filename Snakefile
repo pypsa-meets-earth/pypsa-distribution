@@ -57,10 +57,9 @@ rule build_demand:
     input:
         sample_profile=PROFILE,
         create_network="networks/base.nc",
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
         # WorldPop folder is downloaded using pypsa-earth and loaded here
     output:
-        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
-        microgrid_bus_shapes="resources/shapes/microgrid_bus_shapes.geojson",
         electric_load="resources/demand/microgrid_load.csv",
     log:
         "logs/build_demand.log",
@@ -71,6 +70,23 @@ rule build_demand:
         mem_mb=3000,
     script:
         "scripts/build_demand.py"
+
+
+rule build_shapes:
+    input:
+
+    output:
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+        microgrid_bus_shapes="resources/shapes/microgrid_bus_shapes.geojson",
+    log:
+        "logs/build_shapes.log",
+    benchmark:
+        "benchmarks/build_shapes"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/build_shapes.py"
 
 
 rule create_network:
