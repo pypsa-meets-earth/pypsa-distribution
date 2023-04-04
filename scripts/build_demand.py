@@ -32,9 +32,9 @@ import os
 
 import geopandas as gpd
 import pandas as pd
+import pypsa
 import rasterio
 import rasterio.mask
-import pypsa
 from _helpers_dist import (
     configure_logging,
         sets_path_to_root,
@@ -80,6 +80,7 @@ def get_WorldPop_path(
     )  # Input filepath tif
 
 
+
 def estimate_microgrid_population(
     n, p, raster_path, shapes_path, sample_profile, output_file
 ):
@@ -114,7 +115,7 @@ def estimate_microgrid_population(
     # Save the microgrid load to a CSV file with snapshots index
     microgrid_load.insert(0, "snapshots", n.snapshots)
     microgrid_load.set_index("snapshots", inplace=True)
-    microgrid_load.to_csv(output_file, index=True)    
+    microgrid_load.to_csv(output_file, index=True)
 
 
 if __name__ == "__main__":
