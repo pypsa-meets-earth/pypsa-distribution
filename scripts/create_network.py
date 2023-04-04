@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 import os
 
@@ -7,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers_dist import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, sets_path_to_root, read_geojson
 from scipy.spatial import Delaunay
 from shapely.geometry import shape
 
@@ -30,23 +29,28 @@ def create_network():
     # Return the created network
     return n
 
+import os
+import json
+import geopandas as gpd
+from shapely.geometry import shape
+
 
 def create_microgrid_network(n, input_file):
-    # Load the GeoJSON file
-    with open(input_file) as f:
-        data = json.load(f)
 
+    # Load the GeoJSON file using the read_geojson function
+    data = read_geojson(input_file)
+    
     # Keep track of the bus coordinates and microgrid IDs
     bus_coords = set()
     microgrid_ids = set()
 
-    # Iterate over each feature in the GeoJSON file
-    for feature in data["features"]:
+    # Iterate over each feature in the GeoDataFrame
+    for index, row in data.iterrows():
         # Get the point geometry
-        point_geom = shape(feature["geometry"])
+        point_geom = row["geometry"]
 
         # Create a bus at the point location with microgrid ID included in bus name
-        bus_name = f"{feature['properties']['microgrid_id']}_bus_{feature['id']}"
+        bus_name = f"{row['microgrid_id']}_bus_{row['id']}"
         x, y = point_geom.x, point_geom.y
 
         # Check for overlapping microgrids and raise an error if happening
@@ -57,8 +61,9 @@ def create_microgrid_network(n, input_file):
 
         # Add the bus to the network and update the set of bus coordinates and microgrid IDs
         n.add("Bus", bus_name, x=x, y=y, v_nom=0.220)
+
         bus_coords.add((x, y))
-        microgrid_ids.add(feature["properties"]["microgrid_id"])
+        microgrid_ids.add(row["microgrid_id"])
 
     # Iterate over each microgrid
     for microgrid_id in microgrid_ids:
@@ -73,15 +78,16 @@ def create_microgrid_network(n, input_file):
         # Create a Delaunay triangulation
         tri = Delaunay(coords)
 
-        # Add the edges of the triangulation to the network as lines, but only between buses in the same microgrid
-        for edge in tri.simplices:
-            if (edge[0] < len(microgrid_buses)) and (edge[1] < len(microgrid_buses)):
-                n.add(
-                    "Line",
-                    f"{microgrid_id}_line_{edge[0]}_{edge[1]}",
-                    bus0=microgrid_buses.index[edge[0]],
-                    bus1=microgrid_buses.index[edge[1]],
-                )
+        #Extract the edges of the triangulation for buses in the same microgrid
+        edges = tri.simplices[(tri.simplices < len(microgrid_buses)).all(axis=1)]
+
+    # Add the edges of the triangulation to the network as lines, only between buses in the same microgrid
+        n.madd(
+            "Line",
+            [f"{microgrid_id}_line_{i}_{j}" for i, j, *_ in edges],
+            bus0=microgrid_buses.index[edges[:, 0]],
+            bus1=microgrid_buses.index[edges[:, 1]],
+    )
 
 
 def plot_microgrid_network(n):
@@ -125,6 +131,6 @@ if __name__ == "__main__":
 
     create_microgrid_network(n, snakemake.input["microgrids_buildings"])
 
-    # plot_microgrid_network(n)
+    plot_microgrid_network(n)
 
     n.export_to_netcdf(snakemake.output[0])
