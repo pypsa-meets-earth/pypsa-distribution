@@ -2,13 +2,11 @@
 import logging
 import os
 
-import os
-import pypsa
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
-from _helpers_dist import configure_logging, sets_path_to_root, read_geojson
+import pypsa
+from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
 from scipy.spatial import Delaunay
 
 _logger = logging.getLogger(__name__)
@@ -126,6 +124,6 @@ if __name__ == "__main__":
 
     create_microgrid_network(n, snakemake.input["microgrids_buildings"])
 
-    #plot_microgrid_network(n)
+    # plot_microgrid_network(n)
 
     n.export_to_netcdf(snakemake.output[0])
