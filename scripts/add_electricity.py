@@ -189,7 +189,7 @@ def add_bus_at_center(n, number_microgrids):
     for microgrid_id in microgrid_ids:
         # Select the buses belonging to this microgrid
         microgrid_buses = n.buses.loc[
-            n.buses.index.str.contains(f"^{microgrid_id}_bus_")
+            n.buses.index.str.contains(f"{microgrid_id}_bus_")
         ]
 
         # Compute the centroid of the microgrid buses
@@ -348,55 +348,36 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
     lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
     lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
 
-    number_microgrids = len(number_microgrids.keys())
-    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
+    
+    # Add the storage units to the power network
+    for tech in technologies:
 
-    # Iterate through each microgrid
-    for microgrid in microgrid_ids:
-        # Iterate through each storage technology
-        for tech in technologies:
-            # Add the storage units to the power network
-            n.madd(
-                "StorageUnit",
-                {microgrid},
-                # buses_i
-                " " + tech,
-                bus=f"new_bus_{microgrid}",
-                carrier=tech,
-                p_nom_extendable=True,
-                capital_cost=costs.at[tech, "capital_cost"],
-                marginal_cost=costs.at[tech, "marginal_cost"],
-                efficiency_store=costs.at[
-                    lookup_store["battery"], "efficiency"
-                ],  # Lead_acid and lithium have the same value
-                efficiency_dispatch=costs.at[
-                    lookup_dispatch["battery"], "efficiency"
-                ],  # Lead_acid and lithium have the same value
-                max_hours=max_hours[
-                    "battery"
-                ],  # Lead_acid and lithium have the same value
-                cyclic_state_of_charge=True,
-            )
-
-
-def attach_load(n, load_file, number_microgrids, tech_modelling):
-    # Upload the load csv file
-    load = pd.read_csv(load_file).set_index([n.snapshots])
-    number_microgrids = len(number_microgrids.keys())
-    number_microgrids = range(0, number_microgrids)
-
-    # Rename the header of the demand df as the bus the load will be attached to
-    for i in number_microgrids:
-        load.rename(columns={f"{i+1}": f"new_bus_microgrid_{i+1}"}, inplace=True)
-
-    # Add the load to the power network
-    n.madd(
-        "Load",
-        load.columns,  # TODO: Review indexes
-        bus=load.columns,
-        carrier="AC",
-        p_set=load,
+        n.madd(
+        "StorageUnit",
+        microgrid_ids,
+        ' ' + tech,
+        bus=[f"new_bus_{microgrid}" for microgrid in microgrid_ids],
+        carrier=tech,
+        p_nom_extendable=True,
+        capital_cost=costs.at[tech, "capital_cost"],
+        marginal_cost=costs.at[tech, "marginal_cost"],
+        efficiency_store=costs.at[
+        lookup_store["battery"], "efficiency"],  # Lead_acid and lithium have the same value
+        efficiency_dispatch=costs.at[
+        lookup_dispatch["battery"], "efficiency"],  # Lead_acid and lithium have the same value
+        max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
+        cyclic_state_of_charge=True,
     )
+    
+
+def attach_load(n, load_file, tech_modelling):
+
+    # Upload the load csv file
+    demand_df = pd.read_csv(load_file, index_col=0, parse_dates=True)
+
+    #Attach load to the central bus of each microgrid
+    n.madd("Load", demand_df.columns, bus=demand_df.columns, p_set=demand_df)
 
 
 if __name__ == "__main__":
@@ -462,8 +443,7 @@ if __name__ == "__main__":
     attach_load(
         n,
         load_file,
-        snakemake.config["microgrids_list"],
         snakemake.config["tech_modelling"]["load_carriers"],
-    )
+    )    
 
     n.export_to_netcdf(snakemake.output[0])

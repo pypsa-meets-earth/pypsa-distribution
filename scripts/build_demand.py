@@ -35,7 +35,7 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 import rasterio.mask
-import requests
+import pypsa
 from _helpers_dist import (
     configure_logging,
     save_to_geojson,
@@ -120,9 +120,8 @@ def get_WorldPop_path(
         f"{three_digits_code.lower()}_ppp_{year}_UNadj_constrained.tif",
     )  # Input filepath tif
 
-
 def estimate_microgrid_population(
-    p, raster_path, shapes_path, sample_profile, output_file
+    n, p, raster_path, shapes_path, sample_profile, output_file
 ):
     # Read the sample profile of electricity demand and extract the column corrisponding to the electric load
     per_unit_load = pd.read_csv(sample_profile)["0"] / p
@@ -152,8 +151,10 @@ def estimate_microgrid_population(
 
         microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
 
-    # Save the microgrid load to the specified output file
-    microgrid_load.to_csv(output_file, index=False)
+    # Save the microgrid load to a CSV file with snapshots index
+    microgrid_load.insert(0, "snapshots", n.snapshots)
+    microgrid_load.set_index("snapshots", inplace=True)
+    microgrid_load.to_csv(output_file, index=True)    
 
 
 def create_bus_regions(microgrids_list, output_path):
@@ -222,6 +223,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
+    n = pypsa.Network(snakemake.input.create_network)
     sample_profile = snakemake.input["sample_profile"]
 
     assert (
@@ -235,21 +237,22 @@ if __name__ == "__main__":
         snakemake.config["year"],
         False,
     )
-
+  
     create_microgrid_shapes(
         snakemake.config["microgrids_list"],
         snakemake.output["microgrid_shapes"],
     )
 
-estimate_microgrid_population(
-    snakemake.config["load"]["scaling_factor"],
-    worldpop_path,
-    snakemake.output["microgrid_shapes"],
-    sample_profile,
-    snakemake.output["electric_load"],
+    estimate_microgrid_population(
+        n,
+        snakemake.config["load"]["scaling_factor"],
+        worldpop_path,
+        snakemake.output["microgrid_shapes"],
+        sample_profile,
+        snakemake.output["electric_load"],
 )
 
-create_bus_regions(
-    snakemake.config["microgrids_list"],
-    snakemake.output["microgrid_bus_shapes"],
+    create_bus_regions(
+        snakemake.config["microgrids_list"],
+        snakemake.output["microgrid_bus_shapes"],
 )

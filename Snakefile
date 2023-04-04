@@ -56,6 +56,7 @@ subworkflow pypsaearth:
 rule build_demand:
     input:
         sample_profile=PROFILE,
+        create_network="networks/base.nc",
         # WorldPop folder is downloaded using pypsa-earth and loaded here
     output:
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
