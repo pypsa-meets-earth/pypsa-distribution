@@ -2,13 +2,14 @@
 import logging
 import os
 
-import matplotlib.pyplot as plt
+import os
+import pypsa
 import numpy as np
 import pandas as pd
-import pypsa
+import matplotlib.pyplot as plt
+
 from _helpers_dist import configure_logging, sets_path_to_root, read_geojson
 from scipy.spatial import Delaunay
-from shapely.geometry import shape
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -28,11 +29,6 @@ def create_network():
 
     # Return the created network
     return n
-
-import os
-import json
-import geopandas as gpd
-from shapely.geometry import shape
 
 
 def create_microgrid_network(n, input_file):
@@ -131,6 +127,6 @@ if __name__ == "__main__":
 
     create_microgrid_network(n, snakemake.input["microgrids_buildings"])
 
-    plot_microgrid_network(n)
+    #plot_microgrid_network(n)
 
     n.export_to_netcdf(snakemake.output[0])

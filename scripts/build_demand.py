@@ -40,6 +40,7 @@ from _helpers_dist import (
     configure_logging,
     sets_path_to_root,
     two_2_three_digits_country,
+    save_to_geojson
 )
 from rasterio.io import MemoryFile
 from shapely.geometry import Polygon
@@ -82,11 +83,7 @@ def create_microgrid_shapes(microgrids_list, output_path):
         {"name": microgrid_names, "geometry": microgrid_shapes}
     )
 
-    output_dict = json.loads(microgrid_gdf.to_json())
-    output_json = json.dumps(output_dict, indent=4)
-
-    with open(output_path, "w") as f:
-        f.write(output_json)
+    save_to_geojson(microgrid_gdf, output_path)
 
 
 def get_WorldPop_path(
@@ -125,7 +122,7 @@ def get_WorldPop_path(
 
 
 def estimate_microgrid_population(
-    p, raster_path, shapes_path, sample_profile, output_prefix, output_file
+    p, raster_path, shapes_path, sample_profile, output_file
 ):
     # Read the sample profile of electricity demand and extract the column corrisponding to the electric load
     per_unit_load = pd.read_csv(sample_profile)["0"] / p
@@ -133,7 +130,6 @@ def estimate_microgrid_population(
     # Dataframe of the load
     microgrid_load = pd.DataFrame()
 
-    number_microgrids = 3  # len(os.listdir("resources/masked_files"))
     # Load the GeoJSON file with the shapes to mask the raster
     shapes = gpd.read_file(shapes_path)
 
@@ -152,13 +148,9 @@ def estimate_microgrid_population(
                 }
             )
 
-        with MemoryFile() as memfile:
-            with memfile.open(**out_meta) as dest:
-                dest.write(masked)
+        pop_microgrid = masked[masked >= 0].sum()
 
-                pop_microgrid = masked[masked >= 0].sum()
-
-                microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
+        microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
 
     # Save the microgrid load to the specified output file
     microgrid_load.to_csv(output_file, index=False)
@@ -254,7 +246,6 @@ estimate_microgrid_population(
     worldpop_path,
     snakemake.output["microgrid_shapes"],
     sample_profile,
-    "mask",
     snakemake.output["electric_load"],
 )
 
