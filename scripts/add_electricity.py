@@ -38,14 +38,14 @@ The rule :mod:`add_electricity` takes as input the network generated in the rule
 
 import os
 
+import geopandas
 import numpy as np
 import pandas as pd
-from shapely.geometry import Polygon
 import powerplantmatching as pm
-import geopandas
 import pypsa
 import xarray as xr
 from _helpers_dist import configure_logging, sets_path_to_root
+from shapely.geometry import Polygon
 
 idx = pd.IndexSlice
 
@@ -195,7 +195,7 @@ def add_bus_at_center(n, number_microgrids):
         coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
         polygon = Polygon(coords)
         s = geopandas.GeoSeries(polygon)
-        s=s.centroid
+        s = s.centroid
 
         # Create a new bus at the centroid
         center_bus_name = f"new_bus_{microgrid_id}"
@@ -405,9 +405,7 @@ if __name__ == "__main__":
         Nyears,
     )
 
-
-    add_bus_at_center(n, 
-                      snakemake.config["microgrids_list"])
+    add_bus_at_center(n, snakemake.config["microgrids_list"])
 
     # attach_wind_and_solar(
     #     n,
