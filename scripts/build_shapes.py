@@ -1,13 +1,10 @@
+# -*- coding: utf-8 -*-
 import logging
 import os
 
 import geopandas as gpd
 import pandas as pd
-from _helpers_dist import (
-    configure_logging,
-    save_to_geojson,
-    sets_path_to_root,
-)
+from _helpers_dist import configure_logging, save_to_geojson, sets_path_to_root
 from shapely.geometry import Polygon
 
 _logger = logging.getLogger(__name__)

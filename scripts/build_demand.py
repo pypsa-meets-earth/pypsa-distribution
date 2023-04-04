@@ -37,7 +37,7 @@ import rasterio
 import rasterio.mask
 from _helpers_dist import (
     configure_logging,
-        sets_path_to_root,
+    sets_path_to_root,
     two_2_three_digits_country,
 )
 
@@ -78,7 +78,6 @@ def get_WorldPop_path(
         "WorldPop",
         f"{three_digits_code.lower()}_ppp_{year}_UNadj_constrained.tif",
     )  # Input filepath tif
-
 
 
 def estimate_microgrid_population(
@@ -150,4 +149,4 @@ if __name__ == "__main__":
         snakemake.input["microgrid_shapes"],
         sample_profile,
         snakemake.output["electric_load"],
-)
+    )
