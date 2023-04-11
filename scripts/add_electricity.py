@@ -407,41 +407,41 @@ if __name__ == "__main__":
 
     add_bus_at_center(n, snakemake.config["microgrids_list"])
 
-    # attach_wind_and_solar(
-    #     n,
-    #     costs,
-    #     snakemake.config["microgrids_list"],
-    #     snakemake.input,
-    #     snakemake.config["tech_modelling"]["general_vre"],
-    #     snakemake.config["electricity"]["extendable_carriers"],
-    # )
+    attach_wind_and_solar(
+        n,
+        costs,
+        snakemake.config["microgrids_list"],
+        snakemake.input,
+        snakemake.config["tech_modelling"]["general_vre"],
+        snakemake.config["electricity"]["extendable_carriers"],
+    )
 
-    # conventional_inputs = {
-    #     k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
-    # }
+    conventional_inputs = {
+        k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
+    }
 
-    # attach_conventional_generators(
-    #     n,
-    #     costs,
-    #     ppl,
-    #     snakemake.config["electricity"]["conventional_carriers"],
-    #     snakemake.config["electricity"]["extendable_carriers"],
-    #     snakemake.config.get("conventional", {}),
-    #     conventional_inputs,
-    # )
+    attach_conventional_generators(
+        n,
+        costs,
+        ppl,
+        snakemake.config["electricity"]["conventional_carriers"],
+        snakemake.config["electricity"]["extendable_carriers"],
+        snakemake.config.get("conventional", {}),
+        conventional_inputs,
+    )
 
-    # attach_storageunits(
-    #     n,
-    #     costs,
-    #     snakemake.config["microgrids_list"],
-    #     snakemake.config["tech_modelling"]["storage_techs"],
-    #     snakemake.config["electricity"]["extendable_carriers"],
-    # )
+    attach_storageunits(
+        n,
+        costs,
+        snakemake.config["microgrids_list"],
+        snakemake.config["tech_modelling"]["storage_techs"],
+        snakemake.config["electricity"]["extendable_carriers"],
+    )
 
-    # attach_load(
-    #     n,
-    #     load_file,
-    #     snakemake.config["tech_modelling"]["load_carriers"],
-    # )
+    attach_load(
+        n,
+        load_file,
+        snakemake.config["tech_modelling"]["load_carriers"],
+    )
 
     n.export_to_netcdf(snakemake.output[0])
