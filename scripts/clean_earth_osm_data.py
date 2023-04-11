@@ -3,9 +3,9 @@
 # TODO: Add docstring
 
 import json
-import geojson
 import os
 
+import geojson
 import matplotlib.pyplot as plt
 import numpy as np
 from _helpers_dist import configure_logging, sets_path_to_root
@@ -13,7 +13,6 @@ from shapely.geometry import Point, Polygon
 
 
 def combine_geojson_files(folder_input_path, output_file):
-    
     features = []
 
     for filename in os.listdir(folder_input_path):
@@ -83,8 +82,10 @@ if __name__ == "__main__":
         sets_path_to_root("pypsa-distribution")
 
     configure_logging(snakemake)
-      
-    combine_geojson_files(snakemake.input["folder_input_path"], snakemake.output["buildings_geojson"])
+
+    combine_geojson_files(
+        snakemake.input["folder_input_path"], snakemake.output["buildings_geojson"]
+    )
 
     extract_points_inside_microgrids(
         snakemake.output["buildings_geojson"],

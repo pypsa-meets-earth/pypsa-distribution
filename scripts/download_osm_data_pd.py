@@ -86,6 +86,7 @@ def convert_iso_to_geofk(iso_code, iso_coding=True, convert_dict=iso_to_geofk_di
     else:
         return iso_code
 
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers_dist import mock_snakemake, sets_path_to_root
@@ -97,17 +98,23 @@ if __name__ == "__main__":
 
     run = snakemake.config.get("run", {})
     # RDIR = run["name"] + "/" if run.get("name") else ""
-    store_path_resources = Path.joinpath(Path().cwd(), "resources","osm", "raw")
+    store_path_resources = Path.joinpath(Path().cwd(), "resources", "osm", "raw")
     store_path_data = Path.joinpath(Path().cwd(), "data", "osm")
     country_list = country_list_to_geofk(snakemake.config["countries"])
 
     eo.get_osm_data(
         primary_name="building",
         region_list=country_list,
-        feature_list=["apartments",
-            "barracks", "bungalow", "cabin",
-            "detached", "dormitory",
-            "farm", "ger", "hotel",
+        feature_list=[
+            "apartments",
+            "barracks",
+            "bungalow",
+            "cabin",
+            "detached",
+            "dormitory",
+            "farm",
+            "ger",
+            "hotel",
             # "house", "residential", "semidetached_house",
             # "stilt_house", "terrace", "tree_house", "industrial", "commercial",
             # "kiosk", "office", "retail", "supermarket", "warehouse", "cathedral", "chapel",
@@ -115,30 +122,33 @@ if __name__ == "__main__":
             # "synagogue", "temple", "bakehouse", "bridge", "civic", "college", "fire_station",
             # "government", "gatehouse", "hospital", "kindergarten", "public", "school", "toilets",
             # "train_station", "transportation", "university"
-            ],
+        ],
         update=False,
         mp=True,
         data_dir=store_path_data,
         out_format=["geojson"],
         out_aggregate=True,
     )
-    
+
     out_path = Path.joinpath(store_path_data, "out")
-    names = ["apartmentss", 
-            #"barrackss", 
-            "bungalows", "cabins",
-            "detacheds", "dormitorys",
-            "farms", 
-            #"gers", 
-            "hotels", 
-            # "houses", "residentials", "semidetached_houses",
-            # "stilt_houses", "terraces", "tree_houses", "industrials", "commercials",
-            # "kiosks", "offices", "retails", "supermarkets", "warehouses", "cathedrals", "chapels",
-            # "churchs", "kingdom_halls", "monasterys", "mosques", "presbiterys", "religious", "shrines",
-            # "synagogues", "temple", "bakehouses", "bridges", "civics", "colleges", "fire_stations",
-            # "governments", "gatehouses", "hospitals", "kindergartens", "publics", "schools", "toiletss",
-            # "train_stations", "transportations", "universitys"
-            ]
+    names = [
+        "apartmentss",
+        # "barrackss",
+        "bungalows",
+        "cabins",
+        "detacheds",
+        "dormitorys",
+        "farms",
+        # "gers",
+        "hotels",
+        # "houses", "residentials", "semidetached_houses",
+        # "stilt_houses", "terraces", "tree_houses", "industrials", "commercials",
+        # "kiosks", "offices", "retails", "supermarkets", "warehouses", "cathedrals", "chapels",
+        # "churchs", "kingdom_halls", "monasterys", "mosques", "presbiterys", "religious", "shrines",
+        # "synagogues", "temple", "bakehouses", "bridges", "civics", "colleges", "fire_stations",
+        # "governments", "gatehouses", "hospitals", "kindergartens", "publics", "schools", "toiletss",
+        # "train_stations", "transportations", "universitys"
+    ]
 
     format = ["geojson"]
 
