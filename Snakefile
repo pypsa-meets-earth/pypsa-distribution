@@ -156,69 +156,68 @@ rule add_electricity:
     script:
         "scripts/add_electricity.py"
 
-rule download_osm_data_pd:
-    output:
-        apartments="resources/osm/raw/all_raw_apartmentss.geojson",
-        barracks="resources/osm/raw/all_raw_barrackss.geojson",
-        bungalows="resources/osm/raw/all_raw_bungalows.geojson",
-        cabins="resources/osm/raw/all_raw_cabins.geojson",
-        detacheds="resources/osm/raw/all_raw_detacheds.geojson",
-        dormitorys="resources/osm/raw/all_raw_dormitorys.geojson",
-        farms="resources/osm/raw/all_raw_farms.geojson", 
-        gers="resources/osm/raw/all_raw_gers.geojson",
-        hotels="resources/osm/raw/all_raw_hotels.geojson", 
-        # houses="resources/osm/raw/all_raw_houses", 
-        # residentials="resources/osm/raw/all_raw_residentials",
-        # semidetached_houses="resources/osm/raw/all_raw_semidetached_houses",
-        # stilt_houses="resources/osm/raw/all_raw_stilt_houses", 
-        # terraces="resources/osm/raw/all_raw_terraces",
-        # tree_houses="resources/osm/raw/all_raw_tree_houses", 
-        # industrials="resources/osm/raw/all_raw_industrials",
-        # commercials="resources/osm/raw/all_raw_commercials",
-        # kiosks="resources/osm/raw/all_raw_kiosks",
-        # offices="resources/osm/raw/all_raw_offices",
-        # retails="resources/osm/raw/all_raw_retails", 
-        # supermarkets="resources/osm/raw/all_raw_supermarkets",
-        # warehouses="resources/osm/raw/all_raw_warehouses", 
-        # cathedrals="resources/osm/raw/all_raw_cathedrals", 
-        # chapels="resources/osm/raw/all_raw_chapels",
-        # churchs="resources/osm/raw/all_raw_churchs", 
-        # halls="resources/osm/raw/all_raw_kingdom_halls", 
-        # monasterys="resources/osm/raw/all_raw_monasterys",
-        # mosques="resources/osm/raw/all_raw_mosques", 
-        # presbiterys="resources/osm/raw/all_raw_presbiterys", 
-        # religiouss="resources/osm/raw/all_raw_religiouss",
-        # shrines="resources/osm/raw/all_raw_shrines",
-        # synagogues="resources/osm/raw/all_raw_synagogues", 
-        # temples="resources/osm/raw/all_raw_temples", 
-        # bakehouses="resources/osm/raw/all_raw_bakehouses", 
-        # bridges="resources/osm/raw/all_raw_bridges", 
-        # civics="resources/osm/raw/all_raw_civics", 
-        # colleges="resources/osm/raw/all_raw_colleges",
-        # fire_stations="resources/osm/raw/all_raw_fire_stations",
-        # governments="resources/osm/raw/all_raw_governments", 
-        # gatehouses="resources/osm/raw/all_raw_gatehouses", 
-        # hospitals="resources/osm/raw/all_raw_hospitals",
-        # kindergartens="resources/osm/raw/all_raw_kindergartens",
-        # publics="resources/osm/raw/all_raw_publics",
-        # schools="resources/osm/raw/all_raw_schools",
-        # toiletss="resources/osm/raw/all_raw_toiletss",
-        # train_stations="resources/osm/raw/all_raw_train_stations",
-        # transportations="resources/osm/raw/all_raw_transportations", 
-        # universitys="resources/osm/raw/all_raw_universitys",
+# rule download_osm_data_pd:
+#     output:
+#         apartments="resources/osm/raw/all_raw_apartmentss.geojson",
+#         barracks="resources/osm/raw/all_raw_barrackss.geojson",
+#         bungalows="resources/osm/raw/all_raw_bungalows.geojson",
+#         cabins="resources/osm/raw/all_raw_cabins.geojson",
+#         detacheds="resources/osm/raw/all_raw_detacheds.geojson",
+#         dormitorys="resources/osm/raw/all_raw_dormitorys.geojson",
+#         farms="resources/osm/raw/all_raw_farms.geojson", 
+#         gers="resources/osm/raw/all_raw_gers.geojson",
+#         hotels="resources/osm/raw/all_raw_hotels.geojson", 
+#         # houses="resources/osm/raw/all_raw_houses", 
+#         # residentials="resources/osm/raw/all_raw_residentials",
+#         # semidetached_houses="resources/osm/raw/all_raw_semidetached_houses",
+#         # stilt_houses="resources/osm/raw/all_raw_stilt_houses", 
+#         # terraces="resources/osm/raw/all_raw_terraces",
+#         # tree_houses="resources/osm/raw/all_raw_tree_houses", 
+#         # industrials="resources/osm/raw/all_raw_industrials",
+#         # commercials="resources/osm/raw/all_raw_commercials",
+#         # kiosks="resources/osm/raw/all_raw_kiosks",
+#         # offices="resources/osm/raw/all_raw_offices",
+#         # retails="resources/osm/raw/all_raw_retails", 
+#         # supermarkets="resources/osm/raw/all_raw_supermarkets",
+#         # warehouses="resources/osm/raw/all_raw_warehouses", 
+#         # cathedrals="resources/osm/raw/all_raw_cathedrals", 
+#         # chapels="resources/osm/raw/all_raw_chapels",
+#         # churchs="resources/osm/raw/all_raw_churchs", 
+#         # halls="resources/osm/raw/all_raw_kingdom_halls", 
+#         # monasterys="resources/osm/raw/all_raw_monasterys",
+#         # mosques="resources/osm/raw/all_raw_mosques", 
+#         # presbiterys="resources/osm/raw/all_raw_presbiterys", 
+#         # religiouss="resources/osm/raw/all_raw_religiouss",
+#         # shrines="resources/osm/raw/all_raw_shrines",
+#         # synagogues="resources/osm/raw/all_raw_synagogues", 
+#         # temples="resources/osm/raw/all_raw_temples", 
+#         # bakehouses="resources/osm/raw/all_raw_bakehouses", 
+#         # bridges="resources/osm/raw/all_raw_bridges", 
+#         # civics="resources/osm/raw/all_raw_civics", 
+#         # colleges="resources/osm/raw/all_raw_colleges",
+#         # fire_stations="resources/osm/raw/all_raw_fire_stations",
+#         # governments="resources/osm/raw/all_raw_governments", 
+#         # gatehouses="resources/osm/raw/all_raw_gatehouses", 
+#         # hospitals="resources/osm/raw/all_raw_hospitals",
+#         # kindergartens="resources/osm/raw/all_raw_kindergartens",
+#         # publics="resources/osm/raw/all_raw_publics",
+#         # schools="resources/osm/raw/all_raw_schools",
+#         # toiletss="resources/osm/raw/all_raw_toiletss",
+#         # train_stations="resources/osm/raw/all_raw_train_stations",
+#         # transportations="resources/osm/raw/all_raw_transportations", 
+#         # universitys="resources/osm/raw/all_raw_universitys",
 
-        #houseboat cancelled
-    log:
-        "logs/download_osm_data_pd.log",
-    benchmark:
-        "benchmarks/download_osm_data_pd"
-    script:
-        "scripts/download_osm_data_pd.py"
+#         #houseboat cancelled
+#     log:
+#         "logs/download_osm_data_pd.log",
+#     benchmark:
+#         "benchmarks/download_osm_data_pd"
+#     script:
+#         "scripts/download_osm_data_pd.py"
 
 rule clean_earth_osm_data:
     input:
         #buildings_json="resources/buildings/buildings.json",
-        folder_input_path="resources/osm/raw",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
     output:
         buildings_geojson="resources/buildings/buildings.geojson",
