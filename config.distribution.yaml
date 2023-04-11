@@ -100,10 +100,10 @@ microgrids_list:  #MICROGRIDS IN NIGERIA
     lat_max: 8.9905
 
   microgrid3:
-    lon_min: 3.58116
-    lon_max: 4.10333
-    lat_min: 6.5402
-    lat_max: 7.72474
+    lon_min: 12.18116
+    lon_max: 13.54333
+    lat_min: 12.0402
+    lat_max: 12.12474
 
 # microgrids_list:  #MICROGRIDS IN SIERRA LEONE
 #   microgridA:
