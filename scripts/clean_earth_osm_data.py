@@ -13,7 +13,7 @@ from shapely.geometry import Point, Polygon
 
 
 def combine_geojson_files(output_file):
-    folder_input_path="resources/osm/raw"
+    folder_input_path = "resources/osm/raw"
     features = []
 
     for filename in os.listdir(folder_input_path):
@@ -84,8 +84,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    combine_geojson_files(snakemake.output["buildings_geojson"]
-    )
+    combine_geojson_files(snakemake.output["buildings_geojson"])
 
     extract_points_inside_microgrids(
         snakemake.output["buildings_geojson"],
