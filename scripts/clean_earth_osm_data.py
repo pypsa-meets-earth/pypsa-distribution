@@ -5,7 +5,6 @@
 import json
 import os
 
-import geojson
 import matplotlib.pyplot as plt
 import numpy as np
 from _helpers_dist import configure_logging, sets_path_to_root
