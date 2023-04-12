@@ -199,7 +199,13 @@ def add_bus_at_center(n, number_microgrids):
 
         # Create a new bus at the centroid
         center_bus_name = f"new_bus_{microgrid_id}"
-        n.add("Bus", center_bus_name, x=float(s.x.iloc[0]), y=float(s.y.iloc[0]), v_nom=0.220)
+        n.add(
+            "Bus",
+            center_bus_name,
+            x=float(s.x.iloc[0]),
+            y=float(s.y.iloc[0]),
+            v_nom=0.220,
+        )
 
 
 def attach_wind_and_solar(
