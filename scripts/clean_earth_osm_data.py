@@ -31,21 +31,23 @@ def combine_geojson_files(output_file):
     with open(output_file, "w") as f:
         json.dump(feature_collection, f)
 
+
 def remove_duplicates(input_file, output_file):
     with open(input_file) as f:
         data = json.load(f)
 
     features = []
     ids = set()
-    for feature in data['features']:
-        if feature["properties"]['id'] not in ids:
+    for feature in data["features"]:
+        if feature["properties"]["id"] not in ids:
             features.append(feature)
-            ids.add(feature["properties"]['id'])
+            ids.add(feature["properties"]["id"])
 
-    data['features'] = features
+    data["features"] = features
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         json.dump(data, f)
+
 
 def extract_points_inside_microgrids(
     input_building_file, input_microgrid_file, output_file
@@ -100,7 +102,9 @@ if __name__ == "__main__":
 
     combine_geojson_files(snakemake.output["buildings_geojson"])
 
-    remove_duplicates(snakemake.output["buildings_geojson"], snakemake.output["buildings_geojson"])
+    remove_duplicates(
+        snakemake.output["buildings_geojson"], snakemake.output["buildings_geojson"]
+    )
 
     extract_points_inside_microgrids(
         snakemake.output["buildings_geojson"],
