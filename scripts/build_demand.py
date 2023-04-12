@@ -80,10 +80,8 @@ def get_WorldPop_path(
     )  # Input filepath tif
 
 
-def estimate_microgrid_population(
-    n, p, raster_path, shapes_path, sample_profile, output_file
-):
-    # Read the sample profile of electricity demand and extract the column corrisponding to the electric load
+def estimate_microgrid_population(n, p, raster_path, shapes_path, sample_profile, output_file):
+    # Read the sample profile of electricity demand and extract the column corresponding to the electric load
     per_unit_load = pd.read_csv(sample_profile)["0"] / p
 
     # Dataframe of the load
@@ -109,7 +107,8 @@ def estimate_microgrid_population(
 
         pop_microgrid = masked[masked >= 0].sum()
 
-        microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
+        col_name = "new_bus_microgrid_" + str(i+1)
+        microgrid_load[col_name] = per_unit_load * pop_microgrid
 
     # Save the microgrid load to a CSV file with snapshots index
     microgrid_load.insert(0, "snapshots", n.snapshots)
