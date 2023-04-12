@@ -316,7 +316,7 @@ def attach_conventional_generators(
         build_year=ppl.datein.fillna(0).astype(int),
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
     )
-    
+
     for carrier in conventional_config:
         # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
