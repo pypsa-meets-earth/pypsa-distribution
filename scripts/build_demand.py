@@ -139,7 +139,7 @@ if __name__ == "__main__":
         snakemake.config["countries"][
             0
         ],  # TODO: this needs fix to generalize the countries
-        snakemake.config["year"],
+        snakemake.config["build_shape_options"]["year"],
         False,
     )
 
