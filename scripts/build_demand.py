@@ -27,55 +27,22 @@ The rule :mod:`build_demand` contains functions that are used to create a shape 
 the population. Then the population is multiplied for the per person load and the microgrid load is then obtained. The process applies to all the microgrids specified in config.yaml.
 """
 
-import json
 import logging
 import os
 
 import geopandas as gpd
 import pandas as pd
+import pypsa
 import rasterio
 import rasterio.mask
-import requests
 from _helpers_dist import (
     configure_logging,
     sets_path_to_root,
     two_2_three_digits_country,
 )
-from shapely.geometry import Polygon
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
-
-
-def create_microgrid_shapes(microgrids_list, output_path):
-    """
-    This function creates a rectangular shape of the microgrid and saves it as a .geojson file.
-    The shape is defined by the coordinates of the angles of the rectangle.
-    The resulting file is saved to the specified output_path.
-    """
-
-    microgrids_list = microgrids_list
-    microgrids_list_df = pd.DataFrame(microgrids_list)
-
-    microgrid_shapes = []
-    microgrid_names = []
-
-    for col in range(len(microgrids_list_df.columns)):
-        values = microgrids_list_df.iloc[:, col]
-
-        # Definition of the vertixes of the rectangle
-        Top_left = (values[0], values[3])
-        Top_right = (values[1], values[3])
-        Bottom_right = (values[1], values[2])
-        Bottom_left = (values[0], values[2])
-
-        microgrid_shape = Polygon(
-            [Top_left, Top_right, Bottom_right, Bottom_left, Top_left]
-        )
-
-        microgrid_name = f"microgrid_{col+1}"
-        microgrid_shapes.append(microgrid_shape)
-        microgrid_names.append(microgrid_name)
 
 
 def get_WorldPop_path(
@@ -85,7 +52,6 @@ def get_WorldPop_path(
 ):
     """
     Download tiff file for each country code using the standard method from worldpop datastore with 1kmx1km resolution.
-
     Parameters
     ----------
     country_code : str
@@ -108,24 +74,19 @@ def get_WorldPop_path(
         os.getcwd(),
         "pypsa-earth",
         "data",
-        "Worldpop",
+        "WorldPop",
         f"{three_digits_code.lower()}_ppp_{year}_UNadj_constrained.tif",
     )  # Input filepath tif
 
 
-def create_masked_file(raster_path, shapes_path, output_prefix):
-    """
-    Masks a raster with shapes contained in the GeoJSON file "resources/shapes/microgrid_shapes.geojson" and saves the resulting masked rasters.
-    Parameters:
-    -----------
-    raster_path: str
-        Path to the raster file to mask.
-    shapes_path: str
-        Path to the GeoJSON file containing the shapes to use for masking the raster.
-    output_prefix: str
-        Prefix to use for the output file names. The output files will be named
-        "{output_prefix}_{shape_index}.tif"
-    """
+def estimate_microgrid_population(
+    n, p, raster_path, shapes_path, sample_profile, output_file
+):
+    # Read the sample profile of electricity demand and extract the column corresponding to the electric load
+    per_unit_load = pd.read_csv(sample_profile)["0"] / p
+
+    # Dataframe of the load
+    microgrid_load = pd.DataFrame()
 
     # Load the GeoJSON file with the shapes to mask the raster
     shapes = gpd.read_file(shapes_path)
@@ -145,35 +106,15 @@ def create_masked_file(raster_path, shapes_path, output_prefix):
                 }
             )
 
-        out_raster_path = f"{output_prefix}_{i+1}.tif"
+        pop_microgrid = masked[masked >= 0].sum()
 
-        # Write the masked raster to a file
-        with rasterio.open(out_raster_path, "w", **out_meta) as dest:
-            dest.write(masked)
+        col_name = "new_bus_microgrid_" + str(i + 1)
+        microgrid_load[col_name] = per_unit_load * pop_microgrid
 
-
-def estimate_microgrid_population(p, sample_profile, output_file):
-    """
-    This function estimates the population of the microgrids based on mask files and a sample profile of electricity demand.
-    """
-
-    # Read the sample profile of electricity demand and extract the column corrisponding to the electric load
-    per_unit_load = pd.read_csv(sample_profile)["0"] / p
-
-    # Dataframe of the load
-    microgrid_load = pd.DataFrame()
-
-    number_microgrids = len(os.listdir("resources/masked_files"))
-
-    for i in range(number_microgrids):
-        with rasterio.open(f"resources/masked_files/country_masked_{i+1}.tif") as fp:
-            data = fp.read(1)
-            pop_microgrid = data[data >= 0].sum()
-
-            microgrid_load[str(i + 1)] = per_unit_load * pop_microgrid
-
-    # Save the microgrid load to the specified output file
-    microgrid_load.to_csv(output_file, index=False)
+    # Save the microgrid load to a CSV file with snapshots index
+    microgrid_load.insert(0, "snapshots", n.snapshots)
+    microgrid_load.set_index("snapshots", inplace=True)
+    microgrid_load.to_csv(output_file, index=True)
 
 
 if __name__ == "__main__":
@@ -186,6 +127,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
+    n = pypsa.Network(snakemake.input.create_network)
     sample_profile = snakemake.input["sample_profile"]
 
     assert (
@@ -196,23 +138,15 @@ if __name__ == "__main__":
         snakemake.config["countries"][
             0
         ],  # TODO: this needs fix to generalize the countries
-        snakemake.config["year"],
+        snakemake.config["build_shape_options"]["year"],
         False,
     )
 
-    create_microgrid_shapes(
-        snakemake.config["microgrids_list"],
-        snakemake.output["microgrid_shapes"],
-    )
-
-    create_masked_file(
-        worldpop_path,
-        snakemake.output["microgrid_shapes"],
-        snakemake.output["country_masked"],
-    )
-
     estimate_microgrid_population(
+        n,
         snakemake.config["load"]["scaling_factor"],
+        worldpop_path,
+        snakemake.input["microgrid_shapes"],
         sample_profile,
         snakemake.output["electric_load"],
     )

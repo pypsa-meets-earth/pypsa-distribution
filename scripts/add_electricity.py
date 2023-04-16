@@ -16,7 +16,6 @@ Relevant Settings
         general_vre:
         storage_techs:
         load_carries:
-
 Inputs
 ------
 - ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
@@ -28,23 +27,22 @@ Inputs
 Outputs
 -------
 - ``networks/elec.nc``:
-
 Description
 -----------
 The rule :mod:`add_electricity` takes as input the network generated in the rule "create_network" and adds to it both renewable and conventional generation, storage units and load, resulting in a network that is stored in ``networks/elec.nc``. 
-
 """
 
 
 import os
 
-import matplotlib.pyplot as plt
+import geopandas
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
 from _helpers_dist import configure_logging, sets_path_to_root
+from shapely.geometry import Polygon
 
 idx = pd.IndexSlice
 
@@ -176,51 +174,86 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
     return costs
 
 
+def add_bus_at_center(n, number_microgrids):
+    """
+    Adds a new bus to each network at the center of the existing buses.
+    """
+    number_microgrids = len(number_microgrids.keys())
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+
+    # Iterate over each microgrid
+    for microgrid_id in microgrid_ids:
+        # Select the buses belonging to this microgrid
+        microgrid_buses = n.buses.loc[
+            n.buses.index.str.startswith(f"{microgrid_id}_bus_")
+        ]
+
+        # Create a matrix of bus coordinates
+        coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
+        polygon = Polygon(coords)
+        s = geopandas.GeoSeries(polygon)
+        s = s.centroid
+
+        # Create a new bus at the centroid
+        center_bus_name = f"new_bus_{microgrid_id}"
+        n.add(
+            "Bus",
+            center_bus_name,
+            x=float(s.x.iloc[0]),
+            y=float(s.y.iloc[0]),
+            v_nom=0.220,
+        )
+
+
 def attach_wind_and_solar(
-    n, costs, input_profiles, tech_modelling, extendable_carriers
+    n, costs, number_microgrids, input_profiles, tech_modelling, extendable_carriers
 ):
     """
     This function adds wind and solar generators with the time series "profile_{tech}" to the power network
-
     """
 
     # Add any missing carriers from the costs data to the tech_modelling variable
     _add_missing_carriers_from_costs(n, costs, tech_modelling)
 
-    # Get the index of the buses in the power network
-    buses_i = n.buses.index
+    number_microgrids = len(number_microgrids.keys())
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
 
+    # Iterate over each technology
     for tech in tech_modelling:
+        # Iterate through each microgrid
+        # for microgrid in microgrid_ids: #TODO: review this function
+
         # Open the dataset for the current technology from the input_profiles
         with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
             # If the dataset's "bus" index is empty, skip to the next technology
             if ds.indexes["bus"].empty:
                 continue
 
-            suptech = tech.split("-", 2)[0]
-
-            # Add the wind and solar generators to the power network
-            n.madd(
-                "Generator",
-                ds.indexes["bus"],
-                " " + tech,
-                bus=buses_i,
-                carrier=tech,
-                p_nom_extendable=tech in extendable_carriers["Generator"],
-                p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
-                weight=ds["weight"].to_pandas(),
-                marginal_cost=costs.at[suptech, "marginal_cost"],
-                capital_cost=costs.at[tech, "capital_cost"],
-                efficiency=costs.at[suptech, "efficiency"],
-                p_set=ds["profile"]
-                .transpose("time", "bus")
-                .to_pandas()
-                .reindex(n.snapshots),
-                p_max_pu=ds["profile"]
-                .transpose("time", "bus")
-                .to_pandas()
-                .reindex(n.snapshots),
-            )
+        suptech = tech.split("-", 2)[0]
+        # Add the wind and solar generators to the power network
+        n.madd(
+            "Generator",
+            ds.indexes["bus"],
+            # {microgrid},
+            " " + tech,  # TODO: review indexes
+            # bus=f"new_bus_{microgrid}",
+            bus=ds.indexes["bus"],
+            carrier=tech,
+            p_nom_extendable=tech in extendable_carriers["Generator"],
+            p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
+            weight=ds["weight"].to_pandas(),
+            marginal_cost=costs.at[suptech, "marginal_cost"],
+            capital_cost=costs.at[tech, "capital_cost"],
+            efficiency=costs.at[suptech, "efficiency"],
+            p_set=ds["profile"]
+            .transpose("time", "bus")
+            .to_pandas()
+            .reindex(n.snapshots),
+            p_max_pu=ds["profile"]
+            .transpose("time", "bus")
+            .to_pandas()
+            .reindex(n.snapshots),
+        )
 
 
 def load_powerplants(ppl_fn):
@@ -269,13 +302,13 @@ def attach_conventional_generators(
     # Get the index of the buses in the power network
     buses_i = n.buses.index
 
-    # Add the conventional generators to the power network
+    # Add conventional generators to each bus in the power network (one for microgrid)
 
     n.madd(
         "Generator",
         ppl.index,
         carrier=ppl.carrier,
-        bus=buses_i,
+        bus=ppl.bus,
         p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
         p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
         p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
@@ -302,14 +335,13 @@ def attach_conventional_generators(
                     n.generators.loc[idx].bus.map(bus_values).dropna()
                 )
             else:
-                # Single value affecting all generators of technology k indiscriminantely of country
+                # Single value affecting all generators of technology k indiscriminately of country
                 n.generators.loc[idx, attr] = values
 
 
-def attach_storageunits(n, costs, technologies, extendable_carriers):
+def attach_storageunits(n, costs, number_microgrids, technologies, extendable_carriers):
     """
     This function adds different technologies of storage units to the power network
-
     """
 
     elec_opts = snakemake.config["electricity"]
@@ -318,16 +350,15 @@ def attach_storageunits(n, costs, technologies, extendable_carriers):
     lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
     lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
 
-    buses_i = n.buses.index
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
 
-    # Iterate through each storage technology
+    # Add the storage units to the power network
     for tech in technologies:
-        # Add the storage units to the power network
         n.madd(
             "StorageUnit",
-            buses_i,
+            microgrid_ids,
             " " + tech,
-            bus=buses_i,
+            bus=[f"new_bus_{microgrid}" for microgrid in microgrid_ids],
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
@@ -344,19 +375,11 @@ def attach_storageunits(n, costs, technologies, extendable_carriers):
 
 
 def attach_load(n, load_file, tech_modelling):
-    load = pd.read_csv(load_file).set_index([n.snapshots])
+    # Upload the load csv file
+    demand_df = pd.read_csv(load_file, index_col=0, parse_dates=True)
 
-    # Number of loads
-    n_load = 1
-
-    # Create an index for the loads
-    index = pd.Index(list(range(n_load)))
-
-    # Get the index of the buses in the power network
-    buses_i = n.buses.index
-
-    # Add the load to the power network
-    n.madd("Load", index, bus=buses_i, carrier="AC", p_set=load)
+    # Attach load to the central bus of each microgrid
+    n.madd("Load", demand_df.columns, bus=demand_df.columns, p_set=demand_df)
 
 
 if __name__ == "__main__":
@@ -383,9 +406,12 @@ if __name__ == "__main__":
         Nyears,
     )
 
+    add_bus_at_center(n, snakemake.config["microgrids_list"])
+
     attach_wind_and_solar(
         n,
         costs,
+        snakemake.config["microgrids_list"],
         snakemake.input,
         snakemake.config["tech_modelling"]["general_vre"],
         snakemake.config["electricity"]["extendable_carriers"],
@@ -395,23 +421,28 @@ if __name__ == "__main__":
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     }
 
-    attach_conventional_generators(
-        n,
-        costs,
-        ppl,
-        snakemake.config["electricity"]["conventional_carriers"],
-        snakemake.config["electricity"]["extendable_carriers"],
-        snakemake.config.get("conventional", {}),
-        conventional_inputs,
-    )
+    # attach_conventional_generators(
+    #     n,
+    #     costs,
+    #     ppl,
+    #     snakemake.config["electricity"]["conventional_carriers"],
+    #     snakemake.config["electricity"]["extendable_carriers"],
+    #     snakemake.config.get("conventional", {}),
+    #     conventional_inputs,
+    # )
 
     attach_storageunits(
         n,
         costs,
+        snakemake.config["microgrids_list"],
         snakemake.config["tech_modelling"]["storage_techs"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
 
-    attach_load(n, load_file, snakemake.config["tech_modelling"]["load_carriers"])
+    attach_load(
+        n,
+        load_file,
+        snakemake.config["tech_modelling"]["load_carriers"],
+    )
 
     n.export_to_netcdf(snakemake.output[0])

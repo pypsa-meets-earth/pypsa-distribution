@@ -1,29 +1,17 @@
 # -*- coding: utf-8 -*-
-"""
-Creates a base network with buses
-
-Relevant Settings
------------------
-.. code:: yaml
-    snapshots:
-    microgrids_list
-
-Inputs
-------
-Outputs
--------
-- ``networks/base.nc``
-   
-Description
------------
-This script creates a PyPSA network with as much AC buses as microgrids specified in the file config.yaml
-"""
-
+import logging
 import os
 
+import json
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pypsa
-from _helpers_dist import configure_logging, sets_path_to_root
+from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
+from scipy.spatial import Delaunay
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
 
 
 def create_network():
@@ -42,10 +30,89 @@ def create_network():
     return n
 
 
-def add_buses_to_network(n, number_microgrids):
-    # Add buses to the network based on the number of microgrids
-    for i in range(number_microgrids):
-        n.madd("Bus", [f"bus{i+1}"], carrier="AC", v_nom=0.220)
+import numpy as np
+from scipy.spatial import Delaunay
+import pypsa
+
+def create_microgrid_network(n, input_file, number_microgrids):
+    # Load the GeoJSON file using the read_geojson function
+    
+    with open(input_file) as f:
+        data = json.load(f)
+
+
+    # Keep track of the bus coordinates and microgrid IDs
+    bus_coords = set()
+    number_microgrids = len(number_microgrids.keys())
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+    #microgrid_ids = set()
+
+    # Iterate over each feature in the GeoDataFrame
+    for feature in data["features"][0]:
+        # Get the point geometry
+        point_geom = feature["geometry"]
+
+        # Create a bus at the point location with microgrid ID included in bus name
+        bus_name = f"{feature['properties']['microgrid_id']}_bus_{feature['properties']['id']}"
+        x, y = point_geom["coordinates"][0], point_geom["coordinates"][1]
+
+        # Check for overlapping microgrids and raise an error if happening
+        if (x, y) in bus_coords:
+            raise ValueError(
+                "Overlapping microgrids detected, adjust the coordinates in the config.yaml file"
+            )
+       
+        # Add the bus to the network and update the set of bus coordinates and microgrid IDs
+        n.add("Bus", bus_name, x=x, y=y, v_nom=0.220)
+        bus_coords.add((x, y))
+      
+    # Iterate over each microgrid
+    for microgrid_id in microgrid_ids:
+        # Select the buses belonging to this microgrid
+        microgrid_buses = n.buses.loc[
+            n.buses.index.str.startswith(f"{microgrid_id}_bus_")
+        ]
+
+        # Create a matrix of bus coordinates
+        coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
+        
+        # Create a Delaunay triangulation of the bus coordinates
+        tri = Delaunay(coords)
+        edges = tri.simplices[(tri.simplices < len(coords)).all(axis=1)]
+
+        # Add lines to the network between connected buses in the Delaunay triangulation
+        for i, j, k in edges:
+            bus0 = microgrid_buses.index[i]
+            bus1 = microgrid_buses.index[j]
+            line_name = f"{microgrid_id}_line_{i}_{j}"
+            n.add("Line", line_name, bus0=bus0, bus1=bus1, x=0.01, r=0.1)
+
+
+def plot_microgrid_network(n):
+    # Create a new figure and axis
+    fig, ax = plt.subplots()
+
+    # Plot each bus in the network
+    for bus_name, bus in n.buses.iterrows():
+        ax.plot(bus.x, bus.y, "o", color="blue")
+
+    # Plot each line in the network
+    for line_name, line in n.lines.iterrows():
+        bus0 = n.buses.loc[line.bus0]
+        bus1 = n.buses.loc[line.bus1]
+        ax.plot([bus0.x, bus1.x], [bus0.y, bus1.y], "-", color="black")
+
+    # Set the axis limits to include all buses in the network
+    ax.set_xlim(n.buses.x.min() - 0.1, n.buses.x.max() + 0.1)
+    ax.set_ylim(n.buses.y.min() - 0.1, n.buses.y.max() + 0.1)
+
+    # Set the title and labels for the plot
+    ax.set_title("Networks of the microgrids")
+    ax.set_xlabel("X Coordinate")
+    ax.set_ylabel("Y Coordinate")
+
+    # Show the plot
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -58,9 +125,10 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    number_microgrids = len(snakemake.config["microgrids_list"])
-
     n = create_network()
-    add_buses_to_network(n, number_microgrids)
-    print(n)
+
+    create_microgrid_network(n, snakemake.input["microgrids_buildings"], snakemake.config["microgrids_list"])
+
+    # plot_microgrid_network(n)
+    a=12
     n.export_to_netcdf(snakemake.output[0])

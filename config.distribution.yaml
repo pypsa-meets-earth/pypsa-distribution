@@ -23,8 +23,8 @@ countries: ["NG"]
 year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
 
 snapshots:
-  start: "2013-01-01"
-  end: "2014-01-01"
+  start: "2013-03-01"
+  end: "2013-03-07"
   inclusive: "left" # end is not inclusive
 
 
