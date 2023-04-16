@@ -82,7 +82,7 @@ solving:
     #nhours: 10
   solver:
     name: gurobi
-    
+
 tech_modelling:
   general_vre: ["onwind", "solar"]
   storage_techs: ["lithium", "lead acid"]
