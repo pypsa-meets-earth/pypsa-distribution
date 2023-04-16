@@ -86,25 +86,11 @@ tech_modelling:
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
-microgrids_list:
-  microgridA:
-    lon_min: -11.6807
-    lon_max: -11.3320
-    lat_min: 7.8697
-    lat_max: 7.9905
-
-  microgridB:
-    lon_min: -9.6807
-    lon_max: -9.3320
-    lat_min: 8.8697
-    lat_max: 8.9905
-
-  microgridC:
-    lon_min: -9.1235
-    lon_max: -8.3320
-    lat_min: 8.800
-    lat_max: 9.9905
-
-
+microgrids_list:  #MICROGRIDS IN NIGERIA
+  microgrid1:     #WORKING
+    lon_max: 5.0998
+    lon_min: 6.1700
+    lat_min: 8.2356
+    lat_max: 9.8012
 load:
   scaling_factor: 15000
