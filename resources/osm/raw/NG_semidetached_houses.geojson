@@ -1,0 +1,17 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": 556973183.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 130.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 5.95515977506243, 9.497170506066729 ] } },
+{ "type": "Feature", "properties": { "id": 845377701.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 40.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 9.93881481974922, 9.961010011727902 ] } },
+{ "type": "Feature", "properties": { "id": 845378227.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 60.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 9.939532117582576, 9.960654860383679 ] } },
+{ "type": "Feature", "properties": { "id": 845378238.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 30.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 9.939354037762568, 9.96048172557583 ] } },
+{ "type": "Feature", "properties": { "id": 845378243.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 40.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 9.939473759161887, 9.960445455367259 ] } },
+{ "type": "Feature", "properties": { "id": 845378245.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 50.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 9.93942705, 9.960370649999986 ] } },
+{ "type": "Feature", "properties": { "id": 845378263.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 30.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 9.93897915, 9.960017249999986 ] } },
+{ "type": "Feature", "properties": { "id": 961712156.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 380.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 3.60365855, 6.465110749999978 ] } },
+{ "type": "Feature", "properties": { "id": 1113454264.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 170.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 3.554589216541103, 6.66933904876394 ] } },
+{ "type": "Feature", "properties": { "id": 1132119822.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 80.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 7.00430125, 6.17648955 ] } },
+{ "type": "Feature", "properties": { "id": 1161395587.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 420.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 3.60342880072377, 6.465120040828094 ] } }
+]
+}
