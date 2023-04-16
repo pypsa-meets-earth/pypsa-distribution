@@ -56,11 +56,9 @@ subworkflow pypsaearth:
 rule build_demand:
     input:
         sample_profile=PROFILE,
-        country_shapes=pypsaearth("resources/shapes/country_shapes.geojson"),
-        # WorldPop folder is downloaded using pypsa-earth and loaded here
-    output:
+        create_network="networks/base.nc",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
-        country_masked="resources/masked_files/country_masked",
+    output:
         electric_load="resources/demand/microgrid_load.csv",
     log:
         "logs/build_demand.log",
@@ -73,7 +71,24 @@ rule build_demand:
         "scripts/build_demand.py"
 
 
+rule build_shapes:
+    output:
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+        microgrid_bus_shapes="resources/shapes/microgrid_bus_shapes.geojson",
+    log:
+        "logs/build_shapes.log",
+    benchmark:
+        "benchmarks/build_shapes"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/build_shapes.py"
+
+
 rule create_network:
+    input:
+        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
     output:
         "networks/base.nc",
     log:
@@ -85,6 +100,24 @@ rule create_network:
         mem_mb=3000,
     script:
         "scripts/create_network.py"
+
+
+rule clean_earth_osm_data:
+    input:
+        #buildings_json="resources/buildings/buildings.json",
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+    output:
+        buildings_geojson="resources/buildings/buildings.geojson",
+        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
+    log:
+        "logs/clean_earth_osm_data.log",
+    benchmark:
+        "benchmarks/clean_earth_osm_data"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/clean_earth_osm_data.py"
 
 
 rule build_renewable_profiles:
