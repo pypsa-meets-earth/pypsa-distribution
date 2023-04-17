@@ -7,9 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-from scipy.spatial import Delaunay
-
 from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
+from scipy.spatial import Delaunay
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -84,6 +83,7 @@ def create_microgrid_network(n, input_file, number_microgrids):
             bus1 = microgrid_buses.index[j]
             line_name = f"{microgrid_id}_line_{i}_{j}"
             n.add("Line", line_name, bus0=bus0, bus1=bus1, x=0.01, r=0.1)
+
 
 def add_bus_at_center(n, number_microgrids):
     """
