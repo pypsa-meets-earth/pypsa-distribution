@@ -12,7 +12,6 @@ _logger.setLevel(logging.INFO)
 
 
 def create_microgrid_shapes(microgrids_list, output_path):
-
     """
     Creates rectangular shapes for each microgrid in the list of microgrids in the config.yaml file
     and saves them as a GeoJSON file.
@@ -49,7 +48,6 @@ def create_microgrid_shapes(microgrids_list, output_path):
 
 
 def create_bus_regions(microgrids_list, output_path):
-    
     """
     Creates bus regions for each microgrid in the list of microgrids and saves them as a GeoJSON file.
     """
