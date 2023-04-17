@@ -16,7 +16,6 @@ _logger.setLevel(logging.INFO)
 
 
 def create_network():
-
     """
     Creates a PyPSA network and sets the snapshots for the network
     """
@@ -36,13 +35,12 @@ def create_network():
 
 
 def create_microgrid_network(n, input_file, number_microgrids):
-
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
-    the buildings data, stored in "resources/buildings/microgrids_buildings.geojson". Then the buses are connected together through lines 
+    the buildings data, stored in "resources/buildings/microgrids_buildings.geojson". Then the buses are connected together through lines
     according to the output of a Delaunay Triangulation.
     """
-    # Load the GeoJSON file 
+    # Load the GeoJSON file
 
     with open(input_file) as f:
         data = json.load(f)
@@ -97,9 +95,8 @@ def create_microgrid_network(n, input_file, number_microgrids):
 
 
 def add_bus_at_center(n, number_microgrids):
-
     """
-    Adds a new bus to each network at the center of the existing buses. 
+    Adds a new bus to each network at the center of the existing buses.
     This is the bus to which the generation, the storage and the load will be attached.
     """
     number_microgrids = len(number_microgrids.keys())
@@ -126,9 +123,9 @@ def add_bus_at_center(n, number_microgrids):
             x=float(s.x.iloc[0]),
             y=float(s.y.iloc[0]),
             v_nom=0.220,
-            )
+        )
 
-            # Find the two closest buses to the new bus
+        # Find the two closest buses to the new bus
         closest_buses = microgrid_buses.iloc[
             distance.cdist([(float(s.x.iloc[0]), float(s.y.iloc[0]))], coords).argmin()
         ]
@@ -180,8 +177,7 @@ if __name__ == "__main__":
     n = create_network()
 
     create_microgrid_network(
-        n, snakemake.input["microgrids_buildings"], 
-        snakemake.config["microgrids_list"]
+        n, snakemake.input["microgrids_buildings"], snakemake.config["microgrids_list"]
     )
 
     # plot_microgrid_network(n)
