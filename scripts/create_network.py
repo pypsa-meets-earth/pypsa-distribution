@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
 from scipy.spatial import Delaunay
+
+from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -28,11 +29,6 @@ def create_network():
 
     # Return the created network
     return n
-
-
-import numpy as np
-import pypsa
-from scipy.spatial import Delaunay
 
 
 def create_microgrid_network(n, input_file, number_microgrids):
@@ -88,6 +84,47 @@ def create_microgrid_network(n, input_file, number_microgrids):
             bus1 = microgrid_buses.index[j]
             line_name = f"{microgrid_id}_line_{i}_{j}"
             n.add("Line", line_name, bus0=bus0, bus1=bus1, x=0.01, r=0.1)
+
+def add_bus_at_center(n, number_microgrids):
+    """
+    Adds a new bus to each network at the center of the existing buses.
+    """
+    number_microgrids = len(number_microgrids.keys())
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+
+    # Iterate over each microgrid
+    for microgrid_id in microgrid_ids:
+        # Select the buses belonging to this microgrid
+        microgrid_buses = n.buses.loc[
+            n.buses.index.str.startswith(f"{microgrid_id}_bus_")
+        ]
+
+        # Create a matrix of bus coordinates
+        coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
+        polygon = Polygon(coords)
+        s = geopandas.GeoSeries(polygon)
+        s = s.centroid
+
+        # Create a new bus at the centroid
+        center_bus_name = f"new_bus_{microgrid_id}"
+        n.add(
+            "Bus",
+            center_bus_name,
+            x=float(s.x.iloc[0]),
+            y=float(s.y.iloc[0]),
+            v_nom=0.220,
+        )
+
+        # Find the two closest buses to the new bus
+        closest_buses = microgrid_buses.iloc[
+            distance.cdist([(float(s.x.iloc[0]), float(s.y.iloc[0]))], coords).argmin()
+        ]
+        closest_buses = closest_buses.iloc[[0, 1]]
+
+        # Add lines to connect the new bus to the closest buses
+        for _, bus in closest_buses.iterrows():
+            line_name = f"{microgrid_id}_line_{center_bus_name}_{bus.name}"
+            n.add("Line", line_name, bus0=center_bus_name, bus1=bus.name, x=0.01, r=0.1)
 
 
 def plot_microgrid_network(n):
