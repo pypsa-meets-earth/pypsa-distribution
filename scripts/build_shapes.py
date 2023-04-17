@@ -12,10 +12,10 @@ _logger.setLevel(logging.INFO)
 
 
 def create_microgrid_shapes(microgrids_list, output_path):
+
     """
-    This function creates a rectangular shape of the microgrid and saves it as a .geojson file.
-    The shape is defined by the coordinates of the angles of the rectangle.
-    The resulting file is saved to the specified output_path.
+    Creates rectangular shapes for each microgrid in the list of microgrids in the config.yaml file
+    and saves them as a GeoJSON file.
     """
 
     microgrids_list = microgrids_list
@@ -27,7 +27,7 @@ def create_microgrid_shapes(microgrids_list, output_path):
     for col in range(len(microgrids_list_df.columns)):
         values = microgrids_list_df.iloc[:, col]
 
-        # Definition of the vertixes of the rectangle
+        # Definition of the vertices of the rectangle
         Top_left = (values[0], values[3])
         Top_right = (values[1], values[3])
         Bottom_right = (values[1], values[2])
@@ -49,11 +49,9 @@ def create_microgrid_shapes(microgrids_list, output_path):
 
 
 def create_bus_regions(microgrids_list, output_path):
+    
     """
-    This function creates a geojson shape of the microgrid.
-    The shape is defined by the coordinates of the angles of the rectangle and by another point,
-    individuated by x and y which are the coordinates of the center of the microgrid.
-    The resulting file is saved to the specified output_path.
+    Creates bus regions for each microgrid in the list of microgrids and saves them as a GeoJSON file.
     """
 
     microgrids_list = microgrids_list

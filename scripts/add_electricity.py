@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Adds electrical generators, load and storage units to a base network.
+Adds electrical generators, load and storage units to a each microgrids part of a base network.
 Relevant Settings
 -----------------
 .. code:: yaml
