@@ -174,37 +174,6 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
     return costs
 
 
-def add_bus_at_center(n, number_microgrids):
-    """
-    Adds a new bus to each network at the center of the existing buses.
-    """
-    number_microgrids = len(number_microgrids.keys())
-    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
-
-    # Iterate over each microgrid
-    for microgrid_id in microgrid_ids:
-        # Select the buses belonging to this microgrid
-        microgrid_buses = n.buses.loc[
-            n.buses.index.str.startswith(f"{microgrid_id}_bus_")
-        ]
-
-        # Create a matrix of bus coordinates
-        coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
-        polygon = Polygon(coords)
-        s = geopandas.GeoSeries(polygon)
-        s = s.centroid
-
-        # Create a new bus at the centroid
-        center_bus_name = f"new_bus_{microgrid_id}"
-        n.add(
-            "Bus",
-            center_bus_name,
-            x=float(s.x.iloc[0]),
-            y=float(s.y.iloc[0]),
-            v_nom=0.220,
-        )
-
-
 def attach_wind_and_solar(
     n, costs, number_microgrids, input_profiles, tech_modelling, extendable_carriers
 ):
@@ -406,7 +375,6 @@ if __name__ == "__main__":
         Nyears,
     )
 
-    add_bus_at_center(n, snakemake.config["microgrids_list"])
 
     attach_wind_and_solar(
         n,
