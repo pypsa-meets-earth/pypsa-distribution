@@ -126,8 +126,8 @@ def create_microgrid_network(n, input_file, number_microgrids):
                 c_per_length=11.25,
                 i_nom=0.14,
                 type="24-AL1/4-ST1A 0.4",
-        )
-    
+            )
+
 
 def add_bus_at_center(n, number_microgrids):
     """
