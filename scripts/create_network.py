@@ -75,7 +75,6 @@ def create_microgrid_network(n, input_file, number_microgrids):
     bus_coords = set()
     number_microgrids = len(number_microgrids.keys())
     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
-    # microgrid_ids = set()
 
     # Iterate over each feature in the GeoDataFrame
     for feature in data["features"][0]:
@@ -117,16 +116,18 @@ def create_microgrid_network(n, input_file, number_microgrids):
             bus0 = microgrid_buses.index[i]
             bus1 = microgrid_buses.index[j]
             line_name = f"{microgrid_id}_line_{i}_{j}"
-            # TODO: Review r_per_length and x_per_length values
             n.add(
                 "Line",
                 line_name,
                 bus0=bus0,
                 bus1=bus1,
-                x_per_length=0.01,
-                r_per_length=0.1,
-            )
-
+                x_per_length=0.335,
+                r_per_length=1.2012,
+                c_per_length=11.25,
+                i_nom=0.14,
+                type="24-AL1/4-ST1A 0.4",
+        )
+    
 
 def add_bus_at_center(n, number_microgrids):
     """
@@ -156,7 +157,8 @@ def add_bus_at_center(n, number_microgrids):
             center_bus_name,
             x=float(s.x.iloc[0]),
             y=float(s.y.iloc[0]),
-            v_nom=0.220,
+            i_nom=0.14,
+            type="24-AL1/4-ST1A 0.4",
         )
 
         # Find the two closest buses to the new bus
@@ -168,14 +170,14 @@ def add_bus_at_center(n, number_microgrids):
         # Add lines to connect the new bus to the closest buses
         for _, bus in closest_buses.iterrows():
             line_name = f"{microgrid_id}_line_{center_bus_name}_{bus.name}"
-            # TODO: Review r_per_length and x_per_length values
             n.add(
                 "Line",
                 line_name,
                 bus0=center_bus_name,
                 bus1=bus.name,
-                r_per_length=1,
-                x_per_length=0.1,
+                x_per_length=0.335,
+                r_per_length=1.2012,
+                c_per_length=11.25,
             )
 
 
