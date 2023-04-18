@@ -134,8 +134,15 @@ def add_bus_at_center(n, number_microgrids):
         # Add lines to connect the new bus to the closest buses
         for _, bus in closest_buses.iterrows():
             line_name = f"{microgrid_id}_line_{center_bus_name}_{bus.name}"
-            #TODO: Review r_per_length and x_per_length values
-            n.add("Line", line_name, bus0=center_bus_name, bus1=bus.name, r_per_length=1, x_per_length=0.1)
+            # TODO: Review r_per_length and x_per_length values
+            n.add(
+                "Line",
+                line_name,
+                bus0=center_bus_name,
+                bus1=bus.name,
+                r_per_length=1,
+                x_per_length=0.1,
+            )
 
 
 def plot_microgrid_network(n):
@@ -182,7 +189,7 @@ if __name__ == "__main__":
     )
 
     # plot_microgrid_network(n)
-    n.buses 
+    n.buses
 
     if "new_bus_microgrid_1" in n.buses.index:
         print("The bus new_bus_microgrid_1 exists in the network.")
