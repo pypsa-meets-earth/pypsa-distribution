@@ -1,5 +1,31 @@
 # -*- coding: utf-8 -*-
 
+"""
+Creates a network for each microgrid specified in the config.yaml file
+
+Relevant Settings
+-----------------
+.. code:: yaml
+
+    snapshots:
+
+    microgrids_list:
+
+Inputs
+------
+- ``resources/buildings/microgrids_buildings.geojson``: .geojson file of the buildings corresponding to each microgrids; 
+
+Outputs
+-------
+- ``networks/base.nc``
+
+Description
+-----------
+Creates a network for each microgrid with buses corresponding to the buildings. 
+The buses are then connected through lines to form a grid, according to a Delaunay triangulation 
+
+"""
+
 import json
 import logging
 import os
@@ -91,7 +117,8 @@ def create_microgrid_network(n, input_file, number_microgrids):
             bus0 = microgrid_buses.index[i]
             bus1 = microgrid_buses.index[j]
             line_name = f"{microgrid_id}_line_{i}_{j}"
-            n.add("Line", line_name, bus0=bus0, bus1=bus1, x=0.01, r=0.1)
+            #TODO: Review r_per_length and x_per_length values
+            n.add("Line", line_name, bus0=bus0, bus1=bus1, x_per_length=0.01, r_per_length=0.1)
 
 
 def add_bus_at_center(n, number_microgrids):
