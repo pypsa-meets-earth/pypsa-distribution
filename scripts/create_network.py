@@ -117,8 +117,15 @@ def create_microgrid_network(n, input_file, number_microgrids):
             bus0 = microgrid_buses.index[i]
             bus1 = microgrid_buses.index[j]
             line_name = f"{microgrid_id}_line_{i}_{j}"
-            #TODO: Review r_per_length and x_per_length values
-            n.add("Line", line_name, bus0=bus0, bus1=bus1, x_per_length=0.01, r_per_length=0.1)
+            # TODO: Review r_per_length and x_per_length values
+            n.add(
+                "Line",
+                line_name,
+                bus0=bus0,
+                bus1=bus1,
+                x_per_length=0.01,
+                r_per_length=0.1,
+            )
 
 
 def add_bus_at_center(n, number_microgrids):
