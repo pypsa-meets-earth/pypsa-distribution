@@ -39,6 +39,9 @@ crs:
 
 
 electricity:
+  voltage: 0.22
+  line_type: "24-AL1/4-ST1A 0.4"
+  
   max_hours:
     battery: 6
     H2: 168
