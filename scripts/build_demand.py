@@ -108,7 +108,7 @@ def estimate_microgrid_population(
 
         pop_microgrid = masked[masked >= 0].sum()
 
-        col_name = "new_bus_microgrid_" + str(i + 1)
+        col_name = "microgrid_1_bus_572666767"
         microgrid_load[col_name] = per_unit_load * pop_microgrid
 
     # Save the microgrid load to a CSV file with snapshots index

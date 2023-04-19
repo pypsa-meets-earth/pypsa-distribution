@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "id": 1070711108.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 130.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 4.592566400000275, 8.462522849999925 ] } },
-{ "type": "Feature", "properties": { "id": 1070729482.0, "tags.power": null, "Type": "Way", "Country": "NG", "Area": 130.0, "tags.substation": null, "tags.voltage": null }, "geometry": { "type": "Point", "coordinates": [ 4.620657487816373, 8.48071308940518 ] } }
-]
-}

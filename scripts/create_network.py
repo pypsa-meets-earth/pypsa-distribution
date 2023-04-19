@@ -1,31 +1,5 @@
 # -*- coding: utf-8 -*-
 
-"""
-Creates a network for each microgrid specified in the config.yaml file
-
-Relevant Settings
------------------
-.. code:: yaml
-
-    snapshots:
-
-    microgrids_list:
-
-Inputs
-------
-- ``resources/buildings/microgrids_buildings.geojson``: .geojson file of the buildings corresponding to each microgrids; 
-
-Outputs
--------
-- ``networks/base.nc``
-
-Description
------------
-Creates a network for each microgrid with buses corresponding to the buildings. 
-The buses are then connected through lines to form a grid, according to a Delaunay triangulation 
-
-"""
-
 import json
 import logging
 import os
@@ -33,15 +7,18 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import pypsa
 from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
-from scipy.spatial import Delaunay
+from scipy.spatial import Delaunay, distance
+from shapely.geometry import Polygon
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
 
 def create_network():
+
     """
     Creates a PyPSA network and sets the snapshots for the network
     """
@@ -60,13 +37,14 @@ def create_network():
     return n
 
 
-def create_microgrid_network(n, input_file, number_microgrids):
+def create_microgrid_network(n, input_file, number_microgrids, voltage_level, line_type ):
+
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
-    the buildings data, stored in "resources/buildings/microgrids_buildings.geojson". Then the buses are connected together through lines
+    the buildings data, stored in "resources/buildings/microgrids_buildings.geojson". Then the buses are connected together through lines 
     according to the output of a Delaunay Triangulation.
     """
-    # Load the GeoJSON file
+    # Load the GeoJSON file 
 
     with open(input_file) as f:
         data = json.load(f)
@@ -75,6 +53,7 @@ def create_microgrid_network(n, input_file, number_microgrids):
     bus_coords = set()
     number_microgrids = len(number_microgrids.keys())
     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+    # microgrid_ids = set()
 
     # Iterate over each feature in the GeoDataFrame
     for feature in data["features"][0]:
@@ -94,7 +73,7 @@ def create_microgrid_network(n, input_file, number_microgrids):
             )
 
         # Add the buses to the network and update the set of bus coordinates and microgrid IDs
-        n.add("Bus", bus_name, x=x, y=y, v_nom=0.220)
+        n.add("Bus", bus_name, x=x, y=y, v_nom=voltage_level)
         bus_coords.add((x, y))
 
     # Iterate over each microgrid
@@ -111,27 +90,23 @@ def create_microgrid_network(n, input_file, number_microgrids):
         tri = Delaunay(coords)
         edges = tri.simplices[(tri.simplices < len(coords)).all(axis=1)]
 
+        line_type=line_type
+
         # Add lines to the network between connected buses in the Delaunay triangulation
         for i, j, k in edges:
             bus0 = microgrid_buses.index[i]
             bus1 = microgrid_buses.index[j]
             line_name = f"{microgrid_id}_line_{i}_{j}"
-            n.add(
-                "Line",
-                line_name,
-                bus0=bus0,
-                bus1=bus1,
-                x_per_length=0.335,
-                r_per_length=1.2012,
-                c_per_length=11.25,
-                i_nom=0.14,
-                type="24-AL1/4-ST1A 0.4",
-            )
+            x1, y1 = microgrid_buses.x[i], microgrid_buses.y[i] 
+            x2, y2 = microgrid_buses.x[j], microgrid_buses.y[j] 
+            length = ((x2 - x1)**2 + (y2 - y1)**2)**0.5 
+            n.add("Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length)
 
 
-def add_bus_at_center(n, number_microgrids):
+def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
+
     """
-    Adds a new bus to each network at the center of the existing buses.
+    Adds a new bus to each network at the center of the existing buses. 
     This is the bus to which the generation, the storage and the load will be attached.
     """
     number_microgrids = len(number_microgrids.keys())
@@ -147,7 +122,7 @@ def add_bus_at_center(n, number_microgrids):
         # Create a matrix of bus coordinates
         coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
         polygon = Polygon(coords)
-        s = geopandas.GeoSeries(polygon)
+        s = gpd.GeoSeries(polygon)
         s = s.centroid
 
         # Create a new bus at the centroid
@@ -157,28 +132,24 @@ def add_bus_at_center(n, number_microgrids):
             center_bus_name,
             x=float(s.x.iloc[0]),
             y=float(s.y.iloc[0]),
-            i_nom=0.14,
-            type="24-AL1/4-ST1A 0.4",
-        )
-
-        # Find the two closest buses to the new bus
+            v_nom=voltage_level)
+        
+            # Find the two closest buses to the new bus
         closest_buses = microgrid_buses.iloc[
             distance.cdist([(float(s.x.iloc[0]), float(s.y.iloc[0]))], coords).argmin()
         ]
         closest_buses = closest_buses.iloc[[0, 1]]
+        line_type=line_type
 
-        # Add lines to connect the new bus to the closest buses
-        for _, bus in closest_buses.iterrows():
-            line_name = f"{microgrid_id}_line_{center_bus_name}_{bus.name}"
-            n.add(
-                "Line",
-                line_name,
-                bus0=center_bus_name,
-                bus1=bus.name,
-                x_per_length=0.335,
-                r_per_length=1.2012,
-                c_per_length=11.25,
-            )
+        # Add lines to connect the new bus to the closest buses)
+
+        # Add lines to connect the new bus to the closest buses 
+        for _, bus in closest_buses.to_frame().iterrows(): 
+            line_name = f"{microgrid_id}_line_{center_bus_name}_{bus.name}" 
+            x1, y1 = n.buses.loc[bus.index].x, n.buses.loc[bus.index].y 
+            x2, y2 = n.buses.loc[center_bus_name].x, n.buses.loc[center_bus_name].y 
+            length = ((x2 - x1)**2 + (y2 - y1)**2)**0.5 
+            n.add("Line", line_name, bus0=center_bus_name, bus1=bus.index, type=line_type, length=length)
 
 
 def plot_microgrid_network(n):
@@ -221,15 +192,17 @@ if __name__ == "__main__":
     n = create_network()
 
     create_microgrid_network(
-        n, snakemake.input["microgrids_buildings"], snakemake.config["microgrids_list"]
+        n, snakemake.input["microgrids_buildings"], 
+        snakemake.config["microgrids_list"],
+        snakemake.config["electricity"]["voltage"],
+        snakemake.config["electricity"]["line_type"],
     )
 
+    # add_bus_at_center(n,
+    #                   snakemake.config["microgrids_list"], 
+    #                   snakemake.config["electricity"]["voltage"],
+    #                   snakemake.config["electricity"]["line_type"])
+
     # plot_microgrid_network(n)
-    n.buses
-
-    if "new_bus_microgrid_1" in n.buses.index:
-        print("The bus new_bus_microgrid_1 exists in the network.")
-    else:
-        print("The bus new_bus_microgrid_1 does not exist in the network.")
-
+    
     n.export_to_netcdf(snakemake.output[0])

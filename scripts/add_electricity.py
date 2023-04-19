@@ -327,7 +327,7 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
             "StorageUnit",
             microgrid_ids,
             " " + tech,
-            bus=[f"new_bus_{microgrid}" for microgrid in microgrid_ids],
+            bus=["microgrid_1_bus_572666767"],
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
@@ -375,6 +375,7 @@ if __name__ == "__main__":
         Nyears,
     )
 
+
     attach_wind_and_solar(
         n,
         costs,
@@ -388,15 +389,15 @@ if __name__ == "__main__":
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     }
 
-    # attach_conventional_generators(
-    #     n,
-    #     costs,
-    #     ppl,
-    #     snakemake.config["electricity"]["conventional_carriers"],
-    #     snakemake.config["electricity"]["extendable_carriers"],
-    #     snakemake.config.get("conventional", {}),
-    #     conventional_inputs,
-    # )
+    attach_conventional_generators(
+        n,
+        costs,
+        ppl,
+        snakemake.config["electricity"]["conventional_carriers"],
+        snakemake.config["electricity"]["extendable_carriers"],
+        snakemake.config.get("conventional", {}),
+        conventional_inputs,
+    )
 
     attach_storageunits(
         n,
