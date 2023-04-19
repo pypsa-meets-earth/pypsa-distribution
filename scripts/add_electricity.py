@@ -375,7 +375,6 @@ if __name__ == "__main__":
         Nyears,
     )
 
-
     attach_wind_and_solar(
         n,
         costs,
