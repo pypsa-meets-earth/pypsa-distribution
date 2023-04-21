@@ -74,14 +74,9 @@ def get_central_points_geojson(input_filepath, output_filepath, n_clusters):
     features = []
     for i, central_point in enumerate(central_points):
         feature = {
-            'type': 'Feature',
-            'geometry': {
-                'type': 'Point',
-                'coordinates': central_point.tolist()
-            },
-            'properties': {
-                'cluster': i
-            }
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": central_point.tolist()},
+            "properties": {"cluster": i},
         }
         features.append(feature)
 
@@ -108,6 +103,8 @@ if __name__ == "__main__":
         snakemake.output["cleaned_buildings_geojson"],
     )
 
-    get_central_points_geojson(snakemake.output["cleaned_buildings_geojson"], 
-                               snakemake.output["clusters"],
-                               snakemake.config["buildings"]["n_clusters"])
+    get_central_points_geojson(
+        snakemake.output["cleaned_buildings_geojson"],
+        snakemake.output["clusters"],
+        snakemake.config["buildings"]["n_clusters"],
+    )

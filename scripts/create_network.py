@@ -61,8 +61,8 @@ def create_microgrid_network(
         point_geom = feature["geometry"]
 
         # Create a bus at the point location with microgrid ID included in bus name
-        bus_name =f"bus_{feature['properties']['cluster']}"
-        
+        bus_name = f"bus_{feature['properties']['cluster']}"
+
         x, y = point_geom["coordinates"][0], point_geom["coordinates"][1]
 
         # Check for overlapping microgrids and raise an error if happening
