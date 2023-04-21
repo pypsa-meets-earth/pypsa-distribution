@@ -135,7 +135,7 @@ rule cluster_buildings:
         mem_mb=3000,
     script:
         "scripts/cluster_buildings.py"
-  
+
 
 rule build_renewable_profiles:
     input:
