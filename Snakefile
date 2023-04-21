@@ -88,7 +88,7 @@ rule build_shapes:
 
 rule create_network:
     input:
-        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
+        clusters="resources/buildings/clustered_buildings.geojson",
     output:
         "networks/base.nc",
     log:
