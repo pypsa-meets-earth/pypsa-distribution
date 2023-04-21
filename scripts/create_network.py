@@ -56,14 +56,13 @@ def create_microgrid_network(
     # microgrid_ids = set()
 
     # Iterate over each feature in the GeoDataFrame
-    for feature in data["features"][0]:
+    for feature in data["features"]:
         # Get the point geometry
         point_geom = feature["geometry"]
 
         # Create a bus at the point location with microgrid ID included in bus name
-        bus_name = (
-            f"{feature['properties']['microgrid_id']}_bus_{feature['properties']['id']}"
-        )
+        bus_name =f"bus_{feature['properties']['cluster']}"
+        
         x, y = point_geom["coordinates"][0], point_geom["coordinates"][1]
 
         # Check for overlapping microgrids and raise an error if happening
@@ -79,12 +78,12 @@ def create_microgrid_network(
     # Iterate over each microgrid
     for microgrid_id in microgrid_ids:
         # Select the buses belonging to this microgrid
-        microgrid_buses = n.buses.loc[
-            n.buses.index.str.startswith(f"{microgrid_id}_bus_")
-        ]
+        # microgrid_buses = n.buses.loc[
+        #     n.buses.index.str.startswith(f"bus_")
+        # ]
 
         # Create a matrix of bus coordinates
-        coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
+        coords = np.column_stack((n.buses.x.values, n.buses.y.values))
 
         # Create a Delaunay triangulation of the bus coordinates
         tri = Delaunay(coords)
@@ -94,11 +93,11 @@ def create_microgrid_network(
 
         # Add lines to the network between connected buses in the Delaunay triangulation
         for i, j, k in edges:
-            bus0 = microgrid_buses.index[i]
-            bus1 = microgrid_buses.index[j]
+            bus0 = n.buses.index[i]
+            bus1 = n.buses.index[j]
             line_name = f"{microgrid_id}_line_{i}_{j}"
-            x1, y1 = microgrid_buses.x[i], microgrid_buses.y[i]
-            x2, y2 = microgrid_buses.x[j], microgrid_buses.y[j]
+            x1, y1 = n.buses.x[i], n.buses.y[i]
+            x2, y2 = n.buses.x[j], n.buses.y[j]
             length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
             n.add(
                 "Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length
@@ -202,7 +201,7 @@ if __name__ == "__main__":
 
     create_microgrid_network(
         n,
-        snakemake.input["microgrids_buildings"],
+        snakemake.input["clusters"],
         snakemake.config["microgrids_list"],
         snakemake.config["electricity"]["voltage"],
         snakemake.config["electricity"]["line_type"],

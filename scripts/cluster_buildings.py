@@ -33,7 +33,7 @@ def extract_points(input_file, output_file):
         json.dump(new_data, f)
 
 
-def get_central_points_geojson(input_filepath, output_filepath, n_clusters):
+def get_central_points_geojson(input_filepath, n_clusters, output_filepath):
     # Load GeoJSON data from file
     with open(input_filepath, 'r') as f:
         data = json.load(f)
@@ -63,14 +63,16 @@ def get_central_points_geojson(input_filepath, output_filepath, n_clusters):
 
     # Create GeoJSON feature for each central point
     features = []
-    for central_point in central_points:
+    for i, central_point in enumerate(central_points):
         feature = {
             'type': 'Feature',
             'geometry': {
                 'type': 'Point',
                 'coordinates': central_point.tolist()
             },
-            'properties': {}
+            'properties': {
+                'cluster': i
+            }
         }
         features.append(feature)
 
@@ -99,5 +101,6 @@ if __name__ == "__main__":
                    snakemake.output["cleaned_buildings_geojson"])
 
     get_central_points_geojson(snakemake.output["cleaned_buildings_geojson"], 
+                               snakemake.config["buildings"]["n_clusters"],
                                snakemake.output["clusters"],
-                               snakemake.config["buildings"]["n_clusters"])
+                               )
