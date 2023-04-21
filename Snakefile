@@ -120,6 +120,23 @@ rule clean_earth_osm_data:
         "scripts/clean_earth_osm_data.py"
 
 
+rule cluster_buildings:
+    input:
+        buildings_geojson="resources/buildings/buildings.geojson",
+    output:
+        cleaned_buildings_geojson="resources/buildings/cleaned_buildings.geojson",
+        clusters="resources/buildings/clustered_buildings.geojson",
+    log:
+        "logs/cluster_buildings.log",
+    benchmark:
+        "benchmarks/cluster_buildings"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/cluster_buildings.py"
+  
+
 rule build_renewable_profiles:
     input:
         natura=pypsaearth("resources/natura.tiff"),
