@@ -327,7 +327,7 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
             "StorageUnit",
             microgrid_ids,
             " " + tech,
-            bus=["microgrid_1_bus_572666767"],
+            bus=["bus_0"],
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
@@ -405,6 +405,7 @@ if __name__ == "__main__":
         snakemake.config["tech_modelling"]["storage_techs"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
+    a=12
 
     attach_load(
         n,

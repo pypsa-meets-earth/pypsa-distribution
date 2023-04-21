@@ -23,8 +23,8 @@ countries: ["NG"]
 year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
 
 snapshots:
-  start: "2013-03-01"
-  end: "2013-03-07"
+  start: "2013-01-01"
+  end: "2014-01-01"
   inclusive: "left" # end is not inclusive
 
 
@@ -97,3 +97,6 @@ microgrids_list:  #MICROGRIDS IN NIGERIA
     lat_max: 9.8012
 load:
   scaling_factor: 15000
+  
+buildings:
+  n_clusters: 10
