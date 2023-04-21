@@ -79,8 +79,8 @@ def create_bus_regions(microgrids_list, output_path):
         microgrid_names.append(microgrid_name)
 
         # Centre of the rectangle of the microgrid
-        x = 5.4184
-        y = 8.9884
+        x = 5.418415401711783
+        y = 8.908944304800443
         microgrid_x.append(x)
         microgrid_y.append(y)
 
