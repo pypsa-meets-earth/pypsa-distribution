@@ -42,7 +42,7 @@ def extract_points(input_file, output_file):
         json.dump(new_data, f)
 
 
-def get_central_points_geojson(input_filepath, n_clusters, output_filepath):
+def get_central_points_geojson(input_filepath, output_filepath, n_clusters):
     # Load GeoJSON data from file
     with open(input_filepath, "r") as f:
         data = json.load(f)
