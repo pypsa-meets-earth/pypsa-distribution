@@ -88,7 +88,9 @@ def get_central_points_geojson(input_filepath, output_filepath, n_clusters):
         json.dump(geojson, f)
 
 
-def get_central_points_geojson_with_buildings(input_filepath, output_filepath, n_clusters):
+def get_central_points_geojson_with_buildings(
+    input_filepath, output_filepath, n_clusters
+):
     # Load GeoJSON data from file
     with open(input_filepath, "r") as f:
         data = json.load(f)
@@ -138,7 +140,9 @@ def get_central_points_geojson_with_buildings(input_filepath, output_filepath, n
             cluster_id = label
             if "buildings" not in geojson["features"][cluster_id]["properties"]:
                 geojson["features"][cluster_id]["properties"]["buildings"] = []
-            geojson["features"][cluster_id]["properties"]["buildings"].append(feature["properties"]["id"])
+            geojson["features"][cluster_id]["properties"]["buildings"].append(
+                feature["properties"]["id"]
+            )
 
     # Write central point GeoJSON data with buildings to file
     with open(output_filepath, "w") as f:
@@ -166,5 +170,8 @@ if __name__ == "__main__":
         snakemake.config["buildings"]["n_clusters"],
     )
 
-    get_central_points_geojson_with_buildings(snakemake.output["cleaned_buildings_geojson"], snakemake.output["clusters_with_buildings"], snakemake.config["buildings"]["n_clusters"])
-    
+    get_central_points_geojson_with_buildings(
+        snakemake.output["cleaned_buildings_geojson"],
+        snakemake.output["clusters_with_buildings"],
+        snakemake.config["buildings"]["n_clusters"],
+    )

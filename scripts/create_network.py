@@ -3,13 +3,11 @@
 import json
 import logging
 import os
+from itertools import combinations
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import combinations
-from itertools import combinations
-
 import pandas as pd
 import pypsa
 from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
@@ -82,20 +80,19 @@ def create_microgrid_network(
     for microgrid_id in microgrid_ids:
         coords = np.column_stack((n.buses.x.values, n.buses.y.values))
 
-    # Create a Delaunay triangulation of the bus coordinates
+        # Create a Delaunay triangulation of the bus coordinates
         tri = Delaunay(coords)
 
-# Remove edges that connect the same pair of buses
+        # Remove edges that connect the same pair of buses
         edges = []
         for simplex in tri.simplices:
             for i in range(3):
                 if i < 2:
-                   edge = sorted([simplex[i], simplex[i+1]])
+                    edge = sorted([simplex[i], simplex[i + 1]])
             else:
                 edge = sorted([simplex[i], simplex[0]])
             if edge not in edges:
                 edges.append(edge)
-
 
         # # Create a matrix of bus coordinates
 
@@ -105,7 +102,7 @@ def create_microgrid_network(
 
         line_type = line_type
 
-# Add lines to the network between connected buses in the Delaunay triangulation
+    # Add lines to the network between connected buses in the Delaunay triangulation
     for i, j in edges:
         bus0 = n.buses.index[i]
         bus1 = n.buses.index[j]
@@ -113,9 +110,8 @@ def create_microgrid_network(
         x1, y1 = n.buses.x[i], n.buses.y[i]
         x2, y2 = n.buses.x[j], n.buses.y[j]
         length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-        n.add(
-        "Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length
-    )
+        n.add("Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length)
+
 
 def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
     """
