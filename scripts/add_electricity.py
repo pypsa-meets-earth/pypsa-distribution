@@ -327,7 +327,7 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
             "StorageUnit",
             microgrid_ids,
             " " + tech,
-            bus=["bus_0"],
+            bus=["bus_9"],
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],

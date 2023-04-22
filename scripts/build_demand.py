@@ -35,7 +35,7 @@ import pandas as pd
 import pypsa
 import json
 import rasterio
-import csv
+import pandas as pd
 import rasterio.mask
 from _helpers_dist import (
     configure_logging,
@@ -116,10 +116,6 @@ def estimate_microgrid_population(
 
     return pop_microgrid, microgrid_load
 
-    # # Save the microgrid load to a CSV file with snapshots index
-    # microgrid_load.insert(0, "snapshots", n.snapshots)
-    # microgrid_load.set_index("snapshots", inplace=True)
-    # microgrid_load.to_csv(output_file, index=True)
 
 def count_buildings_per_cluster(geojson_file):
     with open(geojson_file) as f:
@@ -137,8 +133,6 @@ def count_buildings_per_cluster(geojson_file):
     
     return total_buildings, cluster_counts
 
-
-import pandas as pd
 
 def calculate_load(n, p, raster_path, shapes_path, sample_profile, geojson_file, output_file):
     # Estimate the microgrid population and load using the existing function
@@ -169,6 +163,9 @@ def calculate_load(n, p, raster_path, shapes_path, sample_profile, geojson_file,
 
 # Change column names to 'bus_' + the original column number
     load_df.columns = ['bus_' + str(col) for col in load_df.columns]
+
+# Remove the bus_9 column
+    load_df = load_df.drop('bus_9', axis=1)
 
 # Save the microgrid load to a CSV file with snapshots index
     load_df.insert(0, "snapshots", n.snapshots)

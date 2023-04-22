@@ -74,13 +74,13 @@ def create_bus_regions(microgrids_list, output_path):
         )
 
         # The bus is the central bus of each microgrid
-        microgrid_name = f"bus_0"
+        microgrid_name = f"bus_9"
         microgrid_shapes.append(microgrid_shape)
         microgrid_names.append(microgrid_name)
 
         # Centre of the rectangle of the microgrid
-        x = 6.683735
-        y = 7.527534
+        x = 7.499138
+        y = 9.106406
         microgrid_x.append(x)
         microgrid_y.append(y)
 
