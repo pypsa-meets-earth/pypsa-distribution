@@ -7,6 +7,9 @@ import os
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
+from itertools import combinations
+from itertools import combinations
+
 import pandas as pd
 import pypsa
 from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
@@ -77,32 +80,42 @@ def create_microgrid_network(
 
     # Iterate over each microgrid
     for microgrid_id in microgrid_ids:
-        # Select the buses belonging to this microgrid
-        # microgrid_buses = n.buses.loc[
-        #     n.buses.index.str.startswith(f"bus_")
-        # ]
-
-        # Create a matrix of bus coordinates
         coords = np.column_stack((n.buses.x.values, n.buses.y.values))
 
-        # Create a Delaunay triangulation of the bus coordinates
+    # Create a Delaunay triangulation of the bus coordinates
         tri = Delaunay(coords)
-        edges = tri.simplices[(tri.simplices < len(coords)).all(axis=1)]
+
+# Remove edges that connect the same pair of buses
+        edges = []
+        for simplex in tri.simplices:
+            for i in range(3):
+                if i < 2:
+                   edge = sorted([simplex[i], simplex[i+1]])
+            else:
+                edge = sorted([simplex[i], simplex[0]])
+            if edge not in edges:
+                edges.append(edge)
+
+
+        # # Create a matrix of bus coordinates
+
+        # # Create a Delaunay triangulation of the bus coordinates
+        # tri = Delaunay(coords)
+        # edges = tri.simplices[(tri.simplices < len(coords)).all(axis=1)]
 
         line_type = line_type
 
-        # Add lines to the network between connected buses in the Delaunay triangulation
-        for i, j, k in edges:
-            bus0 = n.buses.index[i]
-            bus1 = n.buses.index[j]
-            line_name = f"{microgrid_id}_line_{i}_{j}"
-            x1, y1 = n.buses.x[i], n.buses.y[i]
-            x2, y2 = n.buses.x[j], n.buses.y[j]
-            length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-            n.add(
-                "Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length
-            )
-
+# Add lines to the network between connected buses in the Delaunay triangulation
+    for i, j in edges:
+        bus0 = n.buses.index[i]
+        bus1 = n.buses.index[j]
+        line_name = f"{microgrid_id}_line_{i}_{j}"
+        x1, y1 = n.buses.x[i], n.buses.y[i]
+        x2, y2 = n.buses.x[j], n.buses.y[j]
+        length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+        n.add(
+        "Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length
+    )
 
 def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
     """
@@ -212,6 +225,6 @@ if __name__ == "__main__":
     #                   snakemake.config["electricity"]["voltage"],
     #                   snakemake.config["electricity"]["line_type"])
 
-    # plot_microgrid_network(n)
-    a=12
+    plot_microgrid_network(n)
+
     n.export_to_netcdf(snakemake.output[0])

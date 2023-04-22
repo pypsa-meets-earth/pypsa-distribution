@@ -33,7 +33,9 @@ import os
 import geopandas as gpd
 import pandas as pd
 import pypsa
+import json
 import rasterio
+import csv
 import rasterio.mask
 from _helpers_dist import (
     configure_logging,
@@ -79,6 +81,7 @@ def get_WorldPop_path(
     )  # Input filepath tif
 
 
+#Estimate the total population of tghe microgrid
 def estimate_microgrid_population(
     n, p, raster_path, shapes_path, sample_profile, output_file
 ):
@@ -107,15 +110,73 @@ def estimate_microgrid_population(
             )
 
         pop_microgrid = masked[masked >= 0].sum()
-
+        
         col_name = "microgrid_1_bus_572666767"
         microgrid_load[col_name] = per_unit_load * pop_microgrid
 
-    # Save the microgrid load to a CSV file with snapshots index
-    microgrid_load.insert(0, "snapshots", n.snapshots)
-    microgrid_load.set_index("snapshots", inplace=True)
-    microgrid_load.to_csv(output_file, index=True)
+    return pop_microgrid, microgrid_load
 
+    # # Save the microgrid load to a CSV file with snapshots index
+    # microgrid_load.insert(0, "snapshots", n.snapshots)
+    # microgrid_load.set_index("snapshots", inplace=True)
+    # microgrid_load.to_csv(output_file, index=True)
+
+def count_buildings_per_cluster(geojson_file):
+    with open(geojson_file) as f:
+        data = json.load(f)
+
+    cluster_counts = {}
+    for feature in data['features']:
+        cluster = feature['properties']['cluster']
+        buildings = feature['properties']['buildings']
+        if cluster not in cluster_counts:
+            cluster_counts[cluster] = len(buildings)
+        else:
+            cluster_counts[cluster] += len(buildings)
+    total_buildings = sum(cluster_counts.values())
+    
+    return total_buildings, cluster_counts
+
+
+import pandas as pd
+
+def calculate_load(n, p, raster_path, shapes_path, sample_profile, geojson_file, output_file):
+    # Estimate the microgrid population and load using the existing function
+    pop_microgrid, microgrid_load = estimate_microgrid_population(n, p, raster_path, shapes_path, sample_profile, output_file)
+    
+    # Count the total number of buildings and clusters in the geojson file using the existing function
+    total_buildings, cluster_counts = count_buildings_per_cluster(geojson_file)
+    
+    # Calculate the number population per building
+    population_per_building = pop_microgrid / total_buildings
+    
+    # Calculate the population per cluster using the cluster counts dictionary
+    population_per_cluster = {cluster: population_per_building * count for cluster, count in cluster_counts.items()}
+    
+    # Calculate the per unit load
+    per_unit_load = pd.read_csv(sample_profile)["0"] / p
+
+    # Create a dictionary of DataFrames with the load per cluster
+    load_df_dict = {}
+    for cluster_id in population_per_cluster:
+       load_df_dict[cluster_id] = pd.DataFrame(per_unit_load * population_per_cluster[cluster_id])
+
+# Concatenate the DataFrames into a single DataFrame
+    load_df = pd.concat(load_df_dict, axis=1)
+
+# Remove the second level index
+    load_df.columns = load_df.columns.droplevel(level=1)
+
+# Change column names to 'bus_' + the original column number
+    load_df.columns = ['bus_' + str(col) for col in load_df.columns]
+
+# Save the microgrid load to a CSV file with snapshots index
+    load_df.insert(0, "snapshots", n.snapshots)
+    load_df.set_index("snapshots", inplace=True)
+    load_df.to_csv(output_file, index=True)
+
+# Return the DataFrame
+    return load_df
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -148,5 +209,15 @@ if __name__ == "__main__":
         worldpop_path,
         snakemake.input["microgrid_shapes"],
         sample_profile,
-        snakemake.output["electric_load"],
+        snakemake.output["electric_load"]
     )
+
+    count_buildings_per_cluster(snakemake.input["clusters_with_buildings"])
+
+    calculate_load(n, 
+                   snakemake.config["load"]["scaling_factor"],
+                   worldpop_path, 
+                   snakemake.input["microgrid_shapes"], 
+                   sample_profile,
+                   snakemake.input["clusters_with_buildings"], 
+                   snakemake.output["electric_load"])

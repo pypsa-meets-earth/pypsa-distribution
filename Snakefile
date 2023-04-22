@@ -58,6 +58,7 @@ rule build_demand:
         sample_profile=PROFILE,
         create_network="networks/base.nc",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+        clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
     output:
         electric_load="resources/demand/microgrid_load.csv",
     log:
@@ -126,6 +127,7 @@ rule cluster_buildings:
     output:
         cleaned_buildings_geojson="resources/buildings/cleaned_buildings.geojson",
         clusters="resources/buildings/clustered_buildings.geojson",
+        clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
     log:
         "logs/cluster_buildings.log",
     benchmark:
