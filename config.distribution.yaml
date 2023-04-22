@@ -97,6 +97,6 @@ microgrids_list:  #MICROGRIDS IN NIGERIA
     lat_max: 9.8012
 load:
   scaling_factor: 15000
-  
+
 buildings:
   n_clusters: 10

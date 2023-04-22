@@ -225,6 +225,6 @@ if __name__ == "__main__":
     #                   snakemake.config["electricity"]["voltage"],
     #                   snakemake.config["electricity"]["line_type"])
 
-    plot_microgrid_network(n)
-
+    # plot_microgrid_network(n)
+    a = 12
     n.export_to_netcdf(snakemake.output[0])

@@ -405,7 +405,7 @@ if __name__ == "__main__":
         snakemake.config["tech_modelling"]["storage_techs"],
         snakemake.config["electricity"]["extendable_carriers"],
     )
-    a=12
+    a = 12
 
     attach_load(
         n,
