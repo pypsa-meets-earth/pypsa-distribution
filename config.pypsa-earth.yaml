@@ -34,8 +34,8 @@ countries: ["NG"]
 summary_dir: results
 
 snapshots:
-  start: "2013-03-1"
-  end: "2013-03-7"
+  start: "2013-03-01"
+  end: "2013-03-07"
   inclusive: "left" # end is not inclusive
 
 enable:

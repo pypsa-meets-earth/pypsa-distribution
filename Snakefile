@@ -56,11 +56,10 @@ subworkflow pypsaearth:
 rule build_demand:
     input:
         sample_profile=PROFILE,
-        country_shapes=pypsaearth("resources/shapes/country_shapes.geojson"),
-        # WorldPop folder is downloaded using pypsa-earth and loaded here
-    output:
+        create_network="networks/base.nc",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
-        country_masked="resources/masked_files/country_masked",
+        clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
+    output:
         electric_load="resources/demand/microgrid_load.csv",
     log:
         "logs/build_demand.log",
@@ -73,7 +72,24 @@ rule build_demand:
         "scripts/build_demand.py"
 
 
+rule build_shapes:
+    output:
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+        microgrid_bus_shapes="resources/shapes/microgrid_bus_shapes.geojson",
+    log:
+        "logs/build_shapes.log",
+    benchmark:
+        "benchmarks/build_shapes"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/build_shapes.py"
+
+
 rule create_network:
+    input:
+        clusters="resources/buildings/clustered_buildings.geojson",
     output:
         "networks/base.nc",
     log:
@@ -85,6 +101,42 @@ rule create_network:
         mem_mb=3000,
     script:
         "scripts/create_network.py"
+
+
+rule clean_earth_osm_data:
+    input:
+        #buildings_json="resources/buildings/buildings.json",
+        microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
+    output:
+        buildings_geojson="resources/buildings/buildings.geojson",
+        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
+    log:
+        "logs/clean_earth_osm_data.log",
+    benchmark:
+        "benchmarks/clean_earth_osm_data"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/clean_earth_osm_data.py"
+
+
+rule cluster_buildings:
+    input:
+        buildings_geojson="resources/buildings/buildings.geojson",
+    output:
+        cleaned_buildings_geojson="resources/buildings/cleaned_buildings.geojson",
+        clusters="resources/buildings/clustered_buildings.geojson",
+        clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
+    log:
+        "logs/cluster_buildings.log",
+    benchmark:
+        "benchmarks/cluster_buildings"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/cluster_buildings.py"
 
 
 rule build_renewable_profiles:
@@ -99,11 +151,7 @@ rule build_renewable_profiles:
         hydro_capacities="pypsa-earth/data/hydro_capacities.csv",
         eia_hydro_generation="pypsa-earth/data/eia_hydro_annual_generation.csv",
         powerplants="resources/powerplants.csv",
-        regions=lambda w: (
-            pypsaearth("resources/bus_regions/regions_onshore.geojson")
-            if w.technology in ("onwind", "solar", "hydro")
-            else pypsaearth("resources/bus_regions/regions_offshore.geojson")
-        ),
+        regions="resources/shapes/microgrid_bus_shapes.geojson",
         cutout=lambda w: pypsaearth(
             "cutouts/" + config["renewable"][w.technology]["cutout"] + ".nc"
         ),
