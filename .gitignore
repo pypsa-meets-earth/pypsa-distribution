@@ -21,20 +21,23 @@ img/
 benchmarks/
 cutouts/
 data/
-data/osm/
-data/raw/
-data/base_network/
-results/summaries/
-results/plots/
+results/
 networks/
-scripts/temp
-scripts/test.py
+resources/
 test/tmp/
+
+# track resources/powerplants.csv
+!resources/powerplants.csv
 
 # Untrack test doc builds
 doc/_build
 
 # VS code related
-.vscode
-doc/.vscode/settings.json
-.vscode/settings.json
+*.vscode
+doc/*.vscode/settings.json
+*.vscode/settings.json
+*.code-workspace
+
+# Additional debugging folders
+backup*
+screenlog*
