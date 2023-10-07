@@ -53,6 +53,11 @@ subworkflow pypsaearth:
         "./config.yaml"
 
 
+rule clean:
+    run:
+        shell("snakemake -j 1 solve_network --delete-all-output")
+
+
 rule build_demand:
     input:
         sample_profile=PROFILE,
