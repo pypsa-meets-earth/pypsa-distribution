@@ -30,12 +30,14 @@ the population. Then the population is multiplied for the per person load and th
 import json
 import logging
 import os
+import shutil
 
 import geopandas as gpd
 import pandas as pd
 import pypsa
 import rasterio
 import rasterio.mask
+import requests
 from _helpers_dist import (
     configure_logging,
     sets_path_to_root,
@@ -46,10 +48,12 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
 
-def get_WorldPop_path(
+def get_WorldPop_data(
     country_code,
     year,
-    out_logging,
+    update=False,
+    out_logging=False,
+    size_min=300,
 ):
     """
     Download tiff file for each country code using the standard method from worldpop datastore with 1kmx1km resolution.
@@ -60,24 +64,65 @@ def get_WorldPop_path(
         Files downloaded from https://data.worldpop.org/ datasets WorldPop UN adjusted
     year : int
         Year of the data to download
+    update : bool
+        Update = true, forces re-download of files
+    size_min : int
+        Minimum size of each file to download
     Returns
     -------
     WorldPop_inputfile : str
         Path of the file
     """
 
-    if out_logging:
-        _logger.info("Download WorldPop datasets")
-
     three_digits_code = two_2_three_digits_country(country_code)
 
-    return os.path.join(
+    if out_logging:
+        _logger.info("Get WorldPop datasets")
+
+    if country_code == "XK":
+        WorldPop_filename = f"srb_ppp_{year}_UNadj_constrained.tif"
+        WorldPop_urls = [
+            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2020/BSGM/SRB/{WorldPop_filename}",
+            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2020/maxar_v1/SRB/{WorldPop_filename}",
+        ]
+    else:
+        WorldPop_filename = (
+            f"{three_digits_code.lower()}_ppp_{year}_UNadj_constrained.tif"
+        )
+        # Urls used to possibly download the file
+        WorldPop_urls = [
+            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2020/BSGM/{two_2_three_digits_country(country_code).upper()}/{WorldPop_filename}",
+            f"https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2020/maxar_v1/{two_2_three_digits_country(country_code).upper()}/{WorldPop_filename}",
+        ]
+
+    WorldPop_inputfile = os.path.join(
         os.getcwd(),
         "pypsa-earth",
         "data",
         "WorldPop",
-        f"{three_digits_code.lower()}_ppp_{year}_UNadj_constrained.tif",
+        WorldPop_filename,
     )  # Input filepath tif
+
+    if not os.path.exists(WorldPop_inputfile) or update is True:
+        if out_logging:
+            _logger.warning(
+                f"{WorldPop_filename} does not exist, downloading to {WorldPop_inputfile}"
+            )
+        #  create data/osm directory
+        os.makedirs(os.path.dirname(WorldPop_inputfile), exist_ok=True)
+
+        loaded = False
+        for WorldPop_url in WorldPop_urls:
+            with requests.get(WorldPop_url, stream=True) as r:
+                with open(WorldPop_inputfile, "wb") as f:
+                    if float(r.headers["Content-length"]) > size_min:
+                        shutil.copyfileobj(r.raw, f)
+                        loaded = True
+                        break
+        if not loaded:
+            _logger.error(f"Impossible to download {WorldPop_filename}")
+
+    return WorldPop_inputfile, WorldPop_filename
 
 
 # Estimate the total population of tghe microgrid
@@ -201,7 +246,7 @@ if __name__ == "__main__":
         len(snakemake.config["countries"]) == 1
     ), "Error: only a country shall be specified"
 
-    worldpop_path = get_WorldPop_path(
+    worldpop_path, worldpop_flname = get_WorldPop_data(
         snakemake.config["countries"][
             0
         ],  # TODO: this needs fix to generalize the countries
