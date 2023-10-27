@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Adds electrical generators, load and storage units to a each microgrids part of a base network.
+
 Relevant Settings
 -----------------
+
 .. code:: yaml
+
     costs:
         year:
         USD2013_to_EUR2013:
@@ -16,9 +19,12 @@ Relevant Settings
         general_vre:
         storage_techs:
         load_carries:
+
 Inputs
 ------
-- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
+- ``data/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources;
+e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM),
+fuel costs, efficiency, carbon-dioxide intensity.
 - ``resources/powerplants.csv``: confer :ref:`powerplants`
 - ``resources/profile_{}.nc``: all technologies in ``config["renewables"].keys()``, confer :ref:`renewableprofiles`
 - ``resources/demand/microgrid_load.csv``: microgrid electric demand 
@@ -26,12 +32,12 @@ Inputs
      
 Outputs
 -------
-- ``networks/elec.nc``:
+- ``networks/elec.nc``: output network
+
 Description
 -----------
 The rule :mod:`add_electricity` takes as input the network generated in the rule "create_network" and adds to it both renewable and conventional generation, storage units and load, resulting in a network that is stored in ``networks/elec.nc``. 
 """
-
 
 import os
 
