@@ -2,7 +2,7 @@
 
 ## Development Status: **Under development, contributors are welcome to join**
 
-[![Status Linux](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-linux.yaml/badge.svg?branch=main&event=push)](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-linux.yaml)
+[![Status Linux](https://github.com/pypsa-meets-earth/pypsa-distribution/actions/workflows/ci-linux.yaml/badge.svg?branch=main&event=push)](https://github.com/pypsa-meets-earth/pypsa-distribution/actions/workflows/ci-linux.yaml)
 ![Size](https://img.shields.io/github/repo-size/pypsa-meets-earth/pypsa-distribution)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
