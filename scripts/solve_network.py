@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Solves linear optimal power flow for a network iteratively.
------------------
+
 .. code:: yaml
+
     solving:
         tmpdir:
         options:
@@ -18,10 +19,11 @@ Solves linear optimal power flow for a network iteratively.
         
 Inputs
 ------
-- ``networks/elec.nc
+- ``networks/elec.nc``
+
 Outputs
 -------
-- ``networks/results/networks/elec.nc : Solved PyPSA network including optimisation results
+- ``networks/results/networks/elec.nc``: Solved PyPSA network including optimisation results
   
 Description
 -----------

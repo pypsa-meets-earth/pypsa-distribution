@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Estimates the population and the electric load of each microgrid.
+
 Relevant Settings
 -----------------
+
 .. code:: yaml
+
     microgrids_list:
         microgridX: 
           lon_min:
@@ -12,15 +15,17 @@ Relevant Settings
           lat_max: 
     load:
         scaling_factor:
+
 Inputs
 ------
 - ``data/sample_profile.csv``: a load profile, which will be scaled through a scaling_factor to obtain the per person load
+
 Outputs
 -------
-- ``resources/shapes/microgrid_shapes.geojson: a geojson file of the shape of each microgrid,
-- ``resources/masked_files/masked_file_{i+1}.tif,
-- ``resources/demand/microgrid_load_{i+1}.csv: the electric load of the microgid,
--------
+- ``resources/shapes/microgrid_shapes.geojson``: a geojson file of the shape of each microgrid,
+- ``resources/masked_files/masked_file_{i+1}.tif``,
+- ``resources/demand/microgrid_load_{i+1}.csv``: the electric load of the microgid,
+
 Description
 -----------
 The rule :mod:`build_demand` contains functions that are used to create a shape file of the microgrid, to mask a raster with the shape file and to estimate 
@@ -53,6 +58,7 @@ def get_WorldPop_path(
 ):
     """
     Download tiff file for each country code using the standard method from worldpop datastore with 1kmx1km resolution.
+
     Parameters
     ----------
     country_code : str
@@ -60,6 +66,7 @@ def get_WorldPop_path(
         Files downloaded from https://data.worldpop.org/ datasets WorldPop UN adjusted
     year : int
         Year of the data to download
+
     Returns
     -------
     WorldPop_inputfile : str

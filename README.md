@@ -9,9 +9,9 @@
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pypsa-meets-earth/pypsa-distribution/main.svg)](https://results.pre-commit.ci/latest/github/pypsa-meets-earth/pypsa-distribution/main)
 [![Discord](https://img.shields.io/discord/911692131440148490?logo=discord)](https://discord.gg/AnuJBk23FU)
 [![Google Drive](https://img.shields.io/badge/Google%20Drive-4285F4?style=flat&logo=googledrive&logoColor=white)](https://drive.google.com/drive/folders/1U7fgktbxlaGzWxT2C0-Xv-_ffWCxAKZz)
-<!-- [![Status Mac](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-mac.yaml/badge.svg?branch=main&event=push)](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-mac.yaml) -->
+[![Documentation Status](https://readthedocs.org/projects/pypsa-distribution/badge/?version=latest)](https://pypsa-distribution.readthedocs.io/en/latest/?badge=latest)<!-- [![Status Mac](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-mac.yaml/badge.svg?branch=main&event=push)](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-mac.yaml) -->
 <!-- [![Status Windows](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-windows.yaml/badge.svg?branch=main&event=push)](https://github.com/pypsa-meets-earth/pypsa-earth/actions/workflows/ci-windows.yaml) -->
-<!-- [![Documentation Status](https://readthedocs.org/projects/pypsa-earth/badge/?version=latest)](https://pypsa-earth.readthedocs.io/en/latest/?badge=latest) -->
+   
 
 **PyPSA-Distribution is a multi-energy model for small scale applications in high spatial and temporal resolution.**
 It leverages on the open-source tool PyPSA-Earth and aims at addressing the optimization of small-scale applications.

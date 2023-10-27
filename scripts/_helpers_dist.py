@@ -344,7 +344,7 @@ def get_aggregation_strategies(aggregation_strategies):
 
 def mock_snakemake(rulename, **wildcards):
     """
-    This function is expected to be executed from the "scripts"-directory of "
+    This function is expected to be executed from the "scripts"-directory of
     the snakemake project. It returns a snakemake.script.Snakemake object,
     based on the Snakefile.
 
