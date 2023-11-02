@@ -145,6 +145,11 @@ rule cluster_buildings:
 
 
 rule build_renewable_profiles:
+    params:
+        crs=config["crs"],
+        renewable=config["renewable"],
+        countries=config["countries"],
+        alternative_clustering=config["cluster_options"]["alternative_clustering"],
     input:
         natura=pypsaearth("resources/natura.tiff"),
         copernicus=pypsaearth(
