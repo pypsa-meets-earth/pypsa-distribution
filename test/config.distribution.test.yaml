@@ -100,3 +100,6 @@ microgrids_list:
 
 load:
   scaling_factor: 15000
+
+buildings:
+  n_clusters: 10
