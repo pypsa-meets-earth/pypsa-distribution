@@ -27,7 +27,7 @@ The recurrent meeting on PyPSA-Distribution is every second Wednesday at 9:00 AM
 
 ## Installation
 
-0. **For Windows users**. Please, that windows is supported using WSL (Windows Subsystem Linux), due [Issue 392 Snakamake](https://github.com/snakemake/snakemake/issues/392)
+0. **For Windows users**. Please, that windows is supported using WSL (Windows Subsystem Linux), due [Issue 392 Snakemake](https://github.com/snakemake/snakemake/issues/392)
    Windows users may install the WSL as discussed in [this link](https://code.visualstudio.com/docs/remote/wsl), also including the setup of Visual Studio Code.
    
 1. Open your terminal at a location where you want to install pypsa-earth. Type the following in your terminal to download the package from GitHub:

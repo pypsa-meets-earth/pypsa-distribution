@@ -54,7 +54,7 @@ from the European PyPSA-Eur model using new data and functions. It is suitable f
 storage and transmission expansion studies. We work hard to extend the PyPSA-Earth model by end of this year to include sector-coupling,
 myopic and perfect pathway expansion capabilities.
 
-Example of desired studies are: - Microgrids planning, Distribution system planning, Distribution system operation, Distribution network tariff design, ...
+Example of desired studies are: microgrids planning, distribution system planning, distribution system operation, distribution network tariff design, ...
 **Are we missing something?** Please let us know if you have any other ideas for applications of the model!
 
 *PyPSA meets Earth initiative* members are maintaining the *PyPSA-Distribution* repository.
