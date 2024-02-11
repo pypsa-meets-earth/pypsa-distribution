@@ -23,9 +23,11 @@ Currently it focuses on electric off-grid applications as it is at an infant sta
 There are multiple ways to get involved and learn more about our work.
 Please, checkout the [PyPSA-Earth list](https://github.com/pypsa-meets-earth/pypsa-earth)
 
+The recurrent meeting on PyPSA-Distribution is every second Wednesday at 9:00 AM (UK time) on Discord, please reach out and join! A calendar invitation may be found [here](https://drive.google.com/file/d/1JkYodLuC0HqCud3u8ORrnmpsjeb8NF-E/view?usp=sharing).
+
 ## Installation
 
-0. **For Windows users**. Please, that windows is supported using WSL (Windows Subsystem Linux), due [Issue 392 Snakamake](https://github.com/snakemake/snakemake/issues/392)
+0. **For Windows users**. Please, that windows is supported using WSL (Windows Subsystem Linux), due [Issue 392 Snakemake](https://github.com/snakemake/snakemake/issues/392)
    Windows users may install the WSL as discussed in [this link](https://code.visualstudio.com/docs/remote/wsl), also including the setup of Visual Studio Code.
    
 1. Open your terminal at a location where you want to install pypsa-earth. Type the following in your terminal to download the package from GitHub:
