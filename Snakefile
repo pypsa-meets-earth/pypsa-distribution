@@ -8,6 +8,7 @@ from snakemake.io import expand
 from build_test_configs import create_test_config
 from os.path import normpath, exists, isdir
 from shutil import copyfile
+from _helpers import create_country_list
 
 import sys
 
@@ -32,6 +33,8 @@ if "config" not in globals() or not config:  # skip when used as sub-workflow
         # copyfile("config.distribution.yaml", "config.yaml")
 
     configfile: "config.yaml"
+
+config["countries"] = create_country_list(config["countries"])    
 
 
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 5)
