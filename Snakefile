@@ -21,6 +21,8 @@ HTTP = HTTPRemoteProvider()
 COSTS = "data/costs.csv"
 PROFILE = "data/sample_profile.csv"
 
+PYPSAEARTH_FOLDER = "pypsa-earth"
+
 if "config" not in globals() or not config:  # skip when used as sub-workflow
     if not exists("config.yaml"):
         # prepare pypsa-earth config
@@ -44,13 +46,21 @@ wildcard_constraints:
     discountrate="[-+a-zA-Z0-9\.\s]*",
 
 
-subworkflow pypsaearth:
-    workdir:
-        "./pypsa-earth"
-    snakefile:
-        "./pypsa-earth/Snakefile"
-    configfile:
-        "./config.yaml"
+if not config.get("disable_subworkflow", False):
+
+    subworkflow pypsaearth:
+        workdir:
+            PYPSAEARTH_FOLDER
+        snakefile:
+            PYPSAEARTH_FOLDER + "/Snakefile"
+        configfile:
+            "./config.pypsa-earth.yaml"
+
+
+if config.get("disable_subworkflow", False):
+
+    def pypsaearth(path):
+        return PYPSAEARTH_FOLDER + "/" + path
 
 
 rule clean:
