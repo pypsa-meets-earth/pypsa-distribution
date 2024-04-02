@@ -110,7 +110,16 @@ def create_microgrid_network(
         x1, y1 = n.buses.x[i], n.buses.y[i]
         x2, y2 = n.buses.x[j], n.buses.y[j]
         length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-        n.add("Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length)
+        n.add(
+            "Line",
+            line_name,
+            bus0=bus0,
+            bus1=bus1,
+            type=line_type,
+            length=length,
+            s_nom=0.1,
+            # s_nom_extendable=True
+        )
 
 
 def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
