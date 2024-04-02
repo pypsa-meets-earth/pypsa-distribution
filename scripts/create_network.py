@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
+from geopy import distance as geodistance
 from scipy.spatial import Delaunay, distance
 from shapely.geometry import Polygon
 
@@ -102,24 +103,35 @@ def create_microgrid_network(
 
         line_type = line_type
 
-    # Add lines to the network between connected buses in the Delaunay triangulation
-    for i, j in edges:
-        bus0 = n.buses.index[i]
-        bus1 = n.buses.index[j]
-        line_name = f"{microgrid_id}_line_{i}_{j}"
-        x1, y1 = n.buses.x[i], n.buses.y[i]
-        x2, y2 = n.buses.x[j], n.buses.y[j]
-        length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-        n.add(
-            "Line",
-            line_name,
-            bus0=bus0,
-            bus1=bus1,
-            type=line_type,
-            length=length,
-            s_nom=0.1,
-            # s_nom_extendable=True
-        )
+    line_name = [f"{microgrid_id}_line_{i}_{j}" for (i, j) in edges]
+
+    edges_list = [(i, j) for (i, j) in edges]
+    i_bus0 = [k[0] for k in edges_list]
+    i_bus1 = [k[1] for k in edges_list]
+    # keep order of buses to evaluate length of the lines
+    lines_df = pd.concat(
+        [
+            n.buses.loc[n.buses.index[i_bus0], ["x", "y"]].reset_index(),
+            n.buses.loc[n.buses.index[i_bus1], ["x", "y"]].reset_index(),
+        ],
+        axis=1,
+        ignore_index=True,
+    ).set_axis(["bus0", "x0", "y0", "bus1", "x1", "y1"], axis=1)
+
+    lines_df["length"] = lines_df.apply(
+        lambda x: geodistance.geodesic((x["x0"], x["y0"]), (x["x1"], x["y1"])).meters
+        / 1e3,
+        axis=1,
+    )
+
+    n.madd(
+        "Line",
+        line_name,
+        bus0=lines_df["bus0"].values,
+        bus1=lines_df["bus1"].values,
+        type=line_type,
+        length=lines_df["length"],
+    )
 
 
 def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
