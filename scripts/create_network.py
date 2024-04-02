@@ -131,6 +131,9 @@ def create_microgrid_network(
         bus1=lines_df["bus1"].values,
         type=line_type,
         length=lines_df["length"],
+        # Default settings imply zero s_nom and non-extandable lines
+        s_nom=0.1,  # quick fix
+        # s_nom_extendable=True # makes optimisation longer
     )
 
 
