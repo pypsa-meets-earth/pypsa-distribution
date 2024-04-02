@@ -223,8 +223,9 @@ def calculate_load(
     # Change column names to 'bus_' + the original column number
     load_df.columns = ["bus_" + str(col) for col in load_df.columns]
 
-    # Remove the bus_9 column
-    load_df = load_df.drop("bus_9", axis=1)
+    # TODO It looks like load should be fetched to the central bus
+    ## Remove the bus_9 column
+    # load_df = load_df.drop("bus_9", axis=1)
 
     # Save the microgrid load to a CSV file with snapshots index
     load_df.insert(0, "snapshots", n.snapshots)
