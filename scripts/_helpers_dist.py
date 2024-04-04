@@ -5,6 +5,9 @@
 import os
 from pathlib import Path
 
+import logging
+import sys
+import yaml
 import country_converter as coco
 import geopandas as gpd
 import numpy as np
@@ -48,6 +51,43 @@ def sets_path_to_root(root_directory_name):
             upper_path = os.path.dirname(os.path.abspath("."))  # name of upper folder
             os.chdir(upper_path)
 
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """
+    Customise errors traceback.
+    """
+    tb = exc_traceback
+    while tb.tb_next:
+        tb = tb.tb_next
+    flname = tb.tb_frame.f_globals.get("__file__")
+    funcname = tb.tb_frame.f_code.co_name
+
+    if issubclass(exc_type, KeyboardInterrupt):
+        logger.error(
+            "Manual interruption %r, function %r: %s",
+            flname,
+            funcname,
+            exc_value,
+        )
+    else:
+        logger.error(
+            "An error happened in module %r, function %r: %s",
+            flname,
+            funcname,
+            exc_value,
+            exc_info=(exc_type, exc_value, exc_traceback),
+        )
+
+def create_logger(logger_name, level=logging.INFO):
+    """
+    Create a logger for a module and adds a handler needed to capture in logs
+    traceback from exceptions emerging during the workflow.
+    """
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(level)
+    handler = logging.StreamHandler(stream=sys.stdout)
+    logger.addHandler(handler)
+    sys.excepthook = handle_exception
+    return logger
 
 def configure_logging(snakemake, skip_handlers=False):
     """
@@ -92,6 +132,132 @@ def configure_logging(snakemake, skip_handlers=False):
         )
     logging.basicConfig(**kwargs)
 
+def read_osm_config(*args):
+    """
+    Read values from the osm_config.yaml file based on provided key arguments.
+
+    Parameters
+    ----------
+    *args : str
+        One or more key arguments corresponding to the values to retrieve
+        from the config file. Typical arguments include "world_iso",
+        "continent_regions", "iso_to_geofk_dict", and "osm_clean_columns".
+
+    Returns
+    -------
+    tuple or str or dict
+        If a single key is provided, returns the corresponding value from the
+        osm_config.yaml file. If multiple keys are provided, returns a tuple
+        containing values corresponding to the provided keys.
+
+    Examples
+    --------
+    >>> values = read_osm_config("key1", "key2")
+    >>> print(values)
+    ('value1', 'value2')
+
+    >>> world_iso = read_osm_config("world_iso")
+    >>> print(world_iso)
+    {"Africa": {"DZ": "algeria", ...}, ...}
+    """
+    if "__file__" in globals():
+        base_folder = os.path.dirname(__file__)
+        if not os.path.exists(os.path.join(base_folder, "configs")):
+            base_folder = os.path.dirname(base_folder)
+    else:
+        base_folder = os.getcwd()
+    osm_config_path = os.path.join(base_folder, "configs", "osm_config.yaml")
+    with open(osm_config_path, "r") as f:
+        osm_config = yaml.safe_load(f)
+    if len(args) == 0:
+        return osm_config
+    elif len(args) == 1:
+        return osm_config[args[0]]
+    else:
+        return tuple([osm_config[a] for a in args])
+
+
+def create_country_list(input, iso_coding=True):
+    """
+    Create a country list for defined regions in osm_config.yaml.
+
+    Parameters
+    ----------
+    input : str
+        Any two-letter country name, regional name, or continent given in osm_config.yaml
+        Country name duplications won't distort the result.
+        Examples are:
+        ["NG","ZA"], downloading osm data for Nigeria and South Africa
+        ["africa"], downloading data for Africa
+        ["NAR"], downloading data for the North African Power Pool
+        ["TEST"], downloading data for a customized test set.
+        ["NG","ZA","NG"], won't distort result.
+
+    Returns
+    -------
+    full_codes_list : list
+        Example ["NG","ZA"]
+    """
+    import logging
+
+    _logger = logging.getLogger(__name__)
+    _logger.setLevel(logging.INFO)
+
+    def filter_codes(c_list, iso_coding=True):
+        """
+        Filter list according to the specified coding.
+
+        When iso code are implemented (iso_coding=True), then remove the
+        geofabrik-specific ones. When geofabrik codes are
+        selected(iso_coding=False), ignore iso-specific names.
+        """
+        if (
+            iso_coding
+        ):  # if country lists are in iso coding, then check if they are 2-string
+            # 2-code countries
+            ret_list = [c for c in c_list if len(c) == 2]
+
+            # check if elements have been removed and return a working if so
+            if len(ret_list) < len(c_list):
+                _logger.warning(
+                    "Specified country list contains the following non-iso codes: "
+                    + ", ".join(list(set(c_list) - set(ret_list)))
+                )
+
+            return ret_list
+        else:
+            return c_list  # [c for c in c_list if c not in iso_to_geofk_dict]
+
+    full_codes_list = []
+
+    world_iso, continent_regions = read_osm_config("world_iso", "continent_regions")
+
+    for value1 in input:
+        codes_list = []
+        # extract countries in world
+        if value1 == "Earth":
+            for continent in world_iso.keys():
+                codes_list.extend(list(world_iso[continent]))
+
+        # extract countries in continent
+        elif value1 in world_iso.keys():
+            codes_list = list(world_iso[value1])
+
+        # extract countries in regions
+        elif value1 in continent_regions.keys():
+            codes_list = continent_regions[value1]
+
+        # extract countries
+        else:
+            codes_list.extend([value1])
+
+        # create a list with all countries
+        full_codes_list.extend(codes_list)
+
+    # Removing duplicates and filter outputs by coding
+    full_codes_list = filter_codes(list(set(full_codes_list)), iso_coding=iso_coding)
+
+    return full_codes_list
 
 def load_network(import_name=None, custom_components=None):
     """

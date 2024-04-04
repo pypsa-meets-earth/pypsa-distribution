@@ -6,6 +6,7 @@ sys.path.append("./pypsa-earth/scripts")
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 from snakemake.io import expand
 from build_test_configs import create_test_config
+from _helpers import create_country_list
 from os.path import normpath, exists, isdir
 from shutil import copyfile
 
@@ -31,6 +32,11 @@ if "config" not in globals() or not config:  # skip when used as sub-workflow
 
     configfile: "config.yaml"
 
+# convert country list according to the desired region
+config["countries"] = create_country_list(config["countries"])
+
+run = config.get("run", {})
+RDIR = run["name"] + "/" if run.get("name") else ""
 
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 5)
 
@@ -200,6 +206,20 @@ rule add_electricity:
     script:
         "scripts/add_electricity.py"
 
+
+if config["enable"].get("download_osm_data", True):
+
+    rule download_osm_data:
+        params:
+            countries=config["countries"],
+        output:
+            "resources", RDIR, "osm", "raw"
+        log:
+            "logs/" + RDIR + "download_osm_data.log",
+        benchmark:
+            "benchmarks/" + RDIR + "download_osm_data"
+        script:
+            "scripts/download_osm_data.py"
 
 # if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
 
