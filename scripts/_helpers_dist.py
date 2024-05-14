@@ -2,18 +2,25 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+import logging
 import os
+import sys
 from pathlib import Path
 
-import logging
-import sys
-import yaml
+sys.path.append("../pypsa-earth/scripts")
+sys.path.append("pypsa-distribution/pypsa-earth/scripts")
+import _helpers as pe_helpers
 import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import yaml
 from geopy.extra.rate_limiter import RateLimiter
 from geopy.geocoders import Nominatim
+
+handle_exception = pe_helpers.handle_exception
+create_logger = pe_helpers.create_logger
+read_osm_config = pe_helpers.read_osm_config
 
 
 def sets_path_to_root(root_directory_name):
@@ -51,43 +58,6 @@ def sets_path_to_root(root_directory_name):
             upper_path = os.path.dirname(os.path.abspath("."))  # name of upper folder
             os.chdir(upper_path)
 
-def handle_exception(exc_type, exc_value, exc_traceback):
-    """
-    Customise errors traceback.
-    """
-    tb = exc_traceback
-    while tb.tb_next:
-        tb = tb.tb_next
-    flname = tb.tb_frame.f_globals.get("__file__")
-    funcname = tb.tb_frame.f_code.co_name
-
-    if issubclass(exc_type, KeyboardInterrupt):
-        logger.error(
-            "Manual interruption %r, function %r: %s",
-            flname,
-            funcname,
-            exc_value,
-        )
-    else:
-        logger.error(
-            "An error happened in module %r, function %r: %s",
-            flname,
-            funcname,
-            exc_value,
-            exc_info=(exc_type, exc_value, exc_traceback),
-        )
-
-def create_logger(logger_name, level=logging.INFO):
-    """
-    Create a logger for a module and adds a handler needed to capture in logs
-    traceback from exceptions emerging during the workflow.
-    """
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(level)
-    handler = logging.StreamHandler(stream=sys.stdout)
-    logger.addHandler(handler)
-    sys.excepthook = handle_exception
-    return logger
 
 def configure_logging(snakemake, skip_handlers=False):
     """
@@ -131,50 +101,6 @@ def configure_logging(snakemake, skip_handlers=False):
             }
         )
     logging.basicConfig(**kwargs)
-
-def read_osm_config(*args):
-    """
-    Read values from the osm_config.yaml file based on provided key arguments.
-
-    Parameters
-    ----------
-    *args : str
-        One or more key arguments corresponding to the values to retrieve
-        from the config file. Typical arguments include "world_iso",
-        "continent_regions", "iso_to_geofk_dict", and "osm_clean_columns".
-
-    Returns
-    -------
-    tuple or str or dict
-        If a single key is provided, returns the corresponding value from the
-        osm_config.yaml file. If multiple keys are provided, returns a tuple
-        containing values corresponding to the provided keys.
-
-    Examples
-    --------
-    >>> values = read_osm_config("key1", "key2")
-    >>> print(values)
-    ('value1', 'value2')
-
-    >>> world_iso = read_osm_config("world_iso")
-    >>> print(world_iso)
-    {"Africa": {"DZ": "algeria", ...}, ...}
-    """
-    if "__file__" in globals():
-        base_folder = os.path.dirname(__file__)
-        if not os.path.exists(os.path.join(base_folder, "configs")):
-            base_folder = os.path.dirname(base_folder)
-    else:
-        base_folder = os.getcwd()
-    osm_config_path = os.path.join(base_folder, "configs", "osm_config.yaml")
-    with open(osm_config_path, "r") as f:
-        osm_config = yaml.safe_load(f)
-    if len(args) == 0:
-        return osm_config
-    elif len(args) == 1:
-        return osm_config[args[0]]
-    else:
-        return tuple([osm_config[a] for a in args])
 
 
 def create_country_list(input, iso_coding=True):
@@ -258,6 +184,7 @@ def create_country_list(input, iso_coding=True):
     full_codes_list = filter_codes(list(set(full_codes_list)), iso_coding=iso_coding)
 
     return full_codes_list
+
 
 def load_network(import_name=None, custom_components=None):
     """

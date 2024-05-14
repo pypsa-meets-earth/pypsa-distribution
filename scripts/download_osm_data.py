@@ -1,43 +1,15 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText:  PyPSA-Earth and PyPSA-Eur Authors
-#
-# SPDX-License-Identifier: AGPL-3.0-or-later
-
-# -*- coding: utf-8 -*-
-"""
-Python interface to download OpenStreetMap data
-Documented at https://github.com/pypsa-meets-earth/earth-osm
-
-Relevant Settings
------------------
-
-*None*  # multiprocessing & infrastructure selection can be an option in future
-
-Inputs
-------
-
-*None*
-
-Outputs
--------
-
-- ``data/osm/pbf``: Raw OpenStreetMap data as .pbf files per country
-- ``data/osm/power``: Filtered power data as .json files per country
-- ``data/osm/out``:  Prepared power data as .geojson and .csv files per country
-- ``resources/osm/raw``: Prepared and per type (e.g. cable/lines) aggregated power data as .geojson and .csv files
-"""
-
-# Importing the necessary python libraries
-
 import logging
 import os
 import shutil
 from pathlib import Path
+
 import yaml
 from _helpers_dist import configure_logging, create_logger, read_osm_config
 from earth_osm import eo
 
 logger = create_logger(__name__)
+
 
 def country_list_to_geofk(country_list):
     """
@@ -61,6 +33,7 @@ def country_list_to_geofk(country_list):
     full_codes_list = [convert_iso_to_geofk(c_code) for c_code in set(country_list)]
 
     return full_codes_list
+
 
 def convert_iso_to_geofk(
     iso_code, iso_coding=True, convert_dict=read_osm_config("iso_to_geofk_dict")
@@ -103,40 +76,36 @@ if __name__ == "__main__":
 
     run = snakemake.config.get("run", {})
     RDIR = run["name"] + "/" if run.get("name") else ""
-    store_path_resources = Path.joinpath(Path().cwd(), "resources", RDIR, "osm", "raw")
-    store_path_data = Path.joinpath(Path().cwd(), "data", "osm")
-    country_list = country_list_to_geofk(snakemake.params.countries)
+    store_path_resources = Path.cwd() / "resources" / RDIR / "osm" / "raw"
+    store_path_data = Path.cwd() / "data" / "osm"
+    countries = snakemake.config["countries"]
+    country_list = country_list_to_geofk(countries)
 
     eo.save_osm_data(
         region_list=country_list,
         primary_name="building",
         feature_list=["ALL"],
         update=False,
-        mp=True,
+        mp=False,
         data_dir=store_path_data,
         out_dir=store_path_resources,
         out_format=["csv", "geojson"],
-        out_aggregate=False,
+        out_aggregate=True,
     )
 
     out_path = Path.joinpath(store_path_resources, "out")
-    # # names = ["generator", "cable", "line", "substation"]
-    # format = ["csv", "geojson"]
-    new_files = os.listdir(out_path)  # list downloaded osm files
+    out_formats = ["csv", "geojson"]
+    new_files = os.listdir(out_path)
 
-    # # earth-osm (eo) only outputs files with content
-    # # If the file is empty, it is not created
-    # # This is a workaround to create empty files for the workflow
+    for f in out_formats:
+        new_file_name = Path.joinpath(store_path_resources, f"all_raw_building.{f}")
+        old_file = list(Path(out_path).glob(f"*building.{f}"))
 
-    # # Rename and move osm files to the resources folder output
-    # for file in new_files:
-    #     for name in names:
-    #         for f in format:
-    #             ext = f"{name}.{f}"
-    #             if ext in file:
-    #                 new_file_name = Path.joinpath(
-    #                     store_path_resources, f"all_raw_{name}s.{f}"
-    #                 )
-    #                 old_file_name = Path.joinpath(out_path, file)
-    #                 logger.info(f"Move {old_file_name} to {new_file_name}")
-    #                 shutil.move(old_file_name, new_file_name)
+        if not old_file:
+            with open(new_file_name, "w") as f:
+                pass
+        else:
+            logger.info(f"Move {old_file[0]} to {new_file_name}")
+            shutil.move(old_file[0], new_file_name)
+
+    print("fino a qui tutto bene")

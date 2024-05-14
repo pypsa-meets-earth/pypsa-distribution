@@ -9,6 +9,7 @@ from build_test_configs import create_test_config
 from _helpers import create_country_list
 from os.path import normpath, exists, isdir
 from shutil import copyfile
+from pathlib import Path
 
 import sys
 
@@ -24,19 +25,21 @@ PROFILE = "data/sample_profile.csv"
 
 if "config" not in globals() or not config:  # skip when used as sub-workflow
     if not exists("config.yaml"):
-        # prepare pypsa-earth config
-        create_test_config(
-            "./config.pypsa-earth.yaml", "./config.distribution.yaml", "./config.yaml"
-        )
-        # copyfile("config.distribution.yaml", "config.yaml")
+        # # prepare pypsa-earth config
+        # create_test_config(
+        #     "./config.pypsa-earth.yaml", "./config.distribution.yaml", "./config.yaml"
+        # )
+        copyfile("config.distribution.yaml", "config.yaml")
 
+    configfile: "config.pypsa-earth.yaml"
     configfile: "config.yaml"
 
-# convert country list according to the desired region
+
 config["countries"] = create_country_list(config["countries"])
 
 run = config.get("run", {})
 RDIR = run["name"] + "/" if run.get("name") else ""
+countries = config["countries"]
 
 ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 5)
 
@@ -47,7 +50,7 @@ wildcard_constraints:
     clusters="[0-9]+m?|all",
     opts="[-+a-zA-Z0-9]*",
     sopts="[-+a-zA-Z0-9\.\s]*",
-    discountrate="[-+a-zA-Z0-9\.\s]*",
+    user_type="[a-zA-Z0-9]*",
 
 
 subworkflow pypsaearth:
@@ -64,8 +67,28 @@ rule clean:
         shell("snakemake -j 1 solve_network --delete-all-output")
 
 
+rule ramp_build_demand_profile:
+    input:
+        user_description="data/ramp/{user_type}.xlsx",
+    output:
+        profile_results="resources/ramp/{user_type}.xlsx",
+    log:
+        "logs/ramp_build_demand_profile_{user_type}.log",
+    benchmark:
+        "benchmarks/ramp_build_demand_profile_{user_type}"
+    threads: 1
+    resources:
+        mem_mb=3000,
+    script:
+        "scripts/ramp_build_demand_profile.py"
+
+
 rule build_demand:
     input:
+        **{
+            f"profile_{user_file.stem}": f"resources/ramp/{user_file.stem}.xlsx"
+            for user_file in Path("data/ramp/").glob("[a-zA-Z0-9]*.xlsx")
+        },
         sample_profile=PROFILE,
         create_network="networks/base.nc",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
@@ -114,13 +137,28 @@ rule create_network:
         "scripts/create_network.py"
 
 
+if config["enable"].get("download_osm_data", True):
+
+    rule download_osm_data:
+        output:
+            building_resources="resources/" + RDIR + "osm/raw/all_raw_building.geojson",
+        log:
+            "logs/" + RDIR + "download_osm_data.log",
+        benchmark:
+            "benchmarks/" + RDIR + "download_osm_data"
+        threads: 1
+        resources:
+            mem_mb=3000,
+        script:
+            "scripts/download_osm_data.py"
+
+
 rule clean_earth_osm_data:
     input:
-        #buildings_json="resources/buildings/buildings.json",
+        all_buildings="resources/" + RDIR + "osm/raw/all_raw_building.geojson",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
     output:
-        buildings_geojson="resources/buildings/buildings.geojson",
-        microgrids_buildings="resources/buildings/microgrids_buildings.geojson",
+        microgrid_building="resources/buildings/microgrid_building.geojson",
     log:
         "logs/clean_earth_osm_data.log",
     benchmark:
@@ -134,7 +172,7 @@ rule clean_earth_osm_data:
 
 rule cluster_buildings:
     input:
-        buildings_geojson="resources/buildings/buildings.geojson",
+        buildings_geojson="resources/buildings/microgrid_building.geojson",
     output:
         cleaned_buildings_geojson="resources/buildings/cleaned_buildings.geojson",
         clusters="resources/buildings/clustered_buildings.geojson",
@@ -206,20 +244,6 @@ rule add_electricity:
     script:
         "scripts/add_electricity.py"
 
-
-if config["enable"].get("download_osm_data", True):
-
-    rule download_osm_data:
-        params:
-            countries=config["countries"],
-        output:
-            "resources", RDIR, "osm", "raw"
-        log:
-            "logs/" + RDIR + "download_osm_data.log",
-        benchmark:
-            "benchmarks/" + RDIR + "download_osm_data"
-        script:
-            "scripts/download_osm_data.py"
 
 # if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
 

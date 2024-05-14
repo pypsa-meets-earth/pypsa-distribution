@@ -20,6 +20,7 @@ import json
 
 def extract_points(input_file, output_file):
     # Load GeoJSON data from file
+
     with open(input_file, "r") as f:
         data = json.load(f)
 
