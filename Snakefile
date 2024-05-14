@@ -10,6 +10,7 @@ from _helpers import create_country_list
 from os.path import normpath, exists, isdir
 from shutil import copyfile
 from pathlib import Path
+from _helpers import create_country_list
 
 import sys
 
@@ -23,6 +24,8 @@ HTTP = HTTPRemoteProvider()
 COSTS = "data/costs.csv"
 PROFILE = "data/sample_profile.csv"
 
+PYPSAEARTH_FOLDER = "pypsa-earth"
+
 if "config" not in globals() or not config:  # skip when used as sub-workflow
     if not exists("config.yaml"):
         # # prepare pypsa-earth config
@@ -33,6 +36,8 @@ if "config" not in globals() or not config:  # skip when used as sub-workflow
 
     configfile: "config.pypsa-earth.yaml"
     configfile: "config.yaml"
+
+config["countries"] = create_country_list(config["countries"])    
 
 
 config["countries"] = create_country_list(config["countries"])
@@ -53,13 +58,21 @@ wildcard_constraints:
     user_type="[a-zA-Z0-9]*",
 
 
-subworkflow pypsaearth:
-    workdir:
-        "./pypsa-earth"
-    snakefile:
-        "./pypsa-earth/Snakefile"
-    configfile:
-        "./config.yaml"
+if not config.get("disable_subworkflow", False):
+
+    subworkflow pypsaearth:
+        workdir:
+            PYPSAEARTH_FOLDER
+        snakefile:
+            PYPSAEARTH_FOLDER + "/Snakefile"
+        configfile:
+            "./config.pypsa-earth.yaml"
+
+
+if config.get("disable_subworkflow", False):
+
+    def pypsaearth(path):
+        return PYPSAEARTH_FOLDER + "/" + path
 
 
 rule clean:
