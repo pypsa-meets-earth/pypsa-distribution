@@ -107,5 +107,3 @@ if __name__ == "__main__":
         else:
             logger.info(f"Move {old_file[0]} to {new_file_name}")
             shutil.move(old_file[0], new_file_name)
-
-    print("fino a qui tutto bene")
