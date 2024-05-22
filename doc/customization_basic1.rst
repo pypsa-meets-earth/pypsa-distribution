@@ -5,7 +5,7 @@
 .. _customization_basic1:
 
 #######################
-2. Basic customization
+Basic customization
 #######################
 
 The goal of this section is to show you how to make basic settings to customize the configuration file and consequently the execution of the tool.
@@ -78,11 +78,12 @@ For a successful model run, ensure the download of essential open-source data, i
 .. code:: yaml
 
     enable:
-        retrieve_databundle: true  #  Recommended 'true', for the first run. Otherwise data might be missing.
+        retrieve_databundle: true  # Recommended 'true', for the first run. Otherwise data might be missing.
         retrieve_cost_data: true   # If true, it retrieves cost data from technology data and saves in resources/costs.csv, if false uses cost data in data/costs.csv
-        download_osm_data: true    # If true, OpenStreetMap data will be downloaded for the above given countries
+        download_osm_data: true  # If true, OpenStreetMap data will be downloaded for the selected countries
+        download_osm_buildings: true  # If true, OpenStreetMap buildings will be downloaded for the selected countries
         build_cutout: false
-        build_natura_raster: false # If True, than an exclusion raster will be build
+        build_natura_raster: false  # If True, than an exclusion raster will be build
         
         # If "build_cutout" : true, then environmental data is extracted according to `snapshots` date range and `countries`
 
@@ -120,10 +121,10 @@ This section specifies some parameters needed to generate demand profiles.
 .. code:: yaml
 
     load_options:
-      ssp: "ssp2-2.6"
-      weather_year: 2013
-      prediction_year: 2030
-      scale: 1
+        ssp: "ssp2-2.6"
+        weather_year: 2013
+        prediction_year: 2030
+        scale: 1
 
 The arguments you see are relative:
 - Weather_year: sets the year referenced by the weather data for calculating electricity demand profiles for the selected area.

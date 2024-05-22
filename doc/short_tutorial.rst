@@ -33,10 +33,10 @@ Follow the procedure shown in the prompt, and when finished, restart the device.
 
 You may probably need to install conda and create the pypsa-earth environment in the WSL execution environment as well.
 To do this you need to first download the linux version from https://docs.anaconda.com/free/miniconda/. 
-Once the download is done open the wsl terminal ( you can just type wsl in the search panel),place yourself in the folder where the file you just downloaded is located,  and run the following commands.
+Once the download is done open the wsl terminal ( you can just type wsl in the search panel),place yourself in the folder where the file you just downloaded is located, and run the following commands.
 
 .. code:: bash
-    \your-path (base)  $ bash <conda-installer-name>-latest-Linux-x86_64.sh
+    \your-path (base) % bash <conda-installer-name>-latest-Linux-x86_64.sh
 
 Where conda-installer-name will be one of "Miniconda3", "Anaconda", or "Miniforge3".
 Follow the prompts on the installer screens. If you are unsure about any setting, accept the defaults. You can change them later.
@@ -44,24 +44,24 @@ Follow the prompts on the installer screens. If you are unsure about any setting
 To check if the installation was successful you can run the following command:
 
 .. code:: bash
-    \your-path (base)  $ conda list
+    \your-path (base) % conda list
 
 If you see a list of packages after execution, everything should be okay.
 
 To create the environment, simply open the wsl terminal, open to the pypsa-earth folder and run the following commands:
 
 .. code:: bash
-    \pypsa-earth   $ conda activate base
+    \pypsa-earth % conda activate base
 
 After that:
 
 .. code:: bash
-    \pypsa-earth   $ conda install -c conda-forge mamba
+    \pypsa-earth % conda install -c conda-forge mamba
 
 Finally:
 
 .. code:: bash
-    \pypsa-earth   $ mamba env create -f envs/environment.yaml
+    \pypsa-earth % mamba env create -f envs/environment.yaml
 
 Now everything should be ready to run the tutorial.
 
@@ -120,4 +120,4 @@ To run the whole modeling workflow you just need the following command:
 .. TODO Explain settings of the tutorial case
 
 This command will trigger loading of the whole dataset needed to build the model for a tutorial case if both tutorial and retrieve_databundle flags are on. 
-The tutorial model  run simulation will take a while (about 20..50 minutes).
+The tutorial model run simulation will take a while (about 20..50 minutes).

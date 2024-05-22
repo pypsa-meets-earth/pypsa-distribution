@@ -13,6 +13,17 @@ logging:
 # option to disable the subworkflow to ease the analyses
 disable_subworkflow: false
 
+enable:
+  # prepare_links_p_nom: false
+  retrieve_databundle: true
+  retrieve_cost_data: true
+  download_osm_data: true
+  download_osm_buildings: false
+  # If "build_cutout" : true # requires cds API key https://cds.climate.copernicus.eu/api-how-to
+  # More information https://atlite.readthedocs.io/en/latest/introduction.html#datasets
+  build_cutout: false
+  build_natura_raster: false  # If True, then build_natura_raster can be run
+
 scenario:
   simpl: ['']
   ll: ['copt']

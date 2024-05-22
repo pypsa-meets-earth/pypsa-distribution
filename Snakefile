@@ -76,9 +76,9 @@ if config.get("disable_subworkflow", False):
         return PYPSAEARTH_FOLDER + "/" + path
 
 
-rule clean:
-    run:
-        shell("snakemake -j 1 solve_network --delete-all-output")
+# rule clean:
+#     run:
+#         shell("snakemake -j 1 solve_network --delete-all-output")
 
 
 rule ramp_build_demand_profile:
@@ -151,7 +151,7 @@ rule create_network:
         "scripts/create_network.py"
 
 
-if config["enable"].get("download_osm_data", True):
+if config["enable"].get("download_osm_buildings", True):
 
     rule download_osm_data:
         output:
