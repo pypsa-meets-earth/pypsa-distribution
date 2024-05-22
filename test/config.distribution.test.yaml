@@ -20,6 +20,17 @@ scenario:
 countries: ["NG"]
 # Can be replaced by country ["NG", "BJ"] or user specific region, more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
+enable:
+  # prepare_links_p_nom: false
+  retrieve_databundle: true
+  retrieve_cost_data: true
+  download_osm_data: true
+  download_osm_buildings: false
+  # If "build_cutout" : true # requires cds API key https://cds.climate.copernicus.eu/api-how-to
+  # More information https://atlite.readthedocs.io/en/latest/introduction.html#datasets
+  build_cutout: false
+  build_natura_raster: false  # If True, then build_natura_raster can be run
+
 year: "2020" #Year setting allows the choice of which data to download (es. Worldpop_data)
 
 snapshots:

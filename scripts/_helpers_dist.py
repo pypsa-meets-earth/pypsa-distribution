@@ -2,15 +2,26 @@
 # SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+import logging
 import os
+import sys
 from pathlib import Path
 
+sys.path.append("../pypsa-earth/scripts")
+sys.path.append("./pypsa-earth/scripts")
+import _helpers as pe_helpers
 import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import yaml
 from geopy.extra.rate_limiter import RateLimiter
 from geopy.geocoders import Nominatim
+
+handle_exception = pe_helpers.handle_exception
+create_logger = pe_helpers.create_logger
+read_osm_config = pe_helpers.read_osm_config
+create_country_list = pe_helpers.create_country_list
 
 
 def sets_path_to_root(root_directory_name):

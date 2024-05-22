@@ -76,6 +76,8 @@ Documentation
 
 * :doc:`introduction`
 * :doc:`installation`
+* :doc:`customization_basic1`
+* :doc:`short_tutorial`
 
 .. toctree::
    :hidden:
