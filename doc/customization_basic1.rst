@@ -14,15 +14,61 @@ Within the work folder there is always a configuration file ( typically the file
 This type of file is used to define and customize the settings and parameters for the execution of the workflow or process, so any customization of the tool will be performed on that file. 
 In the next steps we will see the basic settings in order to customize the configuration file, in case you are interested in more in-depth customization, you can refer to the configuration section in the Pypsa-Earth documentation.
 
+Choose the type of simulation:
+--------------------------------------
+It is possible to run simulations with the Pypsa Distribution tool in two modes:
 
-Specify the country/region of interest
+- tutorial mode: this is a faster simulation in which less data is used. It was created to allow users to become familiar with the tool, without necessarily having to run heavy simulations.For realistic case studies it will be necessary to run the tool in full configuration and not in tutorial one.
+- full ( non-tutorial) mode: in this case a full simulation is performed and the use of committed resources is greater.
+
+Since the tutorial mode is designed only to become familiar with the tool, and not to perform analysis in a broad sense, it is possible to run the simulation in tutorial mode for microgrids located in these nations: 
+
+- Nigeria [NG]
+- Benin [BJ]
+- Botswana [BW]
+- Morocco [MA]
+
+The tutorial mode is selectable by placing within the config file:
+
+.. code:: yaml
+
+    tutorial: true
+
+To perform a full simulation it will be necessary to set:
+
+.. code:: yaml
+
+    tutorial: false
+
+
+Specify the country of interest:
 --------------------------------------
 
-The model can be adapted to include any country, multiple countries (e.g. `Nigeria` and `Benin`)  using ``countries`` argument:
+Currently Pypsa-Distribution is a tool under development, how soon it will be possible to use it for the study and simulation of microgrids in all countries.
+Selection of the country of interest will be possible using the "coutries" argument at the top of the config file.
 
 .. code:: yaml
 
     countries: ["NG"]
+
+
+Please remember,before proceeding, that as has already been mentioned, in case you are running a simulation in tutorial mode you will only be able to select one nation from NG,BJ,BW or MA; and that for realistic case studies it will be necessary to run the tool in full configuration
+
+Configure `coordinates`
+--------------------------
+Currently, the tool allows us to select the microgrid coverage area by going to enter the coordinates of the vertices of the rectangular surface we want to be covered by the microgrid.
+At the end of the config.yaml file you will find the microgrid list section where you can go to enter the coordinates. 
+You can take advantage of the webb OpenStreetMap application to generate the coordinates.
+
+.. code:: yaml
+
+    microgrids_list:
+        your_microgrid:
+            lon_max: 41.1141
+            lon_min: 41.1086
+            lat_min: -2.0596
+            lat_max: -2.0526
+
 
 Configure ``enable`` section to download/build data
 ---------------------------------------------------------
@@ -33,8 +79,8 @@ For a successful model run, ensure the download of essential open-source data, i
 
     enable:
         retrieve_databundle: true  #  Recommended 'true', for the first run. Otherwise data might be missing.
-        retrieve_cost_data: true  # true: retrieves cost data from technology data and saves in resources/costs.csv, false: uses cost data in data/costs.csv
-        download_osm_data: true  # If 'true', OpenStreetMap data will be downloaded for the above given countries
+        retrieve_cost_data: true   # If true, it retrieves cost data from technology data and saves in resources/costs.csv, if false uses cost data in data/costs.csv
+        download_osm_data: true    # If true, OpenStreetMap data will be downloaded for the above given countries
         build_cutout: false
         build_natura_raster: false # If True, than an exclusion raster will be build
         
@@ -103,18 +149,3 @@ To accurately model both temporally and spatially renewable availabilities such 
 When you use precompiled cutouts, no editing of this section is required. 
 However, when using precompiled cutouts, you must replace all "cutout-2013-era5" entries with the name of the custom cutout.
 E.g.: if you simulate Kazakhstan with cutout: asia-2013-era5, each occurrence of cutout-2013-era5 should be updated to asia-2013-era5, which refers to the asia-2013-era5.nc file generated in the cutout folder.
-
-Configure `coordinates`
---------------------------
-Currently, the tool allows us to select the microgrid coverage area by going to enter the coordinates of the vertices of the rectangular surface we want to be covered by the microgrid.
-At the end of the config.yaml file you will find the microgrid list section where you can go to enter the coordinates. 
-You can take advantage of the webb OpenStreetMap application to generate the coordinates.
-
-.. code:: yaml
-
-    microgrids_list:
-     microgrid_1:
-        lon_max: 41.1141
-        lon_min: 41.1086
-        lat_min: -2.0596
-        lat_max: -2.0526

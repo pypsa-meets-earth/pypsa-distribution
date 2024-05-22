@@ -9,17 +9,20 @@
 Short tutorial
 ##########################################
 
+.. note::
+
+    For realistic case studies it will be necessary to run the tool in full configuration and not in tutorial configuration. The tutorial mode is used only to become familiar with the tool.
+
 The installation procedure installs PyPSA-Distribution model with all the software dependencies needed to build and run it.
-It is first crucial to get familiar with a tutorial where a simpler model is considered. This section explains how to:
--	Run  the tutorial model
--	Run the tool for different case studies than the one in the tutorial
+The purpose of this section is to make available to the user a simplified case study through which to become familiar with the code and its execution.
+To this aim, we have chosen to present the simulation of a microgrid in Nigeria, choosing the tutorial mode within the configuration file. In this way, the user can explore the different possibilities of the tool, but at a lower expense of computational resources than in the case of a full simulation.
 
 Before we get into the heart of the tutorial, it is important to make a few preliminaries for using the tool if you have a Windows operating system.
 
 Preliminary operations
 ---------------------------
 
-For windows users: due to a problem with Snakemake using windows is supported as long as you use WSL, you can easily install it in your device by following these steps
+For windows users: due to a problem with Snakemake, using windows is supported as long as you use WSL, you can easily install it in your device by following these steps.
 Open the command prompt and run the following command
 
 .. code:: bash
@@ -62,12 +65,36 @@ Finally:
 
 Now everything should be ready to run the tutorial.
 
+Set the IDE:
+---------------------
+.. note::
+    In this example we will refer to the use of the Visual Studio Code IDE.
+
+First, we have to set up the IDE in order to run the tutorial. 
+In particular it will be necessary, first, to open a new terminal. To do this, simply select the "terminal" option at the top left of the VSC interface and select new terminal.
+
+Once this is done we will see a window appear at the bottom of the interface. 
+For Windows users by default, the terminal will be a cmd, however for proper execution of the tool it is necessary to move to a WSL terminal. 
+To do this, it is sufficient to select the down arrow next to "cmd" and select from the drop-down menu the terminal "wsl"
+
+At this point we can move on to activate the previously created pypsa-earth environment ( if you have not already created the pypsa-earth environment you can see how to do it in the "installation" section).
+To activate the environment simply run the following command in the terminal you just opened:
+
+.. code:: bash
+    .../your-folder (base) % conda activate pypsa-earth
+
+Now you just have to move to the folder in which you want to work, and you'll be all ready to get into the thick of the simulation.
+
+.. code:: bash
+    .../your-folder (pypsa-earth) % cd your-work-folder
+
+
 Run the tutorial model
 ---------------------
 
 A tutorial data kit was developed to facilitate exploring the model.
 The user can explore the majority of the model's functions on a local machine by running the tutorial, which uses fewer computational resources than the entire model does. 
-Currently, the tutorial case study refers to a microgrid in Nigeria whose coverage area is defined by a rectangle whose vertices have the following cooridnates:
+Currently, the tutorial case study refers to a microgrid in Nigeria whose coverage area is defined by a rectangle whose vertices have the following coordinates:
 
 -	lon_max: 5.0998
 -	lon_min: 6.1700
@@ -94,76 +121,3 @@ To run the whole modeling workflow you just need the following command:
 
 This command will trigger loading of the whole dataset needed to build the model for a tutorial case if both tutorial and retrieve_databundle flags are on. 
 The tutorial model  run simulation will take a while (about 20..50 minutes).
-
-
-Run a different case study
---------------------------
-
-In this section you will find a small guide to learn how to configure the tool for your specific case study. 
-As an example, we will refer to the study of a microgrid in Kenya whose coverage area is defined by a rectangle with vertices in these coordinates: 
-
-- lon_max: 41.1141
-- lon_min: 41.1086
-- lat_min: -2.0596
-- lat_max: -2.0526
-To better understand this example, it might be helpful to read the section on configuration in the config.yaml file.
-
-.. note::
-    To find the coordinates of a specific study area, one functional way is to take advantage of the web application OpenStreetMap.
-
-First of all, it is always a good idea to start by running the default tutorial case study; this will allow you to see if the tool is working properly. 
-Furthermore, following the run of the tutorial case, you will see a "config.yaml" file appear in the folder. 
-This file conjointly with the config.pypsa-earth.yaml allows the user to specify the scenario they wish to analyze before running the algorithm.
-
-The following commands are the most relevant for setting up your personal case study:
-
-1. Configure the country: in the two configuration files ( config.yaml and config.pypsa-earth.yaml) you must enter under "country" the abbreviation of the country where your case study is located.In our exemple "KE"
-
-.. code:: yaml
-
-    countries: ["KE"]
-
-.. note::
-    If the nation you have chosen is not among the nations that are enabled for tutorial configuration ( currently the only ones available are Nigeria (NG), Benin (BJ) , Botswana (BW) and Morocco (MA) ) you must:
-    - Under tutorial ( at the top of the code ): replace true with false
-    - Replace in both configuration files "cutout-2013-era5-tutorial" with "cutout-2013-era5" ( you can easily do this by exploiting the replace command in the file [ctrl+H])
-
-
-2. Configure enable section : this section of the file ensure the download of essential open-source data, including databundle and cost data. 
-   In our case it is convenient to go to set: 
-    - build_cutout = false
-    - build_nature_raster = false
-   
-   In particular the built_cutout = false is due to the fact that ,for the wheater year ,2013 will be left and in this case the precompiled cutouts are automatically downloaded with the retrive_databoundle rule. 
-   The choice of build_nature_raster = false, is due to the fact that in this way a precompiled file "data/nature.tiff",also downloaded with the databundle, is used.
-
-   .. code:: yaml
-
-    enable:
-        retrieve_databundle: true  #  Recommended 'true', for the first run. Otherwise data might be missing.
-        retrieve_cost_data: true  
-        download_osm_data: true 
-        build_cutout: false
-        build_natura_raster: false 
-        
-
-3. Enter the coordinates of the microgrid: in the config.yaml file, in the  microgrid_list section you have to insert the microgrid coordinates. In our case, the coordinates are:
-
-   .. code:: yaml
-
-    microgrids_list:
-    microgrid_1:
-        lon_max: 41.1141
-        lon_min: 41.1086
-        lat_min: -2.0596
-        lat_max: -2.0526
-
-These are the basic commands for configuring another case study than the one selected in the default configuration file. 
-Of course, there are many other items to further customize your case study. 
-If you would like to explore this further, we recommend you take a look at the Pypsa-Earth documentation in the configuration section.
-
-At this point we are ready to run the newly configured case study.
-As in the previous case, to run the code use this command:
-
-.. code:: bash
-    .../pypsa-distribution (pypsa-earth) % snakemake -j 1 solve_network
