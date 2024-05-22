@@ -37,7 +37,8 @@ if "config" not in globals() or not config:  # skip when used as sub-workflow
     configfile: "config.pypsa-earth.yaml"
     configfile: "config.yaml"
 
-config["countries"] = create_country_list(config["countries"])    
+
+config["countries"] = create_country_list(config["countries"])
 
 
 config["countries"] = create_country_list(config["countries"])
