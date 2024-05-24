@@ -82,10 +82,14 @@ if config.get("disable_subworkflow", False):
 
 
 rule ramp_build_demand_profile:
+    params:
+        ramp=config["ramp"],
+        snapshoots=config["snapshots"],
     input:
         user_description="data/ramp/{user_type}.xlsx",
     output:
-        profile_results="resources/ramp/{user_type}.xlsx",
+        daily_demand_profiles="resources/ramp/daily_demand_{user_type}.xlsx",
+        daily_type_demand_profile="resources/ramp/daily_type_demand_{user_type}.xlsx",
     log:
         "logs/ramp_build_demand_profile_{user_type}.log",
     benchmark:
@@ -100,7 +104,7 @@ rule ramp_build_demand_profile:
 rule build_demand:
     input:
         **{
-            f"profile_{user_file.stem}": f"resources/ramp/{user_file.stem}.xlsx"
+            f"profile_{user_file.stem}": f"resources/ramp/daily_type_demand_{user_file.stem}.xlsx"
             for user_file in Path("data/ramp/").glob("[a-zA-Z0-9]*.xlsx")
         },
         sample_profile=PROFILE,
