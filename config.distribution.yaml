@@ -31,7 +31,7 @@ scenario:
   opts: [Co2L-3H] #Co2L adds an overall absolute carbon-dioxide emissions limi
                   #3H resamples the time-resolution by averaging over every 3 snapshots
 
-countries: ["RW"]
+countries: ["NG"]
 # Can be replaced by country ["NG", "BJ"] or user specific region, more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
 year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
@@ -107,10 +107,10 @@ tech_modelling:
 
 microgrids_list:  #MICROGRIDS IN NIGERIA
   microgrid_1:     #WORKING
-    lon_max: 30.4637
-    lon_min: 30.2996
-    lat_min: -1.3375
-    lat_max: -1.1864
+    lon_max: 5.0998
+    lon_min: 6.1700
+    lat_min: 8.2356
+    lat_max: 9.8012
 load:
   scaling_factor: 15000
 
