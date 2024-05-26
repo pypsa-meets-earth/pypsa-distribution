@@ -9,7 +9,7 @@ logging:
   level: INFO
   format: "%(levelname)s:%(name)s:%(message)s"
 
-countries: ["NG"]
+countries: ["RW"]
 
   # ['DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CM', 'CF', 'TD', 'CG', 'CD',
   # 'DJ', 'EG', 'GQ', 'ER', 'ET', 'GA', 'GH', 'GN', 'CI', 'KE', 'LS', 'LR', 'LY',
@@ -49,6 +49,9 @@ snapshots:
   start: "2013-03-1"
   end: "2013-03-7"
   inclusive: "left" # end is not inclusive
+
+ramp:
+  days: 365
 
 # definition of the Coordinate Reference Systems
 crs:
