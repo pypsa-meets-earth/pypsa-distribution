@@ -121,7 +121,6 @@ def get_number_type_buildings(input_filepath, output_filepath):
     counts["cluster"] = cleaned_buildings["cluster"].values
     counts.set_index("cluster", inplace=True)
     counts.to_excel(output_filepath)
-    print("fino a qui tutto bene")
 
 
 if __name__ == "__main__":
