@@ -41,6 +41,8 @@ snapshots:
   end: "2014-01-01"
   inclusive: "left" # end is not inclusive
 
+ramp:
+  days: 365
 
 # definition of the Coordinate Reference Systems
 crs:

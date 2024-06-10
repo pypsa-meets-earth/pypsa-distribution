@@ -50,6 +50,9 @@ snapshots:
   end: "2013-03-7"
   inclusive: "left" # end is not inclusive
 
+ramp:
+  days: 365
+
 # definition of the Coordinate Reference Systems
 crs:
   geo_crs: EPSG:4326  # general geographic projection, not used for metric measures. "EPSG:4326" is the standard used by OSM and google maps
