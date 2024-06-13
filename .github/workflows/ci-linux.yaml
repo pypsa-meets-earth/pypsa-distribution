@@ -62,6 +62,7 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         mamba env update -n pypsa-earth -f pypsa-earth/envs/environment.yaml
+        mamba activate pypsa_earth
         mamba install -y ramp
 
     - name: Conda list
