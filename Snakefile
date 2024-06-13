@@ -193,6 +193,7 @@ rule cluster_buildings:
         buildings_geojson="resources/buildings/microgrid_building.geojson",
     output:
         cleaned_buildings_geojson="resources/buildings/cleaned_buildings.geojson",
+        cleaned_buildings_update="resources/buildings/cleaned_buildings_update.geojson",
         clusters="resources/buildings/clustered_buildings.geojson",
         clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
         number_buildings_type="resources/buildings/number_buildings_type.xlsx",

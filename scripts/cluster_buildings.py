@@ -36,7 +36,22 @@ def extract_points(input_file, output_file):
                 }
             )
     buildings_geodataframe = gpd.GeoDataFrame.from_features(features)
+    microgrid_buildings = microgrid_buildings.to_crs(epsg=32633)
+    area = microgrid_buildings.geometry.area
+    area = pd.Series(area)
+    buildings_geodataframe["area"] = area
     buildings_geodataframe.to_file(output_file)
+
+
+def buildings_classification(input_path, output_path):
+    cleaned_buildings = gpd.read_file(input_path)
+    for index, row in cleaned_buildings.iterrows():
+        if row.tags_building == "yes":
+            if row.area < 200:
+                cleaned_buildings.at[index, "tags_building"] = "house"
+            else:
+                cleaned_buildings.at[index, "tags_building"] = "yes"
+    cleaned_buildings.to_file(output_path)
 
 
 def get_central_points_geojson(input_filepath, output_filepath, n_clusters):
@@ -110,14 +125,14 @@ def get_central_points_geojson_with_buildings(
 
 def get_number_type_buildings(input_filepath, output_filepath):
     cleaned_buildings = gpd.read_file(input_filepath)
-    counts = []
+    conteggi = []
     for row in cleaned_buildings.itertuples():
         building_tag = row.buildings
         building_tag = json.loads(building_tag.replace("'", '"'))
         building_tag = pd.Series(building_tag)
         count = building_tag.value_counts()
-        counts.append(count)
-    counts = pd.DataFrame(counts).fillna(0).astype(int)
+        conteggi.append(count)
+    counts = pd.DataFrame(conteggi).fillna(0).astype(int)
     counts["cluster"] = cleaned_buildings["cluster"].values
     counts.set_index("cluster", inplace=True)
     counts.to_excel(output_filepath)
@@ -138,14 +153,19 @@ if __name__ == "__main__":
         snakemake.output["cleaned_buildings_geojson"],
     )
 
-    get_central_points_geojson(
+    buildings_classification(
         snakemake.output["cleaned_buildings_geojson"],
+        snakemake.output["cleaned_buildings_update"],
+    )
+
+    get_central_points_geojson(
+        snakemake.output["cleaned_buildings_update"],
         snakemake.output["clusters"],
         snakemake.config["buildings"]["n_clusters"],
     )
 
     get_central_points_geojson_with_buildings(
-        snakemake.output["cleaned_buildings_geojson"],
+        snakemake.output["cleaned_buildings_update"],
         snakemake.output["clusters_with_buildings"],
         snakemake.config["buildings"]["n_clusters"],
     )
