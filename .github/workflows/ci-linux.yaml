@@ -15,7 +15,7 @@ on:
   - cron: "0 5 * * TUE"
 
 env:
-  CACHE_NUMBER: 1  # Change this value to manually reset the environment cache
+  CACHE_NUMBER: 3  # Change this value to manually reset the environment cache
 
 jobs:
   build:
@@ -62,8 +62,8 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         mamba env update -n pypsa-earth -f pypsa-earth/envs/environment.yaml
-        mamba activate pypsa_earth
-        mamba install -y ramp
+        conda activate pypsa-earth
+        pip install rampdemand
 
     - name: Conda list
       run: |
