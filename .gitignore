@@ -20,7 +20,7 @@ img/
 .snakemake/
 benchmarks/
 cutouts/
-data/
+# data/
 results/
 networks/
 resources/
@@ -28,6 +28,11 @@ test/tmp/
 
 # track resources/powerplants.csv
 !resources/powerplants.csv
+
+# track data/ramp/
+!data/ramp/
+!data/ramp/**
+!data/ramp/*.xlsx
 
 # Untrack test doc builds
 doc/_build

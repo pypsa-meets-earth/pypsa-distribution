@@ -41,6 +41,14 @@ snapshots:
   end: "2014-01-01"
   inclusive: "left" # end is not inclusive
 
+ramp:
+  days: 365
+
+tier:
+  tier_percent: [0.3, 0.2, 0.2, 0.1, 0.15, 0.05]
+
+house_area_limit:
+  area_limit: 255
 
 # definition of the Coordinate Reference Systems
 crs:
@@ -105,10 +113,10 @@ tech_modelling:
 
 microgrids_list:  #MICROGRIDS IN NIGERIA
   microgrid_1:     #WORKING
-    lon_max: 5.0998
-    lon_min: 6.1700
-    lat_min: 8.2356
-    lat_max: 9.8012
+    lon_max: 7.3914
+    lon_min: 7.2616
+    lat_min: 4.6151
+    lat_max: 4.7208
 load:
   scaling_factor: 15000
 
