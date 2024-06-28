@@ -60,7 +60,10 @@ jobs:
 
     - name: Update environment due to outdated or unavailable cache
       if: steps.cache.outputs.cache-hit != 'true'
-      run: mamba env update -n pypsa-earth -f pypsa-earth/envs/environment.yaml
+      run: |
+        mamba env update -n pypsa-earth -f pypsa-earth/envs/environment.yaml
+        conda activate pypsa-earth
+        pip install rampdemand
 
     - name: Conda list
       run: |
@@ -73,9 +76,9 @@ jobs:
         cp -rf pypsa-earth/config.tutorial.yaml config.pypsa-earth.yaml
         snakemake --cores all solve_network
 
-      # - name: Test plotting and summaries
-      #   run: |
-      #     snakemake --cores all plot_all_p_nom
-      #     snakemake --cores all plot_all_summaries
-      #     snakemake --cores all make_all_summaries
-      #     rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
+        # - name: Test plotting and summaries
+        #   run: |
+        #     snakemake --cores all plot_all_p_nom
+        #     snakemake --cores all plot_all_summaries
+        #     snakemake --cores all make_all_summaries
+        #     rm -rf resources/*.nc resources/*.geojson resources/*.h5 networks results
