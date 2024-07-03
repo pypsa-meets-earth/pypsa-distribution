@@ -20,7 +20,7 @@ img/
 .snakemake/
 benchmarks/
 cutouts/
-# data/
+data/
 results/
 networks/
 resources/

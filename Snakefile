@@ -47,7 +47,7 @@ run = config.get("run", {})
 RDIR = run["name"] + "/" if run.get("name") else ""
 countries = config["countries"]
 
-ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 1)
+ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 5)
 
 
 wildcard_constraints:
@@ -104,25 +104,19 @@ rule ramp_build_demand_profile:
 rule build_demand:
     params:
         tier=config["tier"],
+        build_demand_model=config["build_demand_type"],
     input:
         **{
             f"profile_{user_file.stem}": f"resources/ramp/daily_type_demand_{user_file.stem}.xlsx"
             for user_file in Path("data/ramp/").glob("[a-zA-Z0-9]*.xlsx")
         },
         sample_profile=PROFILE,
-        building_csv="resources/buildings/number_buildings_type.csv",
+        building_csv="resources/buildings/buildings_type.csv",
         create_network="networks/base.nc",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
         clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
-        profile_tier1="resources/ramp/daily_type_demand_Tier1.xlsx",
-        profile_tier2="resources/ramp/daily_type_demand_Tier2.xlsx",
-        profile_tier3="resources/ramp/daily_type_demand_Tier3.xlsx",
-        profile_tier4="resources/ramp/daily_type_demand_Tier4.xlsx",
-        profile_tier5="resources/ramp/daily_type_demand_Tier5.xlsx",
     output:
         electric_load="resources/demand/microgrid_load.csv",
-        electric_load_1="resources/demand/microgrid_load_1.csv",
-        electric_load_2="resources/demand/microgrid_load_2.csv",
     log:
         "logs/build_demand.log",
     benchmark:
@@ -207,7 +201,7 @@ rule cluster_buildings:
     output:
         clusters="resources/buildings/clustered_buildings.geojson",
         clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
-        number_buildings_type="resources/buildings/number_buildings_type.csv",
+        buildings_type="resources/buildings/buildings_type.csv",
     log:
         "logs/cluster_buildings.log",
     benchmark:

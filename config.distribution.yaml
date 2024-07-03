@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-
 version: 0.0.1
 tutorial: true
 
@@ -19,8 +18,10 @@ enable:
   retrieve_cost_data: true
   download_osm_data: true
   download_osm_buildings: false
-  # If "build_cutout" : true # requires cds API key https://cds.climate.copernicus.eu/api-how-to
-  # More information https://atlite.readthedocs.io/en/latest/introduction.html#datasets
+  # If "build_cutout" : true # requires cds API key
+  # https://cds.climate.copernicus.eu/api-how-to
+  # More information
+  # https://atlite.readthedocs.io/en/latest/introduction.html#datasets
   build_cutout: false
   build_natura_raster: false  # If True, then build_natura_raster can be run
 
@@ -28,34 +29,46 @@ scenario:
   simpl: ['']
   ll: ['copt']
   clusters: [55]
-  opts: [Co2L-3H] #Co2L adds an overall absolute carbon-dioxide emissions limi
-                  #3H resamples the time-resolution by averaging over every 3 snapshots
+  opts: [Co2L-3H]  # Co2L adds an overall absolute carbon-dioxide emissions limit
+                   # 3H resamples the time-resolution by averaging over every 3 snapshots
 
 countries: ["NG"]
-# Can be replaced by country ["NG", "BJ"] or user specific region, more at https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
+# Can be replaced by country ["NG", "BJ"] or user specific region, more at
+# https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
-year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
+year: "2019"  # Year setting allows the choice of which data to download (es. Worldpop_data)
 
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
-  inclusive: "left" # end is not inclusive
+  inclusive: "left"  # end is not inclusive
 
 ramp:
-  days: 365
+  days: 365  # Days allows to select the number of simulated days to ramp
 
 tier:
   tier_percent: [0.3, 0.2, 0.2, 0.1, 0.15, 0.05]
+  # Tier allows selection of the percentage breakdown of the population into
+  # the different tiers of energy access. Values range from the percentage of
+  # population belonging to tier 0 to those belonging to tier 5.
 
 house_area_limit:
-  area_limit: 255
+  area_limit: 255  # All buildings without a specified tag, having an area less than house_limit will be considered houses
+
+build_demand_type:
+  type: 0
+# type allows to select the mode by which the microgrid demand profile is generated.
+# 1 = a predetermined hourly profile is used
+# 2 = an average hourly profile is calculated by exploiting the ramp tool
+# 3 = an average hourly profile and its standard deviation is calculated using the ramp tool,
+#     and both quantities are used to calculate demand.
 
 # definition of the Coordinate Reference Systems
 crs:
-  geo_crs: EPSG:4326  # general geographic projection, not used for metric measures. "EPSG:4326" is the standard used by OSM and google maps
+  geo_crs: EPSG:4326  # general geographic projection, not used for metric measures.
+                      # "EPSG:4326" is the standard used by OSM and google maps
   distance_crs: EPSG:3857  # projection for distance measurements only. Possible recommended values are "EPSG:3857" (used by OSM and Google Maps)
   area_crs: ESRI:54009  # projection for area measurements only. Possible recommended values are Global Mollweide "ESRI:54009"
-
 
 electricity:
   voltage: 0.22
@@ -72,13 +85,12 @@ electricity:
 
   renewable_carriers: [solar, onwind]
 
-
 # TODO: Needs to be adjusted for Africa
 costs:
   year: 2030
-  discountrate: 0.07 # From a Lion Hirth paper, also reflects average of Noothout et al 2016
-  USD2013_to_EUR2013: 0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
-  marginal_cost: # EUR/MWh
+  discountrate: 0.07  # From a Lion Hirth paper, also reflects average of Noothout et al 2016
+  USD2013_to_EUR2013: 0.7532  # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
+  marginal_cost:  # EUR/MWh
     solar: 0.01
     onwind: 0.015
     offwind: 0.015
@@ -88,7 +100,7 @@ costs:
     fuel cell: 0.
     battery: 0.
     battery inverter: 0.
-  emission_prices: # in currency per tonne emission, only used with the option Ep
+  emission_prices:  # in currency per tonne emission, only used with the option Ep
     co2: 0.
 
 solving:
@@ -101,7 +113,7 @@ solving:
     clip_p_max_pu: 0.01
     skip_iterations: true
     track_iterations: false
-    #nhours: 10
+    # nhours: 10
   solver:
     name: glpk
 
@@ -111,8 +123,8 @@ tech_modelling:
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
-microgrids_list:  #MICROGRIDS IN NIGERIA
-  microgrid_1:     #WORKING
+microgrids_list:  # MICROGRIDS IN NIGERIA
+  microgrid_1:     # WORKING
     lon_max: 7.3914
     lon_min: 7.2616
     lat_min: 4.6151

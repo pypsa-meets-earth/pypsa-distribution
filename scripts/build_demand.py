@@ -182,34 +182,22 @@ def calculate_load(
     pop_microgrid, microgrid_load = estimate_microgrid_population(
         n, p, raster_path, shapes_path, sample_profile, output_file
     )
-
-    buildings_csv = pd.read_csv(input_path)
-    total_buildings = buildings_csv.values.sum()
-    buildings_for_cluster = []
-    for row in buildings_csv.itertuples(index=False, name=None):
-        cluster_buildings = sum(row)
-        buildings_for_cluster.append(cluster_buildings)
-    cluster_info_df = pd.DataFrame(buildings_for_cluster, columns=["Buildings"])
-    # Calculate the number population per building
-    population_per_building = pop_microgrid / total_buildings
-    cluster_info_df["population"] = (
-        cluster_info_df["Buildings"] * population_per_building
+    building_class = pd.read_csv(input_path)
+    total_buildings = building_class["count"].sum()
+    building_for_cluster = pd.DataFrame(
+        building_class.groupby("cluster_id").sum()["count"]
     )
-
-    # Calculate the per unit load
+    population_per_building = pop_microgrid / total_buildings
+    population_per_cluster = building_for_cluster * population_per_building
     per_unit_load = pd.read_csv(sample_profile)["0"] / p
-    load_df = cluster_info_df["population"].apply(lambda x: x * per_unit_load)
-    new_index_names = [f"bus_{i}" for i in range(len(load_df))]
-    load_df = load_df.rename(index=dict(zip(load_df.index, new_index_names)))
-    load_df = load_df.T
-    # Remove the bus_9 column
-    load_df = load_df.drop("bus_9", axis=1)
-    load_df.insert(0, "snapshots", n.snapshots)
-    load_df.set_index("snapshots", inplace=True)
-    load_df.to_csv(output_file, index=True)
+    load_per_cluster = population_per_cluster["count"].apply(
+        lambda x: x * per_unit_load
+    )
+    load_per_cluster = load_per_cluster.T
+    load_per_cluster.insert(0, "snapshots", n.snapshots)
+    load_per_cluster.to_csv(output_file, index=True)
 
-    # Return the DataFrame
-    return load_df
+    return load_per_cluster
 
 
 def calculate_load_ramp(
@@ -328,8 +316,6 @@ def calculate_load_ramp(
     )
     yearly_mean_demand_tier_df.index = date_time_index
     yearly_mean_demand_tier_df.to_csv(output_path_csv)
-
-    print("fino a qui tutto bene")
 
 
 def calculate_load_ramp_std(
@@ -468,6 +454,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.create_network)
     sample_profile = snakemake.input["sample_profile"]
     tier_percent = snakemake.params.tier["tier_percent"]
+    build_demand_model = snakemake.params.build_demand_model["type"]
 
     assert (
         len(snakemake.config["countries"]) == 1
@@ -489,51 +476,50 @@ if __name__ == "__main__":
         sample_profile,
         snakemake.output["electric_load"],
     )
+    if build_demand_model == 0:
+        calculate_load(
+            n,
+            snakemake.config["load"]["scaling_factor"],
+            worldpop_path,
+            snakemake.input["microgrid_shapes"],
+            sample_profile,
+            snakemake.input["clusters_with_buildings"],
+            snakemake.output["electric_load"],
+            snakemake.input["building_csv"],
+        )
 
-    calculate_load(
-        n,
-        snakemake.config["load"]["scaling_factor"],
-        worldpop_path,
-        snakemake.input["microgrid_shapes"],
-        sample_profile,
-        snakemake.input["clusters_with_buildings"],
-        snakemake.output["electric_load_2"],
-        snakemake.input["building_csv"],
-    )
+    elif build_demand_model == 1:
+        calculate_load_ramp(
+            snakemake.input["clusters_with_buildings"],
+            n,
+            snakemake.config["load"]["scaling_factor"],
+            worldpop_path,
+            snakemake.input["microgrid_shapes"],
+            sample_profile,
+            snakemake.output["electric_load"],
+            snakemake.input["profile_Tier1"],
+            snakemake.input["profile_Tier2"],
+            snakemake.input["profile_Tier3"],
+            snakemake.input["profile_Tier4"],
+            snakemake.input["profile_Tier5"],
+            snakemake.output["electric_load"],
+            tier_percent,
+        )
+    elif build_demand_model == 2:
 
-    calculate_load_ramp(
-        snakemake.input["clusters_with_buildings"],
-        n,
-        snakemake.config["load"]["scaling_factor"],
-        worldpop_path,
-        snakemake.input["microgrid_shapes"],
-        sample_profile,
-        snakemake.output["electric_load"],
-        snakemake.input["profile_tier1"],
-        snakemake.input["profile_tier2"],
-        snakemake.input["profile_tier3"],
-        snakemake.input["profile_tier4"],
-        snakemake.input["profile_tier5"],
-        snakemake.output["electric_load_1"],
-        tier_percent,
-    )
-
-    calculate_load_ramp_std(
-        snakemake.input["clusters_with_buildings"],
-        n,
-        snakemake.config["load"]["scaling_factor"],
-        worldpop_path,
-        snakemake.input["microgrid_shapes"],
-        sample_profile,
-        snakemake.output["electric_load"],
-        snakemake.input["profile_tier1"],
-        snakemake.input["profile_tier2"],
-        snakemake.input["profile_tier3"],
-        snakemake.input["profile_tier4"],
-        snakemake.input["profile_tier5"],
-        snakemake.output["electric_load"],
-        tier_percent,
-    )
-
-    print("fino a qui tutto bene")
-    print("fino a qui tutto bene")
+        calculate_load_ramp_std(
+            snakemake.input["clusters_with_buildings"],
+            n,
+            snakemake.config["load"]["scaling_factor"],
+            worldpop_path,
+            snakemake.input["microgrid_shapes"],
+            sample_profile,
+            snakemake.output["electric_load"],
+            snakemake.input["profile_Tier1"],
+            snakemake.input["profile_Tier2"],
+            snakemake.input["profile_Tier3"],
+            snakemake.input["profile_Tier4"],
+            snakemake.input["profile_Tier5"],
+            snakemake.output["electric_load"],
+            tier_percent,
+        )
