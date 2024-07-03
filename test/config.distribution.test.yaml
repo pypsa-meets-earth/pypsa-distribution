@@ -50,6 +50,10 @@ tier:
 
 house_area_limit:
   area_limit: 255
+
+build_demand_type:
+  type: 0
+
 # definition of the Coordinate Reference Systems
 crs:
   geo_crs: EPSG:4326  # general geographic projection, not used for metric measures. "EPSG:4326" is the standard used by OSM and google maps
