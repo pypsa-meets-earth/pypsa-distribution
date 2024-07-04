@@ -38,6 +38,7 @@ import os
 import shutil
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pypsa
 import rasterio
@@ -167,72 +168,277 @@ def estimate_microgrid_population(
     return pop_microgrid, microgrid_load
 
 
-def count_buildings_per_cluster(geojson_file):
-    with open(geojson_file) as f:
-        data = json.load(f)
-
-    cluster_counts = {}
-    for feature in data["features"]:
-        cluster = feature["properties"]["cluster"]
-        buildings = feature["properties"]["buildings"]
-        if cluster not in cluster_counts:
-            cluster_counts[cluster] = len(buildings)
-        else:
-            cluster_counts[cluster] += len(buildings)
-    total_buildings = sum(cluster_counts.values())
-
-    return total_buildings, cluster_counts
-
-
 def calculate_load(
-    n, p, raster_path, shapes_path, sample_profile, geojson_file, output_file
+    n,
+    p,
+    raster_path,
+    shapes_path,
+    sample_profile,
+    geojson_file,
+    output_file,
+    input_path,
 ):
     # Estimate the microgrid population and load using the existing function
     pop_microgrid, microgrid_load = estimate_microgrid_population(
         n, p, raster_path, shapes_path, sample_profile, output_file
     )
-
-    # Count the total number of buildings and clusters in the geojson file using the existing function
-    total_buildings, cluster_counts = count_buildings_per_cluster(geojson_file)
-
-    # Calculate the number population per building
+    building_class = pd.read_csv(input_path)
+    total_buildings = building_class["count"].sum()
+    building_for_cluster = pd.DataFrame(
+        building_class.groupby("cluster_id").sum()["count"]
+    )
     population_per_building = pop_microgrid / total_buildings
-
-    # Calculate the population per cluster using the cluster counts dictionary
-    population_per_cluster = {
-        cluster: population_per_building * count
-        for cluster, count in cluster_counts.items()
-    }
-
-    # Calculate the per unit load
+    population_per_cluster = building_for_cluster * population_per_building
     per_unit_load = pd.read_csv(sample_profile)["0"] / p
+    load_per_cluster = population_per_cluster["count"].apply(
+        lambda x: x * per_unit_load
+    )
+    load_per_cluster = load_per_cluster.T
+    load_per_cluster.insert(0, "snapshots", n.snapshots)
+    load_per_cluster.to_csv(output_file, index=True)
 
-    # Create a dictionary of DataFrames with the load per cluster
-    load_df_dict = {}
-    for cluster_id in population_per_cluster:
-        load_df_dict[cluster_id] = pd.DataFrame(
-            per_unit_load * population_per_cluster[cluster_id]
-        )
+    return load_per_cluster
 
-    # Concatenate the DataFrames into a single DataFrame
-    load_df = pd.concat(load_df_dict, axis=1)
 
-    # Remove the second level index
-    load_df.columns = load_df.columns.droplevel(level=1)
+def calculate_load_ramp(
+    input_file_buildings,
+    n,
+    p,
+    raster_path,
+    shapes_path,
+    sample_profile,
+    output_file,
+    input_file_profile_tier1,
+    input_file_profile_tier2,
+    input_file_profile_tier3,
+    input_file_profile_tier4,
+    input_file_profile_tier5,
+    output_path_csv,
+    tier_percent,
+):
+    cleaned_buildings = gpd.read_file(input_file_buildings)
+    house = cleaned_buildings[cleaned_buildings["tags_building"] == "house"]
+    area_tot = house["area_m2"].sum()
 
-    # Change column names to 'bus_' + the original column number
-    load_df.columns = ["bus_" + str(col) for col in load_df.columns]
+    pop_microgrid, microgrid_load = estimate_microgrid_population(
+        n, p, raster_path, shapes_path, sample_profile, output_file
+    )
+    density = pop_microgrid / area_tot
 
-    # Remove the bus_9 column
-    load_df = load_df.drop("bus_9", axis=1)
+    grouped_buildings = cleaned_buildings.groupby("cluster_id")
+    clusters = np.sort(cleaned_buildings["cluster_id"].unique())
+    house_area_for_cluster = []
+    for cluster in clusters:
+        cluster_buildings = pd.DataFrame(grouped_buildings.get_group(cluster))
+        house = cluster_buildings[cluster_buildings["tags_building"] == "house"]
+        area_house = house["area_m2"].sum()
+        house_area_for_cluster.append(area_house)
 
-    # Save the microgrid load to a CSV file with snapshots index
-    load_df.insert(0, "snapshots", n.snapshots)
-    load_df.set_index("snapshots", inplace=True)
-    load_df.to_csv(output_file, index=True)
+    population_df = pd.DataFrame()
+    population_df["cluster"] = clusters
+    population_df.set_index("cluster", inplace=True)
+    population_df["house_area_for_cluster"] = house_area_for_cluster
+    people_for_cluster = (population_df["house_area_for_cluster"] * density).round()
+    population_df["people_for_cluster"] = people_for_cluster
 
-    # Return the DataFrame
-    return load_df
+    # tier_percent = [0.2, 0.2, 0.3, 0.2, 0.05, 0.05]
+    people_for_cluster = population_df["people_for_cluster"]
+    tier_pop_df = population_df["people_for_cluster"].apply(
+        lambda x: pd.Series([x * y for y in tier_percent])
+    )
+    demand_tier_1 = pd.read_excel(input_file_profile_tier1)
+    demand_tier_2 = pd.read_excel(input_file_profile_tier2)
+    demand_tier_3 = pd.read_excel(input_file_profile_tier3)
+    demand_tier_4 = pd.read_excel(input_file_profile_tier4)
+    demand_tier_5 = pd.read_excel(input_file_profile_tier5)
+
+    # Creazione di un DataFrame con tutti i tier e la domanda media oraria per ognuno
+    mean_demand_tier_df = pd.DataFrame()
+    demand_tiers = [
+        demand_tier_1,
+        demand_tier_2,
+        demand_tier_3,
+        demand_tier_4,
+        demand_tier_5,
+    ]
+
+    for i, demand_tier in enumerate(demand_tiers, start=1):
+        mean_column_name = f"tier_{i}"
+        mean_demand_tier_df[mean_column_name] = demand_tier["mean"]
+    mean_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
+
+    hours_index = pd.date_range(
+        start="00:00:00", periods=len(mean_demand_tier_df), freq="H", normalize=True
+    )
+    mean_demand_tier_df.index = hours_index.time
+
+    # Creazione di un DataFrame con tutti i tier e la std media oraria per ognuno
+    std_demand_tier_df = pd.DataFrame()
+
+    for i, demand_tier in enumerate(demand_tiers, start=1):
+        mean_column_name = f"tier_{i}"
+        std_demand_tier_df[mean_column_name] = demand_tier["std"]
+    std_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
+
+    std_demand_tier_df.index = hours_index.time
+
+    result_dict = {}
+    for k in range(len(tier_pop_df)):  # Itero sui cluster
+        pop_cluster = tier_pop_df.iloc[k, :]  # Seleziono tutto i tier per quel cluster
+        nome_dataframe = f"bus_{k}"
+        load_df = pd.DataFrame()
+        for j in range(len(pop_cluster)):  # Itero su tutti i tier per quel cluster
+            n_person = int(pop_cluster[j])
+            mean_load_person = mean_demand_tier_df.iloc[:, j].values
+            total_load = pd.Series(n_person * mean_load_person)
+            load_df[f"tier_{j}"] = total_load
+
+        result_dict[nome_dataframe] = load_df
+
+    tot_result_dict = {}
+    for key in result_dict:
+        nome_dataframe = f"{key}"
+        load = result_dict[key]
+        load_tot = pd.DataFrame(load.sum(axis=1))
+        load_tot.rename(columns={0: key}, inplace=True)
+        tot_result_dict[nome_dataframe] = load_tot
+
+    tot_loads_df = pd.DataFrame()
+    for key, cluster_load in tot_result_dict.items():
+        tot_loads_df = pd.concat([tot_loads_df, cluster_load], axis=1)
+
+    date_range = pd.date_range(start="2013-01-01", end="2013-12-31", freq="D")
+    yearly_mean_demand_tier_df = pd.concat(
+        [tot_loads_df] * len(date_range), ignore_index=True
+    )
+    date_time_index = pd.date_range(
+        start="2013-01-01", end="2013-12-31 23:00:00", freq="H"
+    )
+    yearly_mean_demand_tier_df.index = date_time_index
+    yearly_mean_demand_tier_df.to_csv(output_path_csv)
+
+
+def calculate_load_ramp_std(
+    input_file_buildings,
+    n,
+    p,
+    raster_path,
+    shapes_path,
+    sample_profile,
+    output_file,
+    input_file_profile_tier1,
+    input_file_profile_tier2,
+    input_file_profile_tier3,
+    input_file_profile_tier4,
+    input_file_profile_tier5,
+    output_path_csv,
+    tier_percent,
+):
+    cleaned_buildings = gpd.read_file(input_file_buildings)
+    house = cleaned_buildings[cleaned_buildings["tags_building"] == "house"]
+    area_tot = house["area_m2"].sum()
+
+    pop_microgrid, microgrid_load = estimate_microgrid_population(
+        n, p, raster_path, shapes_path, sample_profile, output_file
+    )
+    density = pop_microgrid / area_tot
+
+    grouped_buildings = cleaned_buildings.groupby("cluster_id")
+    clusters = np.sort(cleaned_buildings["cluster_id"].unique())
+    house_area_for_cluster = []
+    for cluster in clusters:
+        cluster_buildings = pd.DataFrame(grouped_buildings.get_group(cluster))
+        house = cluster_buildings[cluster_buildings["tags_building"] == "house"]
+        area_house = house["area_m2"].sum()
+        house_area_for_cluster.append(area_house)
+
+    population_df = pd.DataFrame()
+    population_df["cluster"] = clusters
+    population_df.set_index("cluster", inplace=True)
+    population_df["house_area_for_cluster"] = house_area_for_cluster
+    people_for_cluster = (population_df["house_area_for_cluster"] * density).round()
+    population_df["people_for_cluster"] = people_for_cluster
+
+    people_for_cluster = population_df["people_for_cluster"]
+    tier_pop_df = population_df["people_for_cluster"].apply(
+        lambda x: pd.Series([x * y for y in tier_percent])
+    )
+    demand_tier_1 = pd.read_excel(input_file_profile_tier1)
+    demand_tier_2 = pd.read_excel(input_file_profile_tier2)
+    demand_tier_3 = pd.read_excel(input_file_profile_tier3)
+    demand_tier_4 = pd.read_excel(input_file_profile_tier4)
+    demand_tier_5 = pd.read_excel(input_file_profile_tier5)
+    mean_demand_tier_df = pd.DataFrame()
+
+    demand_tiers = [
+        demand_tier_1,
+        demand_tier_2,
+        demand_tier_3,
+        demand_tier_4,
+        demand_tier_5,
+    ]
+    for i, demand_tier in enumerate(demand_tiers, start=1):
+        mean_column_name = f"tier_{i}"
+        mean_demand_tier_df[mean_column_name] = demand_tier["mean"]
+    mean_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
+
+    hours_index = pd.date_range(
+        start="00:00:00", periods=len(mean_demand_tier_df), freq="H", normalize=True
+    )
+    mean_demand_tier_df.index = hours_index.time
+
+    # Creazione di un DataFrame con tutti i tier e la std media oraria per ognuno
+    std_demand_tier_df = pd.DataFrame()
+
+    for i, demand_tier in enumerate(demand_tiers, start=1):
+        mean_column_name = f"tier_{i}"
+        std_demand_tier_df[mean_column_name] = demand_tier["std"]
+    std_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
+
+    std_demand_tier_df.index = hours_index.time
+
+    result_dict = {}
+    for k in range(len(tier_pop_df)):  # Itero sui cluster
+        pop_cluster = tier_pop_df.iloc[k, :]  # Seleziono tutto i tier per quel cluster
+        nome_dataframe = f"bus_{k}"
+        load_df = pd.DataFrame()
+        std_df = pd.DataFrame()
+        for j in range(len(pop_cluster)):  # Itero su tutti i tier per quel cluster
+            n_person = int(pop_cluster[j])
+            mean_load_person = mean_demand_tier_df.iloc[:, j].values
+            mean_load = pd.Series(n_person * mean_load_person)
+
+            sqrt_n_person = np.sqrt(n_person)
+            std_load_person = std_demand_tier_df.iloc[:, j].values
+            std_load = np.random.normal(0, std_load_person) * sqrt_n_person
+            std_total = pd.Series(std_load)
+
+            total_load = pd.Series(mean_load.values + std_total.values)
+            load_df[f"tier_{j}"] = total_load
+
+        result_dict[nome_dataframe] = load_df
+
+    tot_result_dict = {}
+    for key in result_dict:
+        nome_dataframe = f"{key}"
+        load = result_dict[key]
+        load_tot = pd.DataFrame(load.sum(axis=1))
+        load_tot.rename(columns={0: key}, inplace=True)
+        tot_result_dict[nome_dataframe] = load_tot
+
+    tot_loads_df = pd.DataFrame()
+    for key, cluster_load in tot_result_dict.items():
+        tot_loads_df = pd.concat([tot_loads_df, cluster_load], axis=1)
+
+    date_range = pd.date_range(start="2013-01-01", end="2013-12-31", freq="D")
+    yearly_mean_demand_tier_df = pd.concat(
+        [tot_loads_df] * len(date_range), ignore_index=True
+    )
+    date_time_index = pd.date_range(
+        start="2013-01-01", end="2013-12-31 23:00:00", freq="H"
+    )
+    yearly_mean_demand_tier_df.index = date_time_index
+    yearly_mean_demand_tier_df.to_csv(output_path_csv)
 
 
 if __name__ == "__main__":
@@ -247,6 +453,8 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.create_network)
     sample_profile = snakemake.input["sample_profile"]
+    tier_percent = snakemake.params.tier["tier_percent"]
+    build_demand_model = snakemake.params.build_demand_model["type"]
 
     assert (
         len(snakemake.config["countries"]) == 1
@@ -268,15 +476,50 @@ if __name__ == "__main__":
         sample_profile,
         snakemake.output["electric_load"],
     )
+    if build_demand_model == 0:
+        calculate_load(
+            n,
+            snakemake.config["load"]["scaling_factor"],
+            worldpop_path,
+            snakemake.input["microgrid_shapes"],
+            sample_profile,
+            snakemake.input["clusters_with_buildings"],
+            snakemake.output["electric_load"],
+            snakemake.input["building_csv"],
+        )
 
-    count_buildings_per_cluster(snakemake.input["clusters_with_buildings"])
+    elif build_demand_model == 1:
+        calculate_load_ramp(
+            snakemake.input["clusters_with_buildings"],
+            n,
+            snakemake.config["load"]["scaling_factor"],
+            worldpop_path,
+            snakemake.input["microgrid_shapes"],
+            sample_profile,
+            snakemake.output["electric_load"],
+            snakemake.input["profile_Tier1"],
+            snakemake.input["profile_Tier2"],
+            snakemake.input["profile_Tier3"],
+            snakemake.input["profile_Tier4"],
+            snakemake.input["profile_Tier5"],
+            snakemake.output["electric_load"],
+            tier_percent,
+        )
+    elif build_demand_model == 2:
 
-    calculate_load(
-        n,
-        snakemake.config["load"]["scaling_factor"],
-        worldpop_path,
-        snakemake.input["microgrid_shapes"],
-        sample_profile,
-        snakemake.input["clusters_with_buildings"],
-        snakemake.output["electric_load"],
-    )
+        calculate_load_ramp_std(
+            snakemake.input["clusters_with_buildings"],
+            n,
+            snakemake.config["load"]["scaling_factor"],
+            worldpop_path,
+            snakemake.input["microgrid_shapes"],
+            sample_profile,
+            snakemake.output["electric_load"],
+            snakemake.input["profile_Tier1"],
+            snakemake.input["profile_Tier2"],
+            snakemake.input["profile_Tier3"],
+            snakemake.input["profile_Tier4"],
+            snakemake.input["profile_Tier5"],
+            snakemake.output["electric_load"],
+            tier_percent,
+        )

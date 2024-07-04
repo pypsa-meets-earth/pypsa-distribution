@@ -82,10 +82,14 @@ if config.get("disable_subworkflow", False):
 
 
 rule ramp_build_demand_profile:
+    params:
+        ramp=config["ramp"],
+        snapshoots=config["snapshots"],
     input:
         user_description="data/ramp/{user_type}.xlsx",
     output:
-        profile_results="resources/ramp/{user_type}.xlsx",
+        daily_demand_profiles="resources/ramp/daily_demand_{user_type}.xlsx",
+        daily_type_demand_profile="resources/ramp/daily_type_demand_{user_type}.xlsx",
     log:
         "logs/ramp_build_demand_profile_{user_type}.log",
     benchmark:
@@ -98,12 +102,16 @@ rule ramp_build_demand_profile:
 
 
 rule build_demand:
+    params:
+        tier=config["tier"],
+        build_demand_model=config["build_demand_type"],
     input:
         **{
-            f"profile_{user_file.stem}": f"resources/ramp/{user_file.stem}.xlsx"
+            f"profile_{user_file.stem}": f"resources/ramp/daily_type_demand_{user_file.stem}.xlsx"
             for user_file in Path("data/ramp/").glob("[a-zA-Z0-9]*.xlsx")
         },
         sample_profile=PROFILE,
+        building_csv="resources/buildings/buildings_type.csv",
         create_network="networks/base.nc",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
         clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
@@ -185,12 +193,15 @@ rule clean_earth_osm_data:
 
 
 rule cluster_buildings:
+    params:
+        crs=config["crs"],
+        house_area_limit=config["house_area_limit"],
     input:
         buildings_geojson="resources/buildings/microgrid_building.geojson",
     output:
-        cleaned_buildings_geojson="resources/buildings/cleaned_buildings.geojson",
         clusters="resources/buildings/clustered_buildings.geojson",
         clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
+        buildings_type="resources/buildings/buildings_type.csv",
     log:
         "logs/cluster_buildings.log",
     benchmark:
