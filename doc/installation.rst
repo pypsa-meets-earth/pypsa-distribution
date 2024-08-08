@@ -60,6 +60,13 @@ If the above takes longer than 30min, you might want to try mamba for faster ins
 
     .../pypsa-distribution % mamba env create -f pypsa-earth/envs/environment.yaml
 
+Extra python package requirements are satisfied by manually installing them. Currently the ramp package is added to existing pypsa-earth environment by using:
+
+.. code:: bash
+    .../pypsa-distribution % conda activate pypsa-earth
+    
+    (pypsa-earth) pip install rampdemand
+   
 
 Install the pre-commit (for developers)
 =======================================

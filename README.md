@@ -71,7 +71,13 @@ The recurrent meeting on PyPSA-Distribution is every second Tuesday at 15:00 AM 
       Java(TM) SE Runtime Environment (build 1.8.0_341-b10)
       Java HotSpot(TM) 64-Bit Server VM (build 25.341-b10, mixed mode)
    ```
+6. Extra python package requirements are satisfied by manually installing them. Currently the ramp package is added to existing pypsa-earth environment by using:
 
+   ```bash
+      .../pypsa-distribution % conda activate pypsa-earth
+      (pypsa-earth) pip install rampdemand
+   ```
+   
 ## Test run
 
 - In the folder open a terminal/command window to be located at this path `~/pypsa-distribution/`
