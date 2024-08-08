@@ -51,11 +51,13 @@ The python package requirements are curated in the `pypsa-earth/envs/environment
 The environment can be installed using:
 
 .. code:: bash
+
     /pypsa-distribution % conda env create -f pypsa-earth/envs/environment.yaml
 
 If the above takes longer than 30min, you might want to try mamba for faster installation:
 
 .. code:: bash
+
     (base) conda install -c conda-forge mamba
 
     /pypsa-distribution % mamba env create -f pypsa-earth/envs/environment.yaml
@@ -63,6 +65,7 @@ If the above takes longer than 30min, you might want to try mamba for faster ins
 Extra python package requirements are satisfied by manually installing them. Currently the ramp package is added to existing pypsa-earth environment by using:
 
 .. code:: bash
+
     /some/other/path/pypsa-distribution % conda activate pypsa-earth
 
     (pypsa-earth) pip install rampdemand
@@ -76,6 +79,7 @@ The tool provide automated ways to keep the code clean and consistent.
 To make sure to install the tool, please run:
 
 .. code:: bash
+  
     /pypsa-distribution % conda activate pypsa-earth
 
     /pypsa-distribution % pre-commit install
