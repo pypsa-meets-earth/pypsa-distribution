@@ -159,7 +159,7 @@ rule create_network:
         "scripts/create_network.py"
 
 
-if config["enable"].get("download_osm_buildings", True):
+if config["enable"].get("download_osm_buildings", True) or config["enable"].get("download_osm_buildings_overpass", True):
 
     rule download_osm_data:
         output:

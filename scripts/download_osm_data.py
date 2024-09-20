@@ -3,6 +3,8 @@ import logging
 import os
 import shutil
 from pathlib import Path
+import json
+import requests
 
 import yaml
 from _helpers_dist import configure_logging, create_logger, read_osm_config
@@ -64,6 +66,38 @@ def convert_iso_to_geofk(
     else:
         return iso_code
 
+def retrieve_osm_data_overpass(coordinates, features, url, path):
+    """
+    The buildings inside the specified coordinates are retrieved by using overpass API. 
+    The region coordinates should be defined in the config.yaml file.
+    Parameters
+    ----------
+    coordinates : dict
+        Coordinates of the rectangular region where buildings to be downloaded from osm resides. 
+    features : str
+        The feature that is searched in the osm database
+    url : str
+        osm query address
+    path : str
+        the directory where the buildings are going to be downloaded.
+    """
+    
+    out_format = "json"
+    for item in coordinates.keys():
+        
+        overpass_query = f'''
+        [out:json];
+        node[{features}]({coordinates[item]["lon_min"]}, {coordinates[item]["lat_min"]}, {coordinates[item]["lon_max"]}, {coordinates[item]["lat_max"]});
+        out;
+        '''
+        try:
+            response = requests.get(url, params={'data': overpass_query})
+            response.raise_for_status()
+            outpath = Path.joinpath(path, f"all_raw_building_{item}.{out_format}")
+            with open(outpath, "w") as out_file:
+                json.dump(response.json(), out_file, indent = 2)
+        except (json.JSONDecodeError, requests.exceptions.RequestException) as e:
+            logger.error(f"Error downloading osm data for the specified coordinates")
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -81,29 +115,39 @@ if __name__ == "__main__":
     countries = snakemake.config["countries"]
     country_list = country_list_to_geofk(countries)
 
-    eo.save_osm_data(
-        region_list=country_list,
-        primary_name="building",
-        feature_list=["ALL"],
-        update=False,
-        mp=False,
-        data_dir=store_path_data,
-        out_dir=store_path_resources,
-        out_format=["csv", "geojson"],
-        out_aggregate=True,
-    )
+    if snakemake.config["enable"]["download_osm_buildings"] == True:
+        eo.save_osm_data(
+            region_list=country_list,
+            primary_name="building",
+            feature_list=["ALL"],
+            update=False,
+            mp=False,
+            data_dir=store_path_data,
+            out_dir=store_path_resources,
+            out_format=["csv", "geojson"],
+            out_aggregate=True,
+        )
 
-    out_path = Path.joinpath(store_path_resources, "out")
-    out_formats = ["csv", "geojson"]
-    new_files = os.listdir(out_path)
+        out_path = Path.joinpath(store_path_resources, "out")
+        out_formats = ["csv", "geojson"]
+        new_files = os.listdir(out_path)
 
-    for f in out_formats:
-        new_file_name = Path.joinpath(store_path_resources, f"all_raw_building.{f}")
-        old_file = list(Path(out_path).glob(f"*building.{f}"))
+        for f in out_formats:
+            new_file_name = Path.joinpath(store_path_resources, f"all_raw_building.{f}")
+            old_file = list(Path(out_path).glob(f"*building.{f}"))
 
-        if not old_file:
-            with open(new_file_name, "w") as f:
-                pass
-        else:
-            logger.info(f"Move {old_file[0]} to {new_file_name}")
-            shutil.move(old_file[0], new_file_name)
+            if not old_file:
+                with open(new_file_name, "w") as f:
+                    pass
+            else:
+                logger.info(f"Move {old_file[0]} to {new_file_name}")
+                shutil.move(old_file[0], new_file_name)
+
+    if snakemake.config["enable"]["download_osm_buildings_overpass"] == True:
+        microgrids_list = snakemake.config["microgrids_list"]
+        features = "building"
+        overpass_url = 'https://overpass-api.de/api/interpreter'
+        retrieve_osm_data_overpass(microgrids_list, features, overpass_url, store_path_resources)
+        outpath = Path.joinpath(store_path_resources, "all_raw_building.geojson")
+        with open(outpath, 'w') as fp: # an empty .geojson file is created to bypass snakemake output file requirement in the download_osm rule.
+            pass
