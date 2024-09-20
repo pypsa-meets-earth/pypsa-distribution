@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 import os
 import shutil
 from pathlib import Path
-import json
-import requests
 
+import requests
 import yaml
 from _helpers_dist import configure_logging, create_logger, read_osm_config
 from earth_osm import eo
@@ -66,14 +66,15 @@ def convert_iso_to_geofk(
     else:
         return iso_code
 
+
 def retrieve_osm_data_overpass(coordinates, features, url, path):
     """
-    The buildings inside the specified coordinates are retrieved by using overpass API. 
+    The buildings inside the specified coordinates are retrieved by using overpass API.
     The region coordinates should be defined in the config.yaml file.
     Parameters
     ----------
     coordinates : dict
-        Coordinates of the rectangular region where buildings to be downloaded from osm resides. 
+        Coordinates of the rectangular region where buildings to be downloaded from osm resides.
     features : str
         The feature that is searched in the osm database
     url : str
@@ -81,23 +82,24 @@ def retrieve_osm_data_overpass(coordinates, features, url, path):
     path : str
         the directory where the buildings are going to be downloaded.
     """
-    
+
     out_format = "json"
     for item in coordinates.keys():
-        
-        overpass_query = f'''
+
+        overpass_query = f"""
         [out:json];
         node[{features}]({coordinates[item]["lon_min"]}, {coordinates[item]["lat_min"]}, {coordinates[item]["lon_max"]}, {coordinates[item]["lat_max"]});
         out;
-        '''
+        """
         try:
-            response = requests.get(url, params={'data': overpass_query})
+            response = requests.get(url, params={"data": overpass_query})
             response.raise_for_status()
             outpath = Path.joinpath(path, f"all_raw_building_{item}.{out_format}")
             with open(outpath, "w") as out_file:
-                json.dump(response.json(), out_file, indent = 2)
+                json.dump(response.json(), out_file, indent=2)
         except (json.JSONDecodeError, requests.exceptions.RequestException) as e:
             logger.error(f"Error downloading osm data for the specified coordinates")
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -146,8 +148,12 @@ if __name__ == "__main__":
     if snakemake.config["enable"]["download_osm_buildings_overpass"] == True:
         microgrids_list = snakemake.config["microgrids_list"]
         features = "building"
-        overpass_url = 'https://overpass-api.de/api/interpreter'
-        retrieve_osm_data_overpass(microgrids_list, features, overpass_url, store_path_resources)
+        overpass_url = "https://overpass-api.de/api/interpreter"
+        retrieve_osm_data_overpass(
+            microgrids_list, features, overpass_url, store_path_resources
+        )
         outpath = Path.joinpath(store_path_resources, "all_raw_building.geojson")
-        with open(outpath, 'w') as fp: # an empty .geojson file is created to bypass snakemake output file requirement in the download_osm rule.
+        with open(
+            outpath, "w"
+        ) as fp:  # an empty .geojson file is created to bypass snakemake output file requirement in the download_osm rule.
             pass
