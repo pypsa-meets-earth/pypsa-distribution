@@ -86,21 +86,17 @@ def create_microgrid_network(
         bus1 = n.buses.index[j]
         line_name = f"{microgrid_id}_line_{i}_{j}"
 
-        # Ottieni le coordinate dei bus
         x0, y0 = n.buses.loc[bus0, ["x", "y"]]
         x1, y1 = n.buses.loc[bus1, ["x", "y"]]
 
-        # Convertire le coordinate da EPSG:4326 a EPSG:3857
         transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
         x0, y0 = transformer.transform(x0, y0)
         x1, y1 = transformer.transform(x1, y1)
 
-        # Creare oggetti Point con le coordinate convertite
         coords_0 = Point(x0, y0)
         coords_1 = Point(x1, y1)
 
-        # Calcolare la distanza tra i punti convertiti
-        length = coords_0.distance(coords_1)
+        length = (coords_0.distance(coords_1)) / 1000
 
         # Aggiungere la linea alla rete
         n.add(
