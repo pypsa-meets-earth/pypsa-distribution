@@ -194,6 +194,8 @@ def calculate_load(
         lambda x: x * per_unit_load
     )
     load_per_cluster = load_per_cluster.T
+    new_column_names = {i: f"bus_{i}" for i in range(load_per_cluster.shape[1])}
+    load_per_cluster.rename(columns=new_column_names, inplace=True)
     load_per_cluster.insert(0, "snapshots", n.snapshots)
     load_per_cluster.to_csv(output_file, index=True)
 
@@ -387,7 +389,6 @@ def calculate_load_ramp_std(
     )
     mean_demand_tier_df.index = hours_index.time
 
-    # Creazione di un DataFrame con tutti i tier e la std media oraria per ognuno
     std_demand_tier_df = pd.DataFrame()
 
     for i, demand_tier in enumerate(demand_tiers, start=1):
@@ -398,22 +399,26 @@ def calculate_load_ramp_std(
     std_demand_tier_df.index = hours_index.time
 
     result_dict = {}
-    for k in range(len(tier_pop_df)):  # Itero sui cluster
-        pop_cluster = tier_pop_df.iloc[k, :]  # Seleziono tutto i tier per quel cluster
+    for k in range(len(tier_pop_df)):
+        pop_cluster = tier_pop_df.iloc[k, :]
         nome_dataframe = f"bus_{k}"
         load_df = pd.DataFrame()
         std_df = pd.DataFrame()
-        for j in range(len(pop_cluster)):  # Itero su tutti i tier per quel cluster
-            n_person = int(pop_cluster[j])
+        for j in range(len(pop_cluster)):
+            n_person = (
+                int(pop_cluster[j]) / 7
+            )  # 7 is use to scale from number of people to number of household
             mean_load_person = mean_demand_tier_df.iloc[:, j].values
             mean_load = pd.Series(n_person * mean_load_person)
 
             sqrt_n_person = np.sqrt(n_person)
             std_load_person = std_demand_tier_df.iloc[:, j].values
-            std_load = np.random.normal(0, std_load_person) * sqrt_n_person
+            std_load = (
+                np.random.normal(mean_load_person, std_load_person) * sqrt_n_person
+            )
             std_total = pd.Series(std_load)
 
-            total_load = pd.Series(mean_load.values + std_total.values)
+            total_load = pd.Series(mean_load.values + std_total.values) / 1000000
             load_df[f"tier_{j}"] = total_load
 
         result_dict[nome_dataframe] = load_df
@@ -438,6 +443,14 @@ def calculate_load_ramp_std(
         start="2013-01-01", end="2013-12-31 23:00:00", freq="H"
     )
     yearly_mean_demand_tier_df.index = date_time_index
+    # Replace columns with all zeros with the specified small value
+    small_value = (
+        0.00000000000000000000000001  # Insert just for not have 0 and be able to plot
+    )
+    yearly_mean_demand_tier_df.loc[:, (yearly_mean_demand_tier_df == 0).all(axis=0)] = (
+        small_value
+    )
+
     yearly_mean_demand_tier_df.to_csv(output_path_csv)
 
 
