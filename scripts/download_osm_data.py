@@ -117,7 +117,7 @@ if __name__ == "__main__":
     countries = snakemake.config["countries"]
     country_list = country_list_to_geofk(countries)
 
-    if snakemake.config["enable"]["download_osm_buildings"] == True:
+    if snakemake.config["enable"]["download_osm_method"] == "earth_osm":
         eo.save_osm_data(
             region_list=country_list,
             primary_name="building",
@@ -145,7 +145,7 @@ if __name__ == "__main__":
                 logger.info(f"Move {old_file[0]} to {new_file_name}")
                 shutil.move(old_file[0], new_file_name)
 
-    if snakemake.config["enable"]["download_osm_buildings_overpass"] == True:
+    elif snakemake.config["enable"]["download_osm_method"] == "overpass":
         microgrids_list = snakemake.config["microgrids_list"]
         features = "building"
         overpass_url = "https://overpass-api.de/api/interpreter"

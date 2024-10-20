@@ -18,7 +18,7 @@ enable:
   retrieve_cost_data: true
   download_osm_data: true
   download_osm_buildings: false
-  download_osm_buildings_overpass: false
+  download_osm_method: overpass # or earth_osm
   # If "build_cutout" : true # requires cds API key
   # https://cds.climate.copernicus.eu/api-how-to
   # More information
