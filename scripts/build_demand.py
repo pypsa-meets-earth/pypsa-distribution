@@ -194,6 +194,8 @@ def calculate_load(
         lambda x: x * per_unit_load
     )
     load_per_cluster = load_per_cluster.T
+    new_column_names = {i: f"bus_{i}" for i in range(load_per_cluster.shape[1])}
+    load_per_cluster.rename(columns=new_column_names, inplace=True)
     load_per_cluster.insert(0, "snapshots", n.snapshots)
     load_per_cluster.to_csv(output_file, index=True)
 
@@ -215,107 +217,67 @@ def calculate_load_ramp(
     input_file_profile_tier5,
     output_path_csv,
     tier_percent,
+    date_start,
+    date_end,
+    inclusive,
 ):
+    # Caricamento dei dati e calcolo della densità di popolazione
     cleaned_buildings = gpd.read_file(input_file_buildings)
     house = cleaned_buildings[cleaned_buildings["tags_building"] == "house"]
-    area_tot = house["area_m2"].sum()
-
     pop_microgrid, microgrid_load = estimate_microgrid_population(
         n, p, raster_path, shapes_path, sample_profile, output_file
     )
-    density = pop_microgrid / area_tot
+    density = pop_microgrid / house["area_m2"].sum()
 
+    # Calcolo superficie e popolazione per cluster
     grouped_buildings = cleaned_buildings.groupby("cluster_id")
     clusters = np.sort(cleaned_buildings["cluster_id"].unique())
-    house_area_for_cluster = []
-    for cluster in clusters:
-        cluster_buildings = pd.DataFrame(grouped_buildings.get_group(cluster))
-        house = cluster_buildings[cluster_buildings["tags_building"] == "house"]
-        area_house = house["area_m2"].sum()
-        house_area_for_cluster.append(area_house)
-
-    population_df = pd.DataFrame()
-    population_df["cluster"] = clusters
-    population_df.set_index("cluster", inplace=True)
-    population_df["house_area_for_cluster"] = house_area_for_cluster
-    people_for_cluster = (population_df["house_area_for_cluster"] * density).round()
-    population_df["people_for_cluster"] = people_for_cluster
-
-    # tier_percent = [0.2, 0.2, 0.3, 0.2, 0.05, 0.05]
-    people_for_cluster = population_df["people_for_cluster"]
-    tier_pop_df = population_df["people_for_cluster"].apply(
-        lambda x: pd.Series([x * y for y in tier_percent])
-    )
-    demand_tier_1 = pd.read_excel(input_file_profile_tier1)
-    demand_tier_2 = pd.read_excel(input_file_profile_tier2)
-    demand_tier_3 = pd.read_excel(input_file_profile_tier3)
-    demand_tier_4 = pd.read_excel(input_file_profile_tier4)
-    demand_tier_5 = pd.read_excel(input_file_profile_tier5)
-
-    # Creazione di un DataFrame con tutti i tier e la domanda media oraria per ognuno
-    mean_demand_tier_df = pd.DataFrame()
-    demand_tiers = [
-        demand_tier_1,
-        demand_tier_2,
-        demand_tier_3,
-        demand_tier_4,
-        demand_tier_5,
+    house_area_for_cluster = [
+        grouped_buildings.get_group(cluster)[grouped_buildings.get_group(cluster)["tags_building"] == "house"]["area_m2"].sum()
+        for cluster in clusters
     ]
+    population_df = pd.DataFrame({"cluster": clusters, "house_area_for_cluster": house_area_for_cluster}).set_index("cluster")
+    population_df["people_for_cluster"] = (population_df["house_area_for_cluster"] * density).round()
+    tier_pop_df = pd.DataFrame(np.outer(population_df["people_for_cluster"], tier_percent), index=population_df.index)
 
-    for i, demand_tier in enumerate(demand_tiers, start=1):
-        mean_column_name = f"tier_{i}"
-        mean_demand_tier_df[mean_column_name] = demand_tier["mean"]
+    # Caricamento e creazione di DataFrames di domanda media e deviazione standard per ogni tier
+    demand_files = [input_file_profile_tier1, input_file_profile_tier2, input_file_profile_tier3, input_file_profile_tier4, input_file_profile_tier5]
+    mean_demand_tier_df = pd.DataFrame({f"tier_{i+1}": pd.read_excel(file)["mean"] for i, file in enumerate(demand_files)})
     mean_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
+    mean_demand_tier_df.index = pd.date_range("00:00:00", periods=len(mean_demand_tier_df), freq="H").time
 
-    hours_index = pd.date_range(
-        start="00:00:00", periods=len(mean_demand_tier_df), freq="H", normalize=True
-    )
-    mean_demand_tier_df.index = hours_index.time
+    if inclusive == "left":
+        date_range = pd.date_range(start=date_start, end=date_end, freq="D")[:-1]
+    else: 
+        date_range = pd.date_range(start=date_start, end=date_end, freq="D")
 
-    # Creazione di un DataFrame con tutti i tier e la std media oraria per ognuno
-    std_demand_tier_df = pd.DataFrame()
+    mean_demand_tier_df_extended = pd.concat([mean_demand_tier_df] * len(date_range), ignore_index=True)
 
-    for i, demand_tier in enumerate(demand_tiers, start=1):
-        mean_column_name = f"tier_{i}"
-        std_demand_tier_df[mean_column_name] = demand_tier["std"]
-    std_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
-
-    std_demand_tier_df.index = hours_index.time
-
+    # Calcolo del carico totale per ogni cluster e tier
     result_dict = {}
-    for k in range(len(tier_pop_df)):  # Itero sui cluster
-        pop_cluster = tier_pop_df.iloc[k, :]  # Seleziono tutto i tier per quel cluster
-        nome_dataframe = f"bus_{k}"
+    for k, pop_cluster in tier_pop_df.iterrows():
         load_df = pd.DataFrame()
-        for j in range(len(pop_cluster)):  # Itero su tutti i tier per quel cluster
-            n_person = int(pop_cluster[j])
-            mean_load_person = mean_demand_tier_df.iloc[:, j].values
-            total_load = pd.Series(n_person * mean_load_person)
+        for j, n_person in enumerate(pop_cluster / 7):  # Scala la popolazione per famiglia
+            mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
+            total_load = (mean_load) / 1e6
             load_df[f"tier_{j}"] = total_load
+        result_dict[f"bus_{k}"] = load_df
 
-        result_dict[nome_dataframe] = load_df
+    # Aggregazione del carico totale per cluster
+    tot_result_dict = {f"{k}": df.sum(axis=1).rename(f"{k}") for k, df in result_dict.items()}
+    tot_loads_df = pd.concat(tot_result_dict.values(), axis=1)
+    if inclusive == "left":
+        date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")[:-1]
+    else: 
+        date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")
+    tot_loads_df.index=date_range_tot
 
-    tot_result_dict = {}
-    for key in result_dict:
-        nome_dataframe = f"{key}"
-        load = result_dict[key]
-        load_tot = pd.DataFrame(load.sum(axis=1))
-        load_tot.rename(columns={0: key}, inplace=True)
-        tot_result_dict[nome_dataframe] = load_tot
+    # Sostituzione dei valori zero con un valore minimo per evitare problemi di plotting
+    small_value = 1e-26
+    tot_loads_df.loc[:, (tot_loads_df == 0).all()] = small_value
 
-    tot_loads_df = pd.DataFrame()
-    for key, cluster_load in tot_result_dict.items():
-        tot_loads_df = pd.concat([tot_loads_df, cluster_load], axis=1)
-
-    date_range = pd.date_range(start="2013-01-01", end="2013-12-31", freq="D")
-    yearly_mean_demand_tier_df = pd.concat(
-        [tot_loads_df] * len(date_range), ignore_index=True
-    )
-    date_time_index = pd.date_range(
-        start="2013-01-01", end="2013-12-31 23:00:00", freq="H"
-    )
-    yearly_mean_demand_tier_df.index = date_time_index
-    yearly_mean_demand_tier_df.to_csv(output_path_csv)
+    # Esportazione del DataFrame finale
+    tot_loads_df.to_csv(output_path_csv)
 
 
 def calculate_load_ramp_std(
@@ -333,112 +295,72 @@ def calculate_load_ramp_std(
     input_file_profile_tier5,
     output_path_csv,
     tier_percent,
+    date_start,
+    date_end,
+    inclusive,
 ):
+    # Caricamento dei dati e calcolo della densità di popolazione
     cleaned_buildings = gpd.read_file(input_file_buildings)
     house = cleaned_buildings[cleaned_buildings["tags_building"] == "house"]
-    area_tot = house["area_m2"].sum()
-
     pop_microgrid, microgrid_load = estimate_microgrid_population(
         n, p, raster_path, shapes_path, sample_profile, output_file
     )
-    density = pop_microgrid / area_tot
+    density = pop_microgrid / house["area_m2"].sum()
 
+    # Calcolo superficie e popolazione per cluster
     grouped_buildings = cleaned_buildings.groupby("cluster_id")
     clusters = np.sort(cleaned_buildings["cluster_id"].unique())
-    house_area_for_cluster = []
-    for cluster in clusters:
-        cluster_buildings = pd.DataFrame(grouped_buildings.get_group(cluster))
-        house = cluster_buildings[cluster_buildings["tags_building"] == "house"]
-        area_house = house["area_m2"].sum()
-        house_area_for_cluster.append(area_house)
-
-    population_df = pd.DataFrame()
-    population_df["cluster"] = clusters
-    population_df.set_index("cluster", inplace=True)
-    population_df["house_area_for_cluster"] = house_area_for_cluster
-    people_for_cluster = (population_df["house_area_for_cluster"] * density).round()
-    population_df["people_for_cluster"] = people_for_cluster
-
-    people_for_cluster = population_df["people_for_cluster"]
-    tier_pop_df = population_df["people_for_cluster"].apply(
-        lambda x: pd.Series([x * y for y in tier_percent])
-    )
-    demand_tier_1 = pd.read_excel(input_file_profile_tier1)
-    demand_tier_2 = pd.read_excel(input_file_profile_tier2)
-    demand_tier_3 = pd.read_excel(input_file_profile_tier3)
-    demand_tier_4 = pd.read_excel(input_file_profile_tier4)
-    demand_tier_5 = pd.read_excel(input_file_profile_tier5)
-    mean_demand_tier_df = pd.DataFrame()
-
-    demand_tiers = [
-        demand_tier_1,
-        demand_tier_2,
-        demand_tier_3,
-        demand_tier_4,
-        demand_tier_5,
+    house_area_for_cluster = [
+        grouped_buildings.get_group(cluster)[grouped_buildings.get_group(cluster)["tags_building"] == "house"]["area_m2"].sum()
+        for cluster in clusters
     ]
-    for i, demand_tier in enumerate(demand_tiers, start=1):
-        mean_column_name = f"tier_{i}"
-        mean_demand_tier_df[mean_column_name] = demand_tier["mean"]
+    population_df = pd.DataFrame({"cluster": clusters, "house_area_for_cluster": house_area_for_cluster}).set_index("cluster")
+    population_df["people_for_cluster"] = (population_df["house_area_for_cluster"] * density).round()
+    tier_pop_df = pd.DataFrame(np.outer(population_df["people_for_cluster"], tier_percent), index=population_df.index)
+
+    # Caricamento e creazione di DataFrames di domanda media e deviazione standard per ogni tier
+    demand_files = [input_file_profile_tier1, input_file_profile_tier2, input_file_profile_tier3, input_file_profile_tier4, input_file_profile_tier5]
+    mean_demand_tier_df = pd.DataFrame({f"tier_{i+1}": pd.read_excel(file)["mean"] for i, file in enumerate(demand_files)})
+    std_demand_tier_df = pd.DataFrame({f"tier_{i+1}": pd.read_excel(file)["std"] for i, file in enumerate(demand_files)})
     mean_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
-
-    hours_index = pd.date_range(
-        start="00:00:00", periods=len(mean_demand_tier_df), freq="H", normalize=True
-    )
-    mean_demand_tier_df.index = hours_index.time
-
-    # Creazione di un DataFrame con tutti i tier e la std media oraria per ognuno
-    std_demand_tier_df = pd.DataFrame()
-
-    for i, demand_tier in enumerate(demand_tiers, start=1):
-        mean_column_name = f"tier_{i}"
-        std_demand_tier_df[mean_column_name] = demand_tier["std"]
     std_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
+    mean_demand_tier_df.index = pd.date_range("00:00:00", periods=len(mean_demand_tier_df), freq="H").time
+    std_demand_tier_df.index = pd.date_range("00:00:00", periods=len(mean_demand_tier_df), freq="H").time
 
-    std_demand_tier_df.index = hours_index.time
+    if inclusive == "left":
+        date_range = pd.date_range(start=date_start, end=date_end, freq="D")[:-1]
+    else: 
+        date_range = pd.date_range(start=date_start, end=date_end, freq="D")
 
+    mean_demand_tier_df_extended = pd.concat([mean_demand_tier_df] * len(date_range), ignore_index=True)
+    std_demand_tier_df_extended = pd.concat([std_demand_tier_df] * len(date_range), ignore_index=True)
+
+    # Calcolo del carico totale per ogni cluster e tier
     result_dict = {}
-    for k in range(len(tier_pop_df)):  # Itero sui cluster
-        pop_cluster = tier_pop_df.iloc[k, :]  # Seleziono tutto i tier per quel cluster
-        nome_dataframe = f"bus_{k}"
+    for k, pop_cluster in tier_pop_df.iterrows():
         load_df = pd.DataFrame()
-        std_df = pd.DataFrame()
-        for j in range(len(pop_cluster)):  # Itero su tutti i tier per quel cluster
-            n_person = int(pop_cluster[j])
-            mean_load_person = mean_demand_tier_df.iloc[:, j].values
-            mean_load = pd.Series(n_person * mean_load_person)
-
-            sqrt_n_person = np.sqrt(n_person)
-            std_load_person = std_demand_tier_df.iloc[:, j].values
-            std_load = np.random.normal(0, std_load_person) * sqrt_n_person
-            std_total = pd.Series(std_load)
-
-            total_load = pd.Series(mean_load.values + std_total.values)
+        for j, n_person in enumerate(pop_cluster / 7):  # Scala la popolazione per famiglia
+            mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
+            std_load = np.random.normal(mean_demand_tier_df_extended.iloc[:, j], std_demand_tier_df_extended.iloc[:, j]) * np.sqrt(n_person)
+            total_load = (mean_load + std_load) / 1e6
             load_df[f"tier_{j}"] = total_load
+        result_dict[f"bus_{k}"] = load_df
 
-        result_dict[nome_dataframe] = load_df
+    # Aggregazione del carico totale per cluster
+    tot_result_dict = {f"{k}": df.sum(axis=1).rename(f"{k}") for k, df in result_dict.items()}
+    tot_loads_df = pd.concat(tot_result_dict.values(), axis=1)
+    if inclusive == "left":
+        date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")[:-1]
+    else: 
+        date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")
+    tot_loads_df.index=date_range_tot
 
-    tot_result_dict = {}
-    for key in result_dict:
-        nome_dataframe = f"{key}"
-        load = result_dict[key]
-        load_tot = pd.DataFrame(load.sum(axis=1))
-        load_tot.rename(columns={0: key}, inplace=True)
-        tot_result_dict[nome_dataframe] = load_tot
+    # Sostituzione dei valori zero con un valore minimo per evitare problemi di plotting
+    small_value = 1e-26
+    tot_loads_df.loc[:, (tot_loads_df == 0).all()] = small_value
 
-    tot_loads_df = pd.DataFrame()
-    for key, cluster_load in tot_result_dict.items():
-        tot_loads_df = pd.concat([tot_loads_df, cluster_load], axis=1)
-
-    date_range = pd.date_range(start="2013-01-01", end="2013-12-31", freq="D")
-    yearly_mean_demand_tier_df = pd.concat(
-        [tot_loads_df] * len(date_range), ignore_index=True
-    )
-    date_time_index = pd.date_range(
-        start="2013-01-01", end="2013-12-31 23:00:00", freq="H"
-    )
-    yearly_mean_demand_tier_df.index = date_time_index
-    yearly_mean_demand_tier_df.to_csv(output_path_csv)
+    # Esportazione del DataFrame finale
+    tot_loads_df.to_csv(output_path_csv)
 
 
 if __name__ == "__main__":
@@ -454,6 +376,10 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.create_network)
     sample_profile = snakemake.input["sample_profile"]
     tier_percent = snakemake.params.tier["tier_percent"]
+    date_start=snakemake.params.snapshots["start"]
+    date_end=snakemake.params.snapshots["end"]
+    inclusive=snakemake.params.snapshots["inclusive"]
+
     build_demand_model = snakemake.params.build_demand_model["type"]
 
     assert (
@@ -504,6 +430,9 @@ if __name__ == "__main__":
             snakemake.input["profile_Tier5"],
             snakemake.output["electric_load"],
             tier_percent,
+            date_start,
+            date_end,
+            inclusive,
         )
     elif build_demand_model == 2:
 
@@ -522,4 +451,7 @@ if __name__ == "__main__":
             snakemake.input["profile_Tier5"],
             snakemake.output["electric_load"],
             tier_percent,
+            date_start,
+            date_end,
+            inclusive,
         )
