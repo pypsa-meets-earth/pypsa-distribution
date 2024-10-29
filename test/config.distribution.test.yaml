@@ -69,7 +69,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, onwind,diesel]
+    Generator: [solar, onwind, diesel]
     StorageUnit: ["lithium", "lead acid"]
   conventional_carriers: [diesel]
 
