@@ -177,6 +177,9 @@ def calculate_load(
     geojson_file,
     output_file,
     input_path,
+    start_date,
+    end_date,
+    inclusive,
 ):
     # Estimate the microgrid population and load using the existing function
     pop_microgrid, microgrid_load = estimate_microgrid_population(
@@ -189,14 +192,25 @@ def calculate_load(
     )
     population_per_building = pop_microgrid / total_buildings
     population_per_cluster = building_for_cluster * population_per_building
-    per_unit_load = pd.read_csv(sample_profile)["0"] / p
-    load_per_cluster = population_per_cluster["count"].apply(
-        lambda x: x * per_unit_load
+    df = pd.read_csv(sample_profile)
+    per_unit_load = df["0"] / p  
+    df["per_unit_load"] = per_unit_load
+    time_index = pd.date_range(start="2013-01-01", end="2013-12-31 23:00:00", freq="h")
+    df = df.set_index(time_index)
+
+    if inclusive == "left":
+        end_date = (pd.to_datetime(end_date) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+
+    df_filtered = df.loc[start_date:end_date]
+    per_unit_load=df_filtered["per_unit_load"].values
+    load_per_cluster = pd.DataFrame(
+        np.outer(population_per_cluster["count"].values, per_unit_load)
     )
     load_per_cluster = load_per_cluster.T
     new_column_names = {i: f"bus_{i}" for i in range(load_per_cluster.shape[1])}
     load_per_cluster.rename(columns=new_column_names, inplace=True)
-    load_per_cluster.insert(0, "snapshots", n.snapshots)
+    load_per_cluster["snapshots"] = n.snapshots
+    load_per_cluster.set_index("snapshots", inplace=True)
     load_per_cluster.to_csv(output_file, index=True)
 
     return load_per_cluster
@@ -480,6 +494,9 @@ if __name__ == "__main__":
             snakemake.input["clusters_with_buildings"],
             snakemake.output["electric_load"],
             snakemake.input["building_csv"],
+            date_start,
+            date_end,
+            inclusive,
         )
 
     elif build_demand_model == 1:
