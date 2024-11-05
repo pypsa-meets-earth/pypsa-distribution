@@ -110,6 +110,7 @@ def create_microgrid_network(
             s_nom_extendable=True,
         )
 
+
 def plot_microgrid_network(n):
     # Create a new figure and axis
     fig, ax = plt.subplots()
