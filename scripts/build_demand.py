@@ -193,16 +193,18 @@ def calculate_load(
     population_per_building = pop_microgrid / total_buildings
     population_per_cluster = building_for_cluster * population_per_building
     df = pd.read_csv(sample_profile)
-    per_unit_load = df["0"] / p  
+    per_unit_load = df["0"] / p
     df["per_unit_load"] = per_unit_load
     time_index = pd.date_range(start="2013-01-01", end="2013-12-31 23:00:00", freq="h")
     df = df.set_index(time_index)
 
     if inclusive == "left":
-        end_date = (pd.to_datetime(end_date) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+        end_date = (pd.to_datetime(end_date) - pd.Timedelta(days=1)).strftime(
+            "%Y-%m-%d"
+        )
 
     df_filtered = df.loc[start_date:end_date]
-    per_unit_load=df_filtered["per_unit_load"].values
+    per_unit_load = df_filtered["per_unit_load"].values
     load_per_cluster = pd.DataFrame(
         np.outer(population_per_cluster["count"].values, per_unit_load)
     )
