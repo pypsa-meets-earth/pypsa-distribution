@@ -61,7 +61,7 @@ jobs:
     - name: Update environment due to outdated or unavailable cache
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        mamba env update -n pypsa-earth -f pypsa-earth/envs/environment.yaml
+        mamba env update -n pypsa-earth -f envs/environment.yaml
         conda activate pypsa-earth
         pip install rampdemand
 
