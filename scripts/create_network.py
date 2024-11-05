@@ -110,63 +110,6 @@ def create_microgrid_network(
             s_nom_extendable=True,
         )
 
-
-# def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
-#     """
-#     Adds a new bus to each network at the center of the existing buses.
-#     This is the bus to which the generation, the storage and the load will be attached.
-#     """
-#     number_microgrids = len(number_microgrids.keys())
-#     microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
-
-#     # Iterate over each microgrid
-#     for microgrid_id in microgrid_ids:
-#         # Select the buses belonging to this microgrid
-#         microgrid_buses = n.buses.loc[
-#             n.buses.index.str.startswith(f"{microgrid_id}_bus_")
-#         ]
-
-#         # Create a matrix of bus coordinates
-#         coords = np.column_stack((microgrid_buses.x.values, microgrid_buses.y.values))
-#         polygon = Polygon(coords)
-#         s = gpd.GeoSeries(polygon)
-#         s = s.centroid
-
-#         # Create a new bus at the centroid
-#         center_bus_name = f"new_bus_{microgrid_id}"
-#         n.add(
-#             "Bus",
-#             center_bus_name,
-#             x=float(s.x.iloc[0]),
-#             y=float(s.y.iloc[0]),
-#             v_nom=voltage_level,
-#         )
-
-#         # Find the two closest buses to the new bus
-#         closest_buses = microgrid_buses.iloc[
-#             distance.cdist([(float(s.x.iloc[0]), float(s.y.iloc[0]))], coords).argmin()
-#         ]
-#         closest_buses = closest_buses.iloc[[0, 1]]
-#         line_type = line_type
-
-#         # Add lines to connect the new bus to the closest buses)
-
-#         # Add lines to connect the new bus to the closest buses
-#         for _, bus in closest_buses.to_frame().iterrows():
-#             line_name = f"{microgrid_id}_line_{center_bus_name}_{bus.name}"
-#             x1, y1 = n.buses.loc[bus.index].x, n.buses.loc[bus.index].y
-#             x2, y2 = n.buses.loc[center_bus_name].x, n.buses.loc[center_bus_name].y
-#             length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-#             n.add(
-#                 "Line",
-#                 line_name,
-#                 bus0=center_bus_name,
-#                 bus1=bus.index,
-#                 type=line_type,
-#                 length=length,
-#             )
-
-
 def plot_microgrid_network(n):
     # Create a new figure and axis
     fig, ax = plt.subplots()
