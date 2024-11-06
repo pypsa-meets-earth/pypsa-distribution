@@ -308,7 +308,7 @@ def attach_conventional_generators(
                     n.generators.loc[idx].bus.map(bus_values).dropna()
                 )
             else:
-                # Singolo valore che influenza tutti i generatori di tecnologia k indipendentemente dal paese
+                # Single value affecting all k technology generators regardless of country.
                 n.generators.loc[idx, attr] = values
 
 
@@ -357,7 +357,7 @@ def attach_load(n, load_file, tech_modelling):
 
 def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=False):
     n.lines["capital_cost"] = (
-        n.lines["length"] * length_factor * costs.at["HVAC overhead", "capital_cost"]
+        n.lines["length"] * length_factor * costs.at["MVAC overhead", "capital_cost"]
     )
 
 

@@ -79,9 +79,7 @@ def get_central_points_geojson_with_buildings(
                 "cluster": i,
             }
         )
-    central_features = gpd.GeoDataFrame(central_features, crs=microgrid_buildings.crs)
-    if microgrid_buildings.crs != "EPSG:4326":
-        central_features = central_features.to_crs("EPSG:4326")
+    central_features = gpd.GeoDataFrame(central_features, crs="EPSG:4326")
     central_features.to_file(output_filepath_centroids, driver="GeoJSON")
 
     clusters = []
