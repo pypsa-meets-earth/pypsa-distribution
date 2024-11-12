@@ -79,8 +79,10 @@ def get_central_points_geojson_with_buildings(
                 "cluster": i,
             }
         )
-    central_features = gpd.GeoDataFrame(central_features, crs=microgrid_buildings.crs)
-    central_features.to_file(output_filepath_centroids)
+    central_features = gpd.GeoDataFrame(
+        central_features, crs=microgrid_buildings.crs
+    ).to_crs("EPSG:4326")
+    central_features.to_file(output_filepath_centroids, driver="GeoJSON")
 
     clusters = []
     for i, row in enumerate(microgrid_buildings.itertuples()):
