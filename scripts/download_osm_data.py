@@ -67,7 +67,7 @@ def convert_iso_to_geofk(
         return iso_code
 
 
-def retrieve_osm_data_overpass(coordinates, features, url, path):
+def retrieve_osm_data_geojson(coordinates, features, url, path):
     """
     The buildings inside the specified coordinates are retrieved by using overpass API.
     The region coordinates should be defined in the config.yaml file.
@@ -80,23 +80,58 @@ def retrieve_osm_data_overpass(coordinates, features, url, path):
     url : str
         osm query address
     path : str
-        the directory where the buildings are going to be downloaded.
+        Directory where the GeoJSON file will be saved.
     """
 
-    out_format = "json"
     for item in coordinates.keys():
 
         overpass_query = f"""
         [out:json];
-        node[{features}]({coordinates[item]["lon_min"]}, {coordinates[item]["lat_min"]}, {coordinates[item]["lon_max"]}, {coordinates[item]["lat_max"]});
-        out;
+        way["{features}"]({coordinates[item]["lat_min"]}, {coordinates[item]["lon_min"]}, {coordinates[item]["lat_max"]}, {coordinates[item]["lon_max"]});
+        (._;>;);
+        out body;
         """
+
         try:
+            # Send request to API Overpass
             response = requests.get(url, params={"data": overpass_query})
             response.raise_for_status()
-            outpath = Path.joinpath(path, f"all_raw_building_{item}.{out_format}")
-            with open(outpath, "w") as out_file:
-                json.dump(response.json(), out_file, indent=2)
+            data = response.json()
+            # Create a dictionary to map nodes with their coordinates
+            node_coordinates = {
+                node["id"]: [node["lon"], node["lat"]]
+                for node in data["elements"]
+                if node["type"] == "node"
+            }
+            # Choose the output path to save the file.
+            outpath = Path(path) / f"all_raw_building.geojson"
+            # outpath = Path(path) / f"all_raw_building_{item}.geojson" #ATTENTION: Currently the other parts of the code ( clean earth osm data,cluster building, and others) have not been updated to run on multiple microgrids simultaneously. For now we do not exploit this to run the code. As soon as we update the other parts of the code as well, we will exploit it.
+            outpath.parent.mkdir(parents=True, exist_ok=True)
+            # Write the geojson file
+            with open(outpath, "w") as f:
+                f.write('{"type":"FeatureCollection","features":[\n')
+                features = []
+                for element in data["elements"]:
+                    if element["type"] == "way" and "nodes" in element:
+                        coordinates = [
+                            node_coordinates[node_id]
+                            for node_id in element["nodes"]
+                            if node_id in node_coordinates
+                        ]
+                        properties = {"id": element["id"]}
+                        if "tags" in element:
+                            properties.update(element["tags"])
+                        feature = {
+                            "type": "Feature",
+                            "properties": properties,
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [coordinates],
+                            },
+                        }
+                        features.append(json.dumps(feature, separators=(",", ":")))
+                f.write(",\n".join(features))
+                f.write("\n]}\n")
         except (json.JSONDecodeError, requests.exceptions.RequestException) as e:
             logger.error(f"Error downloading osm data for the specified coordinates")
 
@@ -149,11 +184,5 @@ if __name__ == "__main__":
         microgrids_list = snakemake.config["microgrids_list"]
         features = "building"
         overpass_url = "https://overpass-api.de/api/interpreter"
-        retrieve_osm_data_overpass(
-            microgrids_list, features, overpass_url, store_path_resources
-        )
-        outpath = Path.joinpath(store_path_resources, "all_raw_building.geojson")
-        with open(
-            outpath, "w"
-        ) as fp:  # an empty .geojson file is created to bypass snakemake output file requirement in the download_osm rule.
-            pass
+        output_file = Path.cwd() / "resources" / RDIR / "osm" / "raw"
+        retrieve_osm_data_geojson(microgrids_list, features, overpass_url, output_file)
