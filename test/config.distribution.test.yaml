@@ -25,9 +25,12 @@ enable:
   retrieve_databundle: true
   retrieve_cost_data: true
   download_osm_data: true
-  download_osm_buildings: false
-  # If "build_cutout" : true # requires cds API key https://cds.climate.copernicus.eu/api-how-to
-  # More information https://atlite.readthedocs.io/en/latest/introduction.html#datasets
+  download_osm_buildings: true
+  download_osm_method: overpass # or earth_osm
+  # If "build_cutout" : true # requires cds API key
+  # https://cds.climate.copernicus.eu/api-how-to
+  # More information
+  # https://atlite.readthedocs.io/en/latest/introduction.html#datasets
   build_cutout: false
   build_natura_raster: false  # If True, then build_natura_raster can be run
 

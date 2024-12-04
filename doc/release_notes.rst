@@ -10,7 +10,11 @@ Release Notes
 
 Upcoming Release
 ================
+New available options
 
+	 * The energy demand time series can now be determined using a new methodology based on social inputs that integrates with the RAMP tool.
+
+	*	Automated downloading of buildings within the microgrid is now supported through the new download_osm_data rule.
 
 
 

@@ -19,14 +19,14 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
 
-def buildings_classification(input_file, crs, house_area_limit):
+def buildings_classification(input_file, crs):
     """
     Filters the data contained in all_raw_building, selecting only Polygon elements,
     after which the plan area is calculated for each building with the specified coordinate system
     and adds the information to the geodataframe.
     """
     microgrid_buildings = gpd.read_file(input_file)
-    microgrid_buildings.rename(columns={"tags.building": "tags_building"}, inplace=True)
+    microgrid_buildings.rename(columns={"building": "tags_building"}, inplace=True)
     microgrid_buildings = microgrid_buildings.loc[
         microgrid_buildings.geometry.type != "Point"
     ]
@@ -54,9 +54,7 @@ def get_central_points_geojson_with_buildings(
     a dataframe with all of the buildings divided into clusters,
     a csv file where for each cluster the building types are counted
     """
-    microgrid_buildings = buildings_classification(
-        input_filepath, crs, house_area_limit
-    )
+    microgrid_buildings = buildings_classification(input_filepath, crs)
     centroids_building = [
         (row.geometry.centroid.x, row.geometry.centroid.y)
         for row in microgrid_buildings.itertuples()
