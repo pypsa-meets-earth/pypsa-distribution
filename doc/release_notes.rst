@@ -10,11 +10,10 @@ Release Notes
 
 Upcoming Release
 ================
-New available options
 
-	 * The energy demand time series can now be determined using a new methodology based on social inputs that integrates with the RAMP tool.
+* The energy demand time series can now be determined using a new methodology based on social inputs that integrates with the RAMP tool. `PR #55 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/55>`__
 
-	*	Automated downloading of buildings within the microgrid is now supported through the new download_osm_data rule.
+* Automated downloading of buildings within the microgrid is now supported through the new download_osm_data rule. `PR #52 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/52>`__ and `PR #56 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/56>`__
 
 
 
