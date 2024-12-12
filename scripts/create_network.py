@@ -35,82 +35,67 @@ def create_network():
 
     # Return the created network
     return n
-
-
-def create_microgrid_network(
-    n, input_file, number_microgrids, voltage_level, line_type
-):
+            
+def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_list):
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
     the buildings data, stored in "resources/buildings/microgrids_buildings.geojson". Then the buses are connected together through lines
     according to the output of a Delaunay Triangulation.
     """
     # Load the GeoJSON file
-
-    with open(input_file) as f:
-        data = json.load(f)
-
-    # Keep track of the bus coordinates and microgrid IDs
+    data = gpd.read_file(input_file)
     bus_coords = set()
-    number_microgrids = len(number_microgrids.keys())
-    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
-    # microgrid_ids = set()
-
-    # Iterate over each feature in the GeoDataFrame
-    for feature in data["features"]:
-        # Get the point geometry
-        point_geom = feature["geometry"]
-
-        # Create a bus at the point location with microgrid ID included in bus name
-        bus_name = f"bus_{feature['properties']['cluster']}"
-
-        x, y = point_geom["coordinates"][0], point_geom["coordinates"][1]
-
-        # Check for overlapping microgrids and raise an error if happening
-        if (x, y) in bus_coords:
-            raise ValueError(
-                "Overlapping microgrids detected, adjust the coordinates in the config.yaml file"
-            )
-
-        # Add the buses to the network and update the set of bus coordinates and microgrid IDs
-        n.add("Bus", bus_name, x=x, y=y, v_nom=voltage_level)
-        bus_coords.add((x, y))
-
-    # Iterate over each microgrid
-    for microgrid_id in microgrid_ids:
-        coords = np.column_stack((n.buses.x.values, n.buses.y.values))
-
-        # Create a Delaunay triangulation of the bus coordinates
+    for grid_name, grid_data in microgrid_list.items():
+        # Filter data for the current microgrid
+        grid_data = data[data["name_microgrid"] == grid_name]
+        # Create a SubNetwork for the current microgrid
+        if grid_name not in n.sub_networks.index:
+            n.add("SubNetwork", grid_name, carrier="electricity")
+        # List to store bus names for this microgrid
+        microgrid_buses = []
+        for _, feature in grid_data.iterrows():
+            point_geom = feature.geometry
+            bus_name = f"{grid_name}_bus_{feature['cluster']}"
+            x, y = point_geom.x, point_geom.y
+            # Avoid adding duplicate buses
+            if bus_name in n.buses.index:
+                continue
+            if (x, y) in bus_coords:
+                raise ValueError(
+                    f"Overlapping microgrids detected at {x}, {y}. Adjust the configuration."
+                )
+            # Add the bus and assign it to the SubNetwork
+            n.add("Bus", bus_name, x=x, y=y, v_nom=voltage_level, sub_network=grid_name)
+            bus_coords.add((x, y))
+            microgrid_buses.append(bus_name)
+        # Filter coordinates for the current microgrid
+        coords = np.column_stack((
+            n.buses.loc[microgrid_buses].x.values,
+            n.buses.loc[microgrid_buses].y.values
+        ))
+        # Check if there are enough points for triangulation
+        if len(coords) < 3:
+            print(f"Not enough points for triangulation in {grid_name}. Skipping.")
+            continue
+        # Create a Delaunay triangulation of the filtered bus coordinates
         tri = Delaunay(coords)
-
-        # Remove edges that connect the same pair of buses
-        edges = []
+        edges = set()
         for simplex in tri.simplices:
             for i in range(3):
-                if i < 2:
-                    edge = sorted([simplex[i], simplex[i + 1]])
-            else:
-                edge = sorted([simplex[i], simplex[0]])
-            if edge not in edges:
-                edges.append(edge)
+                edge = tuple(sorted([simplex[i], simplex[(i + 1) % 3]]))
+                edges.add(edge)
+        # Add lines for the current microgrid
+        for i, j in edges:
+            bus0 = microgrid_buses[i]
+            bus1 = microgrid_buses[j]
+            line_name = f"{grid_name}_line_{i}_{j}"
+            if line_name in n.lines.index:
+                continue  # Skip if the line already exists
+            x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
+            x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
+            length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+            n.add("Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length)
 
-        # # Create a matrix of bus coordinates
-
-        # # Create a Delaunay triangulation of the bus coordinates
-        # tri = Delaunay(coords)
-        # edges = tri.simplices[(tri.simplices < len(coords)).all(axis=1)]
-
-        line_type = line_type
-
-    # Add lines to the network between connected buses in the Delaunay triangulation
-    for i, j in edges:
-        bus0 = n.buses.index[i]
-        bus1 = n.buses.index[j]
-        line_name = f"{microgrid_id}_line_{i}_{j}"
-        x1, y1 = n.buses.x[i], n.buses.y[i]
-        x2, y2 = n.buses.x[j], n.buses.y[j]
-        length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-        n.add("Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length)
 
 
 def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
@@ -207,13 +192,14 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     n = create_network()
+    microgrids_list = snakemake.config["microgrids_list"]
 
     create_microgrid_network(
         n,
         snakemake.input["clusters"],
-        snakemake.config["microgrids_list"],
         snakemake.config["electricity"]["voltage"],
         snakemake.config["electricity"]["line_type"],
+        microgrids_list,
     )
 
     # add_bus_at_center(n,

@@ -124,6 +124,12 @@ microgrids_list:
     lat_min: 4.6151
     lat_max: 4.7208
 
+  microgrid_2:     # WORKING
+    lon_max: 7.18935
+    lon_min: 7.01048
+    lat_min: 6.17059
+    lat_max: 6.29329
+
 load:
   scaling_factor: 15000
 

@@ -67,7 +67,7 @@ def convert_iso_to_geofk(
         return iso_code
 
 
-def retrieve_osm_data_geojson(coordinates, features, url, path):
+def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
     """
     The buildings inside the specified coordinates are retrieved by using overpass API.
     The region coordinates should be defined in the config.yaml file.
@@ -82,59 +82,81 @@ def retrieve_osm_data_geojson(coordinates, features, url, path):
     path : str
         Directory where the GeoJSON file will be saved.
     """
+    geojson_features = []  # Collect all features from all microgrids
 
-    for item in coordinates.keys():
+    for grid_name, grid_data in microgrids_list.items():
+        lat_min = grid_data["lat_min"]
+        lon_min = grid_data["lon_min"]
+        lat_max = grid_data["lat_max"]
+        lon_max = grid_data["lon_max"]
 
         overpass_query = f"""
         [out:json];
-        way["{features}"]({coordinates[item]["lat_min"]}, {coordinates[item]["lon_min"]}, {coordinates[item]["lat_max"]}, {coordinates[item]["lon_max"]});
+        way["{feature_name}"]({lat_min},{lon_min},{lat_max},{lon_max});
         (._;>;);
         out body;
         """
 
         try:
-            # Send request to API Overpass
+            logger.info(f"Querying Overpass API for microgrid: {grid_name}")
             response = requests.get(url, params={"data": overpass_query})
             response.raise_for_status()
             data = response.json()
-            # Create a dictionary to map nodes with their coordinates
+
+            if "elements" not in data:
+                logger.error(f"No elements found for microgrid: {grid_name}")
+                continue
+
             node_coordinates = {
                 node["id"]: [node["lon"], node["lat"]]
                 for node in data["elements"]
                 if node["type"] == "node"
             }
-            # Choose the output path to save the file.
-            outpath = Path(path) / f"all_raw_building.geojson"
-            # outpath = Path(path) / f"all_raw_building_{item}.geojson" #ATTENTION: Currently the other parts of the code ( clean earth osm data,cluster building, and others) have not been updated to run on multiple microgrids simultaneously. For now we do not exploit this to run the code. As soon as we update the other parts of the code as well, we will exploit it.
-            outpath.parent.mkdir(parents=True, exist_ok=True)
-            # Write the geojson file
-            with open(outpath, "w") as f:
-                f.write('{"type":"FeatureCollection","features":[\n')
-                features = []
-                for element in data["elements"]:
-                    if element["type"] == "way" and "nodes" in element:
-                        coordinates = [
-                            node_coordinates[node_id]
-                            for node_id in element["nodes"]
-                            if node_id in node_coordinates
-                        ]
-                        properties = {"id": element["id"]}
-                        if "tags" in element:
-                            properties.update(element["tags"])
-                        feature = {
-                            "type": "Feature",
-                            "properties": properties,
-                            "geometry": {
-                                "type": "Polygon",
-                                "coordinates": [coordinates],
-                            },
-                        }
-                        features.append(json.dumps(feature, separators=(",", ":")))
-                f.write(",\n".join(features))
-                f.write("\n]}\n")
-        except (json.JSONDecodeError, requests.exceptions.RequestException) as e:
-            logger.error(f"Error downloading osm data for the specified coordinates")
 
+            for element in data["elements"]:
+                if element["type"] == "way" and "nodes" in element:
+                    coordinates = [
+                        node_coordinates[node_id]
+                        for node_id in element["nodes"]
+                        if node_id in node_coordinates
+                    ]
+                    if not coordinates:
+                        continue
+
+                    properties = {"name_microgrid": grid_name, "id": element["id"]}
+                    if "tags" in element:
+                        properties.update(element["tags"])
+
+                    feature = {
+                        "type": "Feature",
+                        "properties": properties,
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [coordinates],
+                        },
+                    }
+                    # Serialize each feature as a compact JSON string
+                    geojson_features.append(json.dumps(feature, separators=(",", ":")))
+
+        except json.JSONDecodeError:
+            logger.error(f"JSON decoding error for microgrid: {grid_name}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error for microgrid: {grid_name}: {e}")
+
+    # Save all features to a single GeoJSON file
+    try:
+        outpath = Path(path) / "all_raw_buildings.geojson"
+        outpath.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(outpath, "w") as f:
+            f.write('{"type":"FeatureCollection","features":[\n')
+            f.write(",\n".join(geojson_features))  # Write features in one-line format
+            f.write("\n]}\n")
+
+        logger.info(f"Combined GeoJSON saved to {outpath}")
+
+    except IOError as e:
+        logger.error(f"Error saving GeoJSON file: {e}")
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

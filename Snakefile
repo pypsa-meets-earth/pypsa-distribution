@@ -104,6 +104,7 @@ rule ramp_build_demand_profile:
 rule build_demand:
     params:
         tier=config["tier"],
+        snapshots=config["snapshots"],
         build_demand_model=config["build_demand_type"],
     input:
         **{
@@ -163,7 +164,7 @@ if config["enable"].get("download_osm_buildings", True):
 
     rule download_osm_data:
         output:
-            building_resources="resources/" + RDIR + "osm/raw/all_raw_building.geojson",
+            building_resources="resources/" + RDIR + "osm/raw/all_raw_buildings.geojson",
         log:
             "logs/" + RDIR + "download_osm_data.log",
         benchmark:
@@ -177,7 +178,7 @@ if config["enable"].get("download_osm_buildings", True):
 
 rule clean_earth_osm_data:
     input:
-        all_buildings="resources/" + RDIR + "osm/raw/all_raw_building.geojson",
+        all_buildings="resources/" + RDIR + "osm/raw/all_raw_buildings.geojson",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
     output:
         microgrid_building="resources/buildings/microgrid_building.geojson",
