@@ -11,8 +11,12 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers_dist import configure_logging, read_geojson, sets_path_to_root
+from pyproj import Transformer
 from scipy.spatial import Delaunay, distance
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -96,7 +100,7 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
         ))
         # Check if there are enough points for triangulation
         if len(coords) < 3:
-            print(f"Not enough points for triangulation in {grid_name}. Skipping.")
+            print(f"Not enough points for triangulation in {grid_name}.")
             continue
         # Create a Delaunay triangulation of the filtered bus coordinates
         tri = Delaunay(coords)
@@ -114,9 +118,25 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
                 continue  # Skip if the line already exists
             x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
             x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-            length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-            n.add("Line", line_name, bus0=bus0, bus1=bus1, type=line_type, length=length)
+            transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+            x1, y1 = transformer.transform(x1, y1)
+            x2, y2 = transformer.transform(x2, y2)
 
+            coords_0 = Point(x1, y1)
+            coords_1 = Point(x2, y2)
+
+        length = (coords_0.distance(coords_1)) / 1000
+        n.add(
+            "Line",
+            line_name,
+            bus0=bus0,
+            bus1=bus1,
+            type="24-AL1/4-ST1A 0.4",
+            length=length,
+            s_nom=0.1,
+            s_nom_extendable=True,
+        )
+           
 
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
