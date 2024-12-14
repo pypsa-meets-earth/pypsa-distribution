@@ -117,7 +117,9 @@ battery inverter,2030,lifetime,20,years,budischak2013;
 battery inverter,2030,efficiency,0.9,per unit charge/discharge,budischak2013; Lund and Kempton (2008) http://dx.doi.org/10.1016/j.enpol.2008.06.007
 battery inverter,2030,FOM,3,%/year,budischak2013;
 lithium,2030,investment,192,USD/kWh,budischak2013;
-lead acid,2030,lifetime,15,years,budischak2013;
+lithium,2030,lifetime,15,years,b;
+lead acid,2030,lifetime,5,years,b;
+lead acid,2030,investment,150,USD/kWh,bu;
 decentral air-sourced heat pump,2030,investment,1050,EUR/kWth,HP; Palzer thesis
 decentral air-sourced heat pump,2030,lifetime,20,years,HP; Palzer thesis
 decentral air-sourced heat pump,2030,FOM,3.5,%/year,Palzer thesis;
@@ -193,4 +195,10 @@ HVDC submarine,2030,FOM,2,%/year,Hagspiel;
 HVDC inverter pair,2030,investment,150000,EUR/MW,Hagspiel;
 HVDC inverter pair,2030,lifetime,40,years,Hagspiel;
 HVDC inverter pair,2030,FOM,2,%/year,Hagspiel;
-diesel,2030,investment,400,EUR/kWel,DIW DataDoc http://hdl.handle.net/10419/80348;
+diesel,2030,investment,400,EUR/kWel,DIW;
+diesel,2030,efficiency,0.30,per unit,DIW ;
+diesel,2030,VOM,0.5,EUR/MWhel,DIW;
+diesel,2030,fuel,100,USD/MWhth,DIW;
+MVAC overhead,2030,investment,40,EUR/MW/km, ;
+MVAC overhead,2030,lifetime,40,years, ;
+MVAC overhead,2030,FOM,2,%/year, ;

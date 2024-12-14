@@ -40,8 +40,8 @@ countries: ["NG"]
 year: "2019"  # Year setting allows the choice of which data to download (es. Worldpop_data)
 
 snapshots:
-  start: "2013-01-01"
-  end: "2014-01-01"
+  start: "2013-03-01"
+  end: "2013-03-07"
   inclusive: "left"  # end is not inclusive
 
 ramp:
@@ -59,9 +59,9 @@ house_area_limit:
 build_demand_type:
   type: 0
 # type allows to select the mode by which the microgrid demand profile is generated.
-# 1 = a predetermined hourly profile is used
-# 2 = an average hourly profile is calculated by exploiting the ramp tool
-# 3 = an average hourly profile and its standard deviation is calculated using the ramp tool,
+# 0 = a predetermined hourly profile is used
+# 1 = an average hourly profile is calculated by exploiting the ramp tool
+# 2 = an average hourly profile and its standard deviation is calculated using the ramp tool,
 #     and both quantities are used to calculate demand.
 
 # definition of the Coordinate Reference Systems
@@ -80,7 +80,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, onwind]
+    Generator: [solar, onwind, diesel]
     StorageUnit: ["lithium", "lead acid"]
   conventional_carriers: [diesel]
 

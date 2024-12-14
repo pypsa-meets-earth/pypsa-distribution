@@ -252,11 +252,13 @@ def calculate_load(
     time_index = pd.date_range(start="2013-01-01", end="2013-12-31 23:00:00", freq="h")
     df = df.set_index(time_index)
 
+
     # Apply time filtering based on the specified start and end dates
     if inclusive == "left":
         end_date = (pd.to_datetime(end_date) - pd.Timedelta(days=1)).strftime(
             "%Y-%m-%d"
         )
+
     df_filtered = df.loc[start_date:end_date]  # Filter the time series data
     per_unit_load = df_filtered["per_unit_load"].values
     # Loop over each microgrid
@@ -321,17 +323,17 @@ def calculate_load_ramp(
     date_end,
     inclusive,
 ):
-    # Caricamento dei dati e calcolo della densità di popolazione
-    microgrid_buildings = gpd.read_file(input_file_buildings)
-    house = microgrid_buildings[microgrid_buildings["tags_building"] == "house"]
-    pop_microgrid = estimate_microgrid_population(
-        raster_path, shapes_path, output_file
+    
+    cleaned_buildings = gpd.read_file(input_file_buildings)
+    house = cleaned_buildings[cleaned_buildings["tags_building"] == "house"]
+    pop_microgrid, microgrid_load = estimate_microgrid_population(
+        n, p, raster_path, shapes_path, sample_profile, output_file
     )
     density = pop_microgrid / house["area_m2"].sum()
 
-    # Calcolo superficie e popolazione per cluster
-    grouped_buildings = microgrid_buildings.groupby("cluster_id")
-    clusters = np.sort(microgrid_buildings["cluster_id"].unique())
+
+    grouped_buildings = cleaned_buildings.groupby("cluster_id")
+    clusters = np.sort(cleaned_buildings["cluster_id"].unique())
     house_area_for_cluster = [
         grouped_buildings.get_group(cluster)[
             grouped_buildings.get_group(cluster)["tags_building"] == "house"
@@ -529,6 +531,7 @@ def calculate_load_ramp_std(
 
     # Esportazione del DataFrame finale
     all_microgrid_loads.to_csv(output_path_csv)
+
 
 
 if __name__ == "__main__":

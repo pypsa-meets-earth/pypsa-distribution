@@ -226,7 +226,7 @@ rule build_renewable_profiles:
             "data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"
         ),
         gebco=pypsaearth("data/gebco/GEBCO_2021_TID.nc"),
-        country_shapes=pypsaearth("resources/shapes/country_shapes.geojson"),
+        country_shapes="resources/shapes/microgrid_shapes.geojson",
         offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
         hydro_capacities="pypsa-earth/data/hydro_capacities.csv",
         eia_hydro_generation="pypsa-earth/data/eia_hydro_annual_generation.csv",

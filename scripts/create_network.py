@@ -18,9 +18,6 @@ from shapely.geometry import Point, Polygon
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.INFO)
-
 
 def create_network():
     """
@@ -137,7 +134,6 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
             s_nom_extendable=True,
         )
            
-
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
 #     """
