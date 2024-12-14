@@ -15,7 +15,7 @@ from shapely.geometry import Point, Polygon
 
 def extract_points(microgrid_shape_path, buildings_path, output_path):
     """
-    From the downloaded data, extracts buildings located within the boundaries of each microgrid geometry 
+    From the downloaded data, extracts buildings located within the boundaries of each microgrid geometry
     and associates them with the respective microgrid name.
 
     Parameters
@@ -30,10 +30,10 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
     Returns
     -------
     GeoDataFrame
-        A GeoDataFrame containing the filtered buildings with an added field "name_microgrid" 
+        A GeoDataFrame containing the filtered buildings with an added field "name_microgrid"
         that associates each building to its corresponding microgrid.
     """
-    
+
     # Load the GeoJSON files
     microgrid = gpd.read_file(microgrid_shape_path)
     buildings = gpd.read_file(buildings_path)
@@ -44,12 +44,16 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
         # Extract the name of the microgrid
         microgrid_name = microgrid_shape["name"]
         # Filter buildings located within the microgrid geometry
-        buildings_in_microgrid = buildings[buildings.geometry.within(microgrid_shape.geometry)]
+        buildings_in_microgrid = buildings[
+            buildings.geometry.within(microgrid_shape.geometry)
+        ]
         # Add or replace the "name_microgrid" field with the microgrid name
         buildings_in_microgrid = buildings_in_microgrid.copy()
         buildings_in_microgrid["name_microgrid"] = microgrid_name
         # Append the filtered buildings to the final result
-        result = gpd.GeoDataFrame(pd.concat([result, buildings_in_microgrid], ignore_index=True))
+        result = gpd.GeoDataFrame(
+            pd.concat([result, buildings_in_microgrid], ignore_index=True)
+        )
     # Save the final result as a GeoJSON file
     result.to_file(output_path, driver="GeoJSON")
 

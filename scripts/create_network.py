@@ -36,7 +36,8 @@ def create_network():
 
     # Return the created network
     return n
-            
+
+
 def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_list):
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
@@ -55,7 +56,7 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
     line_type : str
         The type of lines to be used for connecting the buses (e.g., "AC").
     microgrid_list : dict
-        A dictionary containing the list of microgrids. Keys are microgrid names, 
+        A dictionary containing the list of microgrids. Keys are microgrid names,
         and values are metadata about each microgrid.
     Output
     ------
@@ -63,7 +64,7 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
     - Buses for each microgrid, identified by cluster ID and associated with a SubNetwork.
     - Lines connecting buses within each microgrid based on Delaunay triangulation.
     """
-    
+
     # Load the GeoJSON file
     data = gpd.read_file(input_file)
     bus_coords = set()
@@ -91,10 +92,12 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
             bus_coords.add((x, y))
             microgrid_buses.append(bus_name)
         # Filter coordinates for the current microgrid
-        coords = np.column_stack((
-            n.buses.loc[microgrid_buses].x.values,
-            n.buses.loc[microgrid_buses].y.values
-        ))
+        coords = np.column_stack(
+            (
+                n.buses.loc[microgrid_buses].x.values,
+                n.buses.loc[microgrid_buses].y.values,
+            )
+        )
         # Check if there are enough points for triangulation
         if len(coords) < 3:
             print(f"Not enough points for triangulation in {grid_name}.")
@@ -133,7 +136,7 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
             s_nom=0.1,
             s_nom_extendable=True,
         )
-           
+
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
 #     """

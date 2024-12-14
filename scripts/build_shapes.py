@@ -23,7 +23,7 @@ def create_microgrid_shapes(microgrids_list, output_path):
     output_path : str
        Path where the GeoJSON file will be saved.
     """
-    
+
     # Open the input dictionary into a pandas DataFrame for easier processing
     microgrids_list_df = pd.DataFrame(microgrids_list)
 
@@ -61,13 +61,13 @@ def create_microgrid_shapes(microgrids_list, output_path):
 def create_bus_regions(microgrids_list, output_path):
     """
     Creates bus regions for each microgrid in the list of microgrids and saves them as a GeoJSON file.
-    The generated shape will be used for the calculation of renewable energy producibility, 
+    The generated shape will be used for the calculation of renewable energy producibility,
     which will be associated with the bus generated at the center of the geometry.
     Parameters
     ----------
     microgrids_list : dict
         Dictionary containing the microgrid names and their bounding box coordinates (lat_min, lon_min, lat_max, lon_max).
-        
+
     output_path : str
        Path where the GeoJSON file will be saved.
     """
@@ -83,8 +83,8 @@ def create_bus_regions(microgrids_list, output_path):
 
     # Iterate over each column in the DataFrame
     for col in range(len(microgrids_list_df.columns)):
-        values = microgrids_list_df.iloc[:, col]  
-        microgrid_name = microgrids_list_df.columns[col] + "_bus_renewable"  
+        values = microgrids_list_df.iloc[:, col]
+        microgrid_name = microgrids_list_df.columns[col] + "_bus_renewable"
 
         # Define the vertices of the rectangle
         Top_left = (values[0], values[3])
@@ -111,8 +111,8 @@ def create_bus_regions(microgrids_list, output_path):
     microgrid_gdf = gpd.GeoDataFrame(
         {
             "name": microgrid_names,  # Names of the bus regions
-            "x": microgrid_x,         # x-coordinates of the centers
-            "y": microgrid_y,         # y-coordinates of the centers
+            "x": microgrid_x,  # x-coordinates of the centers
+            "y": microgrid_y,  # y-coordinates of the centers
             "geometry": microgrid_shapes,  # Polygon shapes of the regions
         }
     )

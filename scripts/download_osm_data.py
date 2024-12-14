@@ -67,7 +67,7 @@ def convert_iso_to_geofk(
         return iso_code
 
 
-def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
+def retrieve_osm_data_geojson(microgrids_list, feature_name, url, path):
     """
     The buildings inside the specified coordinates are retrieved by using overpass API.
     The region coordinates should be defined in the config.yaml file.
@@ -83,7 +83,7 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
         Directory where the GeoJSON file will be saved.
     """
     # Collect all features from all microgrids
-    geojson_features = []  
+    geojson_features = []
 
     for grid_name, grid_data in microgrids_list.items():
         # Extract the bounding box coordinates for the current microgrid to construct the query
@@ -100,8 +100,12 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
         out body;
         """
         try:
-            logger.info(f"Querying Overpass API for microgrid: {grid_name}")  # Log the current query
-            response = requests.get(url, params={"data": overpass_query})  # Send the query to Overpass API
+            logger.info(
+                f"Querying Overpass API for microgrid: {grid_name}"
+            )  # Log the current query
+            response = requests.get(
+                url, params={"data": overpass_query}
+            )  # Send the query to Overpass API
             response.raise_for_status()  # Raise an error if the request fails
             data = response.json()  # Parse the JSON response
 
@@ -150,7 +154,7 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
         except requests.exceptions.RequestException as e:
             # Handle request-related errors
             logger.error(f"Request error for microgrid: {grid_name}: {e}")
-        
+
             # Save all features to a single GeoJSON file
         try:
             outpath = Path(path) / "all_raw_buildings.geojson"
@@ -158,13 +162,16 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
 
             with open(outpath, "w") as f:
                 f.write('{"type":"FeatureCollection","features":[\n')
-                f.write(",\n".join(geojson_features))  # Write features in one-line format
+                f.write(
+                    ",\n".join(geojson_features)
+                )  # Write features in one-line format
                 f.write("\n]}\n")
 
             logger.info(f"Combined GeoJSON saved to {outpath}")
 
         except IOError as e:
             logger.error(f"Error saving GeoJSON file: {e}")
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
