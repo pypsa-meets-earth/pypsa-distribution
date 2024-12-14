@@ -73,8 +73,8 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
     The region coordinates should be defined in the config.yaml file.
     Parameters
     ----------
-    coordinates : dict
-        Coordinates of the rectangular region where buildings to be downloaded from osm resides.
+    microgrids_list : dict
+        Dictionary containing the microgrid names and their bounding box coordinates (lat_min, lon_min, lat_max, lon_max).
     features : str
         The feature that is searched in the osm database
     url : str
@@ -82,39 +82,43 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
     path : str
         Directory where the GeoJSON file will be saved.
     """
-    geojson_features = []  # Collect all features from all microgrids
+    # Collect all features from all microgrids
+    geojson_features = []  
 
     for grid_name, grid_data in microgrids_list.items():
+        # Extract the bounding box coordinates for the current microgrid to construct the query
         lat_min = grid_data["lat_min"]
         lon_min = grid_data["lon_min"]
         lat_max = grid_data["lat_max"]
         lon_max = grid_data["lon_max"]
 
+        # Construct the Overpass API query for the specified feature
         overpass_query = f"""
         [out:json];
         way["{feature_name}"]({lat_min},{lon_min},{lat_max},{lon_max});
         (._;>;);
         out body;
         """
-
         try:
-            logger.info(f"Querying Overpass API for microgrid: {grid_name}")
-            response = requests.get(url, params={"data": overpass_query})
-            response.raise_for_status()
-            data = response.json()
+            logger.info(f"Querying Overpass API for microgrid: {grid_name}")  # Log the current query
+            response = requests.get(url, params={"data": overpass_query})  # Send the query to Overpass API
+            response.raise_for_status()  # Raise an error if the request fails
+            data = response.json()  # Parse the JSON response
 
+            # Check if the response contains any elements
             if "elements" not in data:
                 logger.error(f"No elements found for microgrid: {grid_name}")
                 continue
-
+            # Extract node coordinates from the response
             node_coordinates = {
                 node["id"]: [node["lon"], node["lat"]]
                 for node in data["elements"]
                 if node["type"] == "node"
             }
-
+            # Process "way" elements to construct polygon geometries
             for element in data["elements"]:
                 if element["type"] == "way" and "nodes" in element:
+                    # Get the coordinates of the nodes that form the way
                     coordinates = [
                         node_coordinates[node_id]
                         for node_id in element["nodes"]
@@ -123,10 +127,12 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
                     if not coordinates:
                         continue
 
+                    # Add properties for the feature, including the microgrid name and element ID
                     properties = {"name_microgrid": grid_name, "id": element["id"]}
-                    if "tags" in element:
+                    if "tags" in element:  # Include additional tags if available
                         properties.update(element["tags"])
 
+                    # Create a GeoJSON feature for the way
                     feature = {
                         "type": "Feature",
                         "properties": properties,
@@ -135,28 +141,30 @@ def retrieve_osm_data_geojson( microgrids_list, feature_name, url, path):
                             "coordinates": [coordinates],
                         },
                     }
-                    # Serialize each feature as a compact JSON string
+                    # Serialize each feature as a compact JSON string and add it to the list
                     geojson_features.append(json.dumps(feature, separators=(",", ":")))
 
         except json.JSONDecodeError:
+            # Handle JSON parsing errors
             logger.error(f"JSON decoding error for microgrid: {grid_name}")
         except requests.exceptions.RequestException as e:
+            # Handle request-related errors
             logger.error(f"Request error for microgrid: {grid_name}: {e}")
+        
+            # Save all features to a single GeoJSON file
+        try:
+            outpath = Path(path) / "all_raw_buildings.geojson"
+            outpath.parent.mkdir(parents=True, exist_ok=True)
 
-    # Save all features to a single GeoJSON file
-    try:
-        outpath = Path(path) / "all_raw_buildings.geojson"
-        outpath.parent.mkdir(parents=True, exist_ok=True)
+            with open(outpath, "w") as f:
+                f.write('{"type":"FeatureCollection","features":[\n')
+                f.write(",\n".join(geojson_features))  # Write features in one-line format
+                f.write("\n]}\n")
 
-        with open(outpath, "w") as f:
-            f.write('{"type":"FeatureCollection","features":[\n')
-            f.write(",\n".join(geojson_features))  # Write features in one-line format
-            f.write("\n]}\n")
+            logger.info(f"Combined GeoJSON saved to {outpath}")
 
-        logger.info(f"Combined GeoJSON saved to {outpath}")
-
-    except IOError as e:
-        logger.error(f"Error saving GeoJSON file: {e}")
+        except IOError as e:
+            logger.error(f"Error saving GeoJSON file: {e}")
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

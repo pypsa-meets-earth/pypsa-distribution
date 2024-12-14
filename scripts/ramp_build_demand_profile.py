@@ -16,6 +16,37 @@ def create_demand_profile(
     excel_profiles_output_path,
     excel_daily_profile_output_path,
 ):
+    """
+    Generates daily and hourly demand profiles for a specified number of days, 
+    based on user data from an input Excel file, and saves the results to Excel files.
+    The function:
+    Load user-specific data from the provided input Excel file.
+    Generate daily load profiles, normalized by the number of users.
+    Compute hourly averages of demand from minute-level data.
+    Reshape the hourly data into daily profiles and calculate statistical measures 
+    (mean and standard deviation) to represent a "typical day."
+    Save the processed profiles and statistics to Excel files.
+
+    Parameters
+    ----------
+    days : int
+        The number of days for which the demand profile should be generated.
+    start : str
+        The starting date for the profiles 
+    xlsx_input_path : str
+        Path to the input Excel file containing user-specific data
+    excel_profiles_output_path : str
+        Path to the output Excel file where the daily profiles (hourly data for each day) will be saved.
+    excel_daily_profile_output_path : str
+        Path to the output Excel file where the typical daily profile (mean and standard deviation) will be saved.
+
+    Output Files
+    ------------
+    - `excel_profiles_output_path`: Contains a DataFrame where each column represents the hourly profile of a specific day.
+    - `excel_daily_profile_output_path`: Contains a DataFrame with two columns, `mean` and `std`, representing 
+      the mean hourly demand and its standard deviation over the specified days.
+
+    """
     use_case = UseCase()
     use_case.load(xlsx_input_path)
 
