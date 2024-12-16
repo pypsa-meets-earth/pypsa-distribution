@@ -56,6 +56,7 @@ house_area_limit:
 
 build_demand_type:
   type: 0
+  std: "on"
 
 # definition of the Coordinate Reference Systems
 crs:
