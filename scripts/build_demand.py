@@ -301,7 +301,6 @@ def calculate_load(
     return all_load_per_cluster
 
 
-
 def calculate_load_ramp(
     input_file_buildings,
     n,
@@ -320,113 +319,8 @@ def calculate_load_ramp(
     date_start,
     date_end,
     inclusive,
-):
-    # Caricamento dei dati e calcolo della densità di popolazione
-    microgrid_buildings = gpd.read_file(input_file_buildings)
-    house = microgrid_buildings[microgrid_buildings["tags_building"] == "house"]
-    pop_microgrid = estimate_microgrid_population(
-        raster_path, shapes_path, output_file
-    )
-    density = pop_microgrid / house["area_m2"].sum()
-
-    # Calcolo superficie e popolazione per cluster
-    grouped_buildings = microgrid_buildings.groupby("cluster_id")
-    clusters = np.sort(microgrid_buildings["cluster_id"].unique())
-    house_area_for_cluster = [
-        grouped_buildings.get_group(cluster)[
-            grouped_buildings.get_group(cluster)["tags_building"] == "house"
-        ]["area_m2"].sum()
-        for cluster in clusters
-    ]
-    population_df = pd.DataFrame(
-        {"cluster": clusters, "house_area_for_cluster": house_area_for_cluster}
-    ).set_index("cluster")
-    population_df["people_for_cluster"] = (
-        population_df["house_area_for_cluster"] * density
-    ).round()
-    tier_pop_df = pd.DataFrame(
-        np.outer(population_df["people_for_cluster"], tier_percent),
-        index=population_df.index,
-    )
-
-    # Caricamento e creazione di DataFrames di domanda media e deviazione standard per ogni tier
-    demand_files = [
-        input_file_profile_tier1,
-        input_file_profile_tier2,
-        input_file_profile_tier3,
-        input_file_profile_tier4,
-        input_file_profile_tier5,
-    ]
-    mean_demand_tier_df = pd.DataFrame(
-        {
-            f"tier_{i+1}": pd.read_excel(file)["mean"]
-            for i, file in enumerate(demand_files)
-        }
-    )
-    mean_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
-    mean_demand_tier_df.index = pd.date_range(
-        "00:00:00", periods=len(mean_demand_tier_df), freq="H"
-    ).time
-
-    if inclusive == "left":
-        date_range = pd.date_range(start=date_start, end=date_end, freq="D")[:-1]
-    else:
-        date_range = pd.date_range(start=date_start, end=date_end, freq="D")
-
-    mean_demand_tier_df_extended = pd.concat(
-        [mean_demand_tier_df] * len(date_range), ignore_index=True
-    )
-
-    # Calcolo del carico totale per ogni cluster e tier
-    result_dict = {}
-    for k, pop_cluster in tier_pop_df.iterrows():
-        load_df = pd.DataFrame()
-        for j, n_person in enumerate(
-            pop_cluster / 7
-        ):  # Scala la popolazione per famiglia
-            mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
-            total_load = (mean_load) / 1e6
-            load_df[f"tier_{j}"] = total_load
-        result_dict[f"bus_{k}"] = load_df
-
-    # Aggregazione del carico totale per cluster
-    tot_result_dict = {
-        f"{k}": df.sum(axis=1).rename(f"{k}") for k, df in result_dict.items()
-    }
-    tot_loads_df = pd.concat(tot_result_dict.values(), axis=1)
-    if inclusive == "left":
-        date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")[:-1]
-    else:
-        date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")
-    tot_loads_df.index = date_range_tot
-
-    # Sostituzione dei valori zero con un valore minimo per evitare problemi di plotting
-    small_value = 1e-26
-    tot_loads_df.loc[:, (tot_loads_df == 0).all()] = small_value
-
-    # Esportazione del DataFrame finale
-    tot_loads_df.to_csv(output_path_csv)
-
-
-def calculate_load_ramp_std(
-    input_file_buildings,
-    n,
-    p,
-    raster_path,
-    shapes_path,
-    sample_profile,
-    output_file,
-    input_file_profile_tier1,
-    input_file_profile_tier2,
-    input_file_profile_tier3,
-    input_file_profile_tier4,
-    input_file_profile_tier5,
-    output_path_csv,
-    tier_percent,
-    date_start,
-    date_end,
-    inclusive,
     microgrid_list,
+    std,
 ):
     # Upload of buildings and data demand for each tier
     cleaned_buildings = gpd.read_file(input_file_buildings)
@@ -495,20 +389,32 @@ def calculate_load_ramp_std(
         )
 
      # Calculate load for each cluster and tier
-        result_dict = {}
-        for k, pop_cluster in tier_pop_df.iterrows():
-            load_df = pd.DataFrame()
-            for j, n_person in enumerate(
-                pop_cluster / 7            # Scale by family size
-            ):  
-                mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
-                std_load = np.random.normal(
-                    mean_demand_tier_df_extended.iloc[:, j],
-                    std_demand_tier_df_extended.iloc[:, j],
-                ) * np.sqrt(n_person)
-                total_load = (mean_load + std_load) / 1e6
-                load_df[f"tier_{j}"] = total_load
-            result_dict[f"{grid_name}_bus_{k}"] = load_df
+        if std == "on":
+            result_dict = {}
+            for k, pop_cluster in tier_pop_df.iterrows():
+                load_df = pd.DataFrame()
+                for j, n_person in enumerate(
+                    pop_cluster / 7            # Scale by family size
+                ):  
+                    mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
+                    std_load = np.random.normal(
+                        mean_demand_tier_df_extended.iloc[:, j],
+                        std_demand_tier_df_extended.iloc[:, j],
+                    ) * np.sqrt(n_person)
+                    total_load = (mean_load + std_load) / 1e6
+                    load_df[f"tier_{j}"] = total_load
+                result_dict[f"{grid_name}_bus_{k}"] = load_df
+        elif std == "off":
+            result_dict = {}
+            for k, pop_cluster in tier_pop_df.iterrows():
+                load_df = pd.DataFrame()
+                for j, n_person in enumerate(
+                    pop_cluster / 7            # Scale by family size
+                ):  
+                    mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
+                    total_load = (mean_load) / 1e6
+                    load_df[f"tier_{j}"] = total_load
+                result_dict[f"{grid_name}_bus_{k}"] = load_df
 
         # Aggregate total load per cluster
         tot_result_dict = {
@@ -548,8 +454,8 @@ if __name__ == "__main__":
     date_end = snakemake.params.snapshots["end"]
     inclusive = snakemake.params.snapshots["inclusive"]
     microgrids_list = snakemake.config["microgrids_list"]
-
     build_demand_model = snakemake.params.build_demand_model["type"]
+    std = snakemake.params.build_demand_model["std"]
 
     assert (
         len(snakemake.config["countries"]) == 1
@@ -602,26 +508,6 @@ if __name__ == "__main__":
             date_start,
             date_end,
             inclusive,
-        )
-    elif build_demand_model == 2:
-
-        calculate_load_ramp_std(
-            snakemake.input["clusters_with_buildings"],
-            n,
-            snakemake.config["load"]["scaling_factor"],
-            worldpop_path,
-            snakemake.input["microgrid_shapes"],
-            sample_profile,
-            snakemake.output["electric_load"],
-            snakemake.input["profile_Tier1"],
-            snakemake.input["profile_Tier2"],
-            snakemake.input["profile_Tier3"],
-            snakemake.input["profile_Tier4"],
-            snakemake.input["profile_Tier5"],
-            snakemake.output["electric_load"],
-            tier_percent,
-            date_start,
-            date_end,
-            inclusive,
             microgrids_list,
+            std,
         )
