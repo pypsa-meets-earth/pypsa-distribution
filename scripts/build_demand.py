@@ -132,13 +132,11 @@ def get_WorldPop_data(
     return WorldPop_inputfile, WorldPop_filename
 
 
-def estimate_microgrid_population(
-    raster_path, shapes_path, output_file
-):
+def estimate_microgrid_population(raster_path, shapes_path, output_file):
     """
     Estimates the population within each microgrid by using raster data and shape geometries.
-    The function processes population density raster data and calculates the total population 
-    for each microgrid by masking the raster data using the corresponding geometries from a 
+    The function processes population density raster data and calculates the total population
+    for each microgrid by masking the raster data using the corresponding geometries from a
     GeoJSON file. The population estimates are saved as a CSV file.
 
     Parameters
@@ -183,7 +181,7 @@ def estimate_microgrid_population(
         list(population_data.items()), columns=["Microgrid_Name", "Population"]
     )
     # Save the population estimates to a CSV file
-    #population_df.to_csv(output_file, index=False)
+    # population_df.to_csv(output_file, index=False)
 
     return population_df
 
@@ -202,7 +200,7 @@ def calculate_load(
     inclusive,
 ):
     """
-    Calculate the microgrid demand based on a load profile provided as input, 
+    Calculate the microgrid demand based on a load profile provided as input,
     appropriately scaled according to the population calculated for each cluster
     The output includes a time-indexed DataFrame containing the load for each bus in the microgrid
     and is saved as a CSV file.
@@ -226,7 +224,7 @@ def calculate_load(
     microgrids_list : dict
         Dictionary with microgrid names as keys and their cluster information as values.
     start_date : str
-        Start date for filtering the time series data 
+        Start date for filtering the time series data
     end_date : str
         End date for filtering the time series data
     inclusive : str
@@ -237,10 +235,8 @@ def calculate_load(
         DataFrame containing the calculated load profile for all microgrids.
 
     """
-     # Estimate the population for the two microgrid
-    pop_microgrid = estimate_microgrid_population(
-        raster_path, shapes_path, output_file
-    )
+    # Estimate the population for the two microgrid
+    pop_microgrid = estimate_microgrid_population(raster_path, shapes_path, output_file)
     # Load the building classification data
     building_class = pd.read_csv(input_path)
     # Dictionary to store the load profiles for each microgrid
@@ -257,6 +253,7 @@ def calculate_load(
         end_date = (pd.to_datetime(end_date) - pd.Timedelta(days=1)).strftime(
             "%Y-%m-%d"
         )
+
     df_filtered = df.loc[start_date:end_date]  # Filter the time series data
     per_unit_load = df_filtered["per_unit_load"].values
     # Loop over each microgrid
@@ -333,9 +330,17 @@ def calculate_load_ramp(
     ]
 
     mean_demand_tier_df = pd.DataFrame(
-    {f"tier_{i+1}": pd.read_excel(file)["mean"] for i, file in enumerate(demand_files)})
+        {
+            f"tier_{i+1}": pd.read_excel(file)["mean"]
+            for i, file in enumerate(demand_files)
+        }
+    )
     std_demand_tier_df = pd.DataFrame(
-    {f"tier_{i+1}": pd.read_excel(file)["std"] for i, file in enumerate(demand_files)})
+        {
+            f"tier_{i+1}": pd.read_excel(file)["std"]
+            for i, file in enumerate(demand_files)
+        }
+    )
     mean_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
     std_demand_tier_df.insert(0, "tier_0", np.zeros(len(mean_demand_tier_df)))
     mean_demand_tier_df.index = pd.date_range(
@@ -345,15 +350,19 @@ def calculate_load_ramp(
         "00:00:00", periods=len(mean_demand_tier_df), freq="H"
     ).time
 
-    pop= estimate_microgrid_population(raster_path, shapes_path,output_file)
+    pop = estimate_microgrid_population(raster_path, shapes_path, output_file)
 
     all_microgrid_loads = pd.DataFrame()
 
     for grid_name, grid_data in microgrid_list.items():
-        microgrid_buildings=cleaned_buildings[cleaned_buildings["name_microgrid"]==grid_name]
+        microgrid_buildings = cleaned_buildings[
+            cleaned_buildings["name_microgrid"] == grid_name
+        ]
         # Calculate the population density for the current microgrid based only on house buildings
         house = microgrid_buildings[microgrid_buildings["tags_building"] == "house"]
-        pop_microgrid = pop.loc[pop["Microgrid_Name"] == grid_name, "Population"].values[0]
+        pop_microgrid = pop.loc[
+            pop["Microgrid_Name"] == grid_name, "Population"
+        ].values[0]
         density = pop_microgrid / house["area_m2"].sum()
 
         # Calculate population per cluster
@@ -387,6 +396,7 @@ def calculate_load_ramp(
         std_demand_tier_df_extended = pd.concat(
             [std_demand_tier_df] * len(date_range), ignore_index=True
         )
+
 
      # Calculate load for each cluster and tier
         if std == "on":
@@ -422,7 +432,9 @@ def calculate_load_ramp(
         }
         tot_loads_df = pd.concat(tot_result_dict.values(), axis=1)
         if inclusive == "left":
-            date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")[:-1]
+            date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")[
+                :-1
+            ]
         else:
             date_range_tot = pd.date_range(start=date_start, end=date_end, freq="H")
         tot_loads_df.index = date_range_tot
