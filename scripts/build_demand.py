@@ -397,15 +397,12 @@ def calculate_load_ramp(
             [std_demand_tier_df] * len(date_range), ignore_index=True
         )
 
-
-     # Calculate load for each cluster and tier
+        # Calculate load for each cluster and tier
         if std == "on":
             result_dict = {}
             for k, pop_cluster in tier_pop_df.iterrows():
                 load_df = pd.DataFrame()
-                for j, n_person in enumerate(
-                    pop_cluster / 7            # Scale by family size
-                ):  
+                for j, n_person in enumerate(pop_cluster / 7):  # Scale by family size
                     mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
                     std_load = np.random.normal(
                         mean_demand_tier_df_extended.iloc[:, j],
@@ -418,9 +415,7 @@ def calculate_load_ramp(
             result_dict = {}
             for k, pop_cluster in tier_pop_df.iterrows():
                 load_df = pd.DataFrame()
-                for j, n_person in enumerate(
-                    pop_cluster / 7            # Scale by family size
-                ):  
+                for j, n_person in enumerate(pop_cluster / 7):  # Scale by family size
                     mean_load = mean_demand_tier_df_extended.iloc[:, j] * n_person
                     total_load = (mean_load) / 1e6
                     load_df[f"tier_{j}"] = total_load
