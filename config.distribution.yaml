@@ -58,6 +58,7 @@ house_area_limit:
 
 build_demand_type:
   type: 0
+  std : "on"
 # type allows to select the mode by which the microgrid demand profile is generated.
 # 1 = a predetermined hourly profile is used
 # 2 = an average hourly profile is calculated by exploiting the ramp tool
