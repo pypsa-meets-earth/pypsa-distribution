@@ -65,77 +65,84 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
     - Lines connecting buses within each microgrid based on Delaunay triangulation.
     """
 
-    # Load the GeoJSON file
     data = gpd.read_file(input_file)
-    bus_coords = set()
+    bus_coords = set()  # Keep track of bus coordinates to avoid duplicates
+
     for grid_name, grid_data in microgrid_list.items():
         # Filter data for the current microgrid
         grid_data = data[data["name_microgrid"] == grid_name]
-        # Create a SubNetwork for the current microgrid
+
+        # Create a SubNetwork for the current microgrid if it does not exist
         if grid_name not in n.sub_networks.index:
             n.add("SubNetwork", grid_name, carrier="electricity")
-        # List to store bus names for this microgrid
+
+        # List to store bus names and their positions for triangulation
         microgrid_buses = []
+        bus_positions = []
+
         for _, feature in grid_data.iterrows():
             point_geom = feature.geometry
             bus_name = f"{grid_name}_bus_{feature['cluster']}"
             x, y = point_geom.x, point_geom.y
-            # Avoid adding duplicate buses
+
+            # Skip duplicate buses or overlapping coordinates
             if bus_name in n.buses.index:
                 continue
             if (x, y) in bus_coords:
                 raise ValueError(
                     f"Overlapping microgrids detected at {x}, {y}. Adjust the configuration."
                 )
-            # Add the bus and assign it to the SubNetwork
+
+            # Add the bus to the network and assign it to the SubNetwork
             n.add("Bus", bus_name, x=x, y=y, v_nom=voltage_level, sub_network=grid_name)
             bus_coords.add((x, y))
             microgrid_buses.append(bus_name)
-        # Filter coordinates for the current microgrid
-        coords = np.column_stack(
-            (
-                n.buses.loc[microgrid_buses].x.values,
-                n.buses.loc[microgrid_buses].y.values,
-            )
-        )
+            bus_positions.append((x, y))
+
         # Check if there are enough points for triangulation
-        if len(coords) < 3:
+        if len(bus_positions) < 3:
             print(f"Not enough points for triangulation in {grid_name}.")
             continue
-        # Create a Delaunay triangulation of the filtered bus coordinates
+
+        # Perform Delaunay triangulation to determine bus connections
+        coords = np.array(bus_positions)
         tri = Delaunay(coords)
+
+        # Collect unique edges from the Delaunay triangulation
         edges = set()
         for simplex in tri.simplices:
             for i in range(3):
                 edge = tuple(sorted([simplex[i], simplex[(i + 1) % 3]]))
                 edges.add(edge)
-        # Add lines for the current microgrid
+
+        # Add lines to the network based on the triangulation edges
         for i, j in edges:
             bus0 = microgrid_buses[i]
             bus1 = microgrid_buses[j]
-            line_name = f"{grid_name}_line_{i}_{j}"
+            line_name = f"{grid_name}_line_{bus0}_{bus1}"
+
+            # Skip if the line already exists
             if line_name in n.lines.index:
-                continue  # Skip if the line already exists
+                continue
+
+            # Retrieve the coordinates of the buses
             x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
             x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-            transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
-            x1, y1 = transformer.transform(x1, y1)
-            x2, y2 = transformer.transform(x2, y2)
 
-            coords_0 = Point(x1, y1)
-            coords_1 = Point(x2, y2)
+            # Calculate the distance between buses (in km)
+            length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
 
-        length = (coords_0.distance(coords_1)) / 1000
-        n.add(
-            "Line",
-            line_name,
-            bus0=bus0,
-            bus1=bus1,
-            type="24-AL1/4-ST1A 0.4",
-            length=length,
-            s_nom=0.1,
-            s_nom_extendable=True,
-        )
+            # Add the line to the network
+            n.add(
+                "Line",
+                line_name,
+                bus0=bus0,
+                bus1=bus1,
+                type=line_type,
+                length=length,
+                s_nom=0.1,
+                s_nom_extendable=True,
+            )
 
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
