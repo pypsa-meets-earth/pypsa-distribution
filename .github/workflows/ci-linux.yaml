@@ -38,13 +38,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Setup Mambaforge
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Setup micromamba
+      uses: mamba-org/setup-micromamba@v2
       with:
-        miniforge-variant: Mambaforge
-        miniforge-version: latest
-        activate-environment: pypsa-earth
-        use-mamba: true
+        micromamba-version: '1.5.9-1'
+        environment-file: "envs/environment.yaml"
+        log-level: debug
+        init-shell: bash
+        cache-environment: true
+        cache-downloads: true
 
     - name: Fill submodule
       run: |
@@ -62,8 +64,6 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         mamba env update -n pypsa-earth -f envs/environment.yaml
-        conda activate pypsa-earth
-        pip install rampdemand
 
     - name: Conda list
       run: |

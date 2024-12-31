@@ -15,8 +15,8 @@ dependencies:
 - pypsa>=0.24, <0.25
 # - atlite>=0.2.4  # until https://github.com/PyPSA/atlite/issues/244 is not merged
 - dask
-- powerplantmatching
-- earth-osm>=2.1
+- powerplantmatching>=0.5.19
+- earth-osm>=2.3.post1
 - atlite
 
   # Dependencies of the workflow itself
@@ -28,7 +28,7 @@ dependencies:
 - ruamel.yaml<=0.17.26
 - pytables
 - lxml
-- numpy
+- numpy<2
 - pandas
 - geopandas>=0.11.0, <=0.14.3
 - fiona<1.10.0
@@ -81,11 +81,9 @@ dependencies:
 - gurobi
 
 - pip:
-  - earth-osm>=2.2 # until conda release it out
-  - powerplantmatching>=0.5.19 # until conda release it out
   - rampdemand
   - git+https://github.com/davide-f/google-drive-downloader@master  # google drive with fix for virus scan
-  - git+https://github.com/FRESNA/vresutils@master  # until new pip release > 0.3.1 (strictly)
   - tsam>=1.1.0
   - chaospy  # lastest version only available on pip
   - fake_useragent
+  - numpy<=1.26.4

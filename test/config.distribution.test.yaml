@@ -56,6 +56,7 @@ house_area_limit:
 
 build_demand_type:
   type: 0
+  std: "on"
 
 # definition of the Coordinate Reference Systems
 crs:
@@ -123,6 +124,12 @@ microgrids_list:
     lon_min: 7.2616
     lat_min: 4.6151
     lat_max: 4.7208
+
+  microgrid_2:     # WORKING
+    lon_max: 7.18935
+    lon_min: 7.01048
+    lat_min: 6.17059
+    lat_max: 6.29329
 
 load:
   scaling_factor: 15000

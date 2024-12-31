@@ -9,7 +9,6 @@ sphinx_rtd_theme
 setuptools<58.3.0
 
 pypsa
-vresutils>=0.3.1
 powerplantmatching>=0.4.8
 atlite>=0.2.2
 dask<=2021.3.1
