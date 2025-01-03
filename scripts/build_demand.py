@@ -249,7 +249,9 @@ def calculate_load(
     df = df.set_index(time_index)
 
     # Generate the snapshots range for filtering
-    snapshots_range = pd.date_range(start=start_date, end=end_date, freq="h", inclusive="both")
+    snapshots_range = pd.date_range(
+        start=start_date, end=end_date, freq="h", inclusive="both"
+    )
 
     # Filter the DataFrame based on the specified time range
     df_filtered = df.loc[snapshots_range]
@@ -298,7 +300,6 @@ def calculate_load(
     # Save the cumulative results to a CSV file
     all_load_per_cluster.to_csv(output_file, index=False)
     return all_load_per_cluster
-
 
 
 def calculate_load_ramp(
