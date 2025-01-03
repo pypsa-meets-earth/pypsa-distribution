@@ -187,7 +187,6 @@ def estimate_microgrid_population(raster_path, shapes_path, output_file):
 
 
 def calculate_load(
-    n,
     p,
     raster_path,
     shapes_path,
@@ -201,7 +200,7 @@ def calculate_load(
 ):
     """
     Calculate the microgrid demand based on a load profile provided as input,
-    appropriately scaled according to the population calculated for each cluster
+    appropriately scaled according to the population calculated for each cluster.
     The output includes a time-indexed DataFrame containing the load for each bus in the microgrid
     and is saved as a CSV file.
 
@@ -224,18 +223,19 @@ def calculate_load(
     microgrids_list : dict
         Dictionary with microgrid names as keys and their cluster information as values.
     start_date : str
-        Start date for filtering the time series data
+        Start date for filtering the time series data.
     end_date : str
-        End date for filtering the time series data
+        End date for filtering the time series data.
     inclusive : str
         Specifies whether the filtering is inclusive of the start or end date. Possible values: "left" or "right".
+
     Returns
     -------
     pd.DataFrame
         DataFrame containing the calculated load profile for all microgrids.
 
     """
-    # Estimate the population for the two microgrid
+    # Estimate the population for the two microgrids
     pop_microgrid = estimate_microgrid_population(raster_path, shapes_path, output_file)
     # Load the building classification data
     building_class = pd.read_csv(input_path)
@@ -248,16 +248,15 @@ def calculate_load(
     time_index = pd.date_range(start="2013-01-01", end="2013-12-31 23:00:00", freq="h")
     df = df.set_index(time_index)
 
-    # Apply time filtering based on the specified start and end dates
-    if inclusive == "left":
-        end_date = (pd.to_datetime(end_date) - pd.Timedelta(days=1)).strftime(
-            "%Y-%m-%d"
-        )
+    # Generate the snapshots range for filtering
+    snapshots_range = pd.date_range(start=start_date, end=end_date, freq="h", inclusive="both")
 
-    df_filtered = df.loc[start_date:end_date]  # Filter the time series data
+    # Filter the DataFrame based on the specified time range
+    df_filtered = df.loc[snapshots_range]
     per_unit_load = df_filtered["per_unit_load"].values
+
     # Loop over each microgrid
-    for grid_name, grid_data in microgrids_list.items():
+    for grid_name in microgrids_list.keys():
         # Filter buildings belonging to the current microgrid
         total_buildings = building_class[building_class["name_microgrid"] == grid_name]
         total_buildings = total_buildings["count"].sum()
@@ -286,21 +285,24 @@ def calculate_load(
         load_per_cluster.rename(columns=new_column_names, inplace=True)
         # Add the DataFrame for the microgrid to the dictionary
         microgrid_dataframes[grid_name] = load_per_cluster
+
     # Concatenate all microgrid DataFrames horizontally
     all_load_per_cluster = pd.concat(microgrid_dataframes.values(), axis=1)
-    # Add time indexing based on the PyPSA network snapshots
-    if hasattr(n, "snapshots") and len(n.snapshots) == len(all_load_per_cluster):
-        all_load_per_cluster.insert(0, "timestamp", n.snapshots)
+
+    # Verify that the length of snapshots matches the length of the load data
+    if len(snapshots_range) == len(all_load_per_cluster):
+        all_load_per_cluster.insert(0, "timestamp", snapshots_range)
     else:
         raise ValueError("Mismatch between the length of snapshots and load data rows.")
+
     # Save the cumulative results to a CSV file
     all_load_per_cluster.to_csv(output_file, index=False)
     return all_load_per_cluster
 
 
+
 def calculate_load_ramp(
     input_file_buildings,
-    n,
     p,
     raster_path,
     shapes_path,
@@ -454,7 +456,6 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    n = pypsa.Network(snakemake.input.create_network)
     sample_profile = snakemake.input["sample_profile"]
     tier_percent = snakemake.params.tier["tier_percent"]
     date_start = snakemake.params.snapshots["start"]
@@ -483,7 +484,6 @@ if __name__ == "__main__":
     )
     if build_demand_model == 0:
         calculate_load(
-            n,
             snakemake.config["load"]["scaling_factor"],
             worldpop_path,
             snakemake.input["microgrid_shapes"],
@@ -499,7 +499,6 @@ if __name__ == "__main__":
     elif build_demand_model == 1:
         calculate_load_ramp(
             snakemake.input["clusters_with_buildings"],
-            n,
             snakemake.config["load"]["scaling_factor"],
             worldpop_path,
             snakemake.input["microgrid_shapes"],

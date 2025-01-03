@@ -113,7 +113,6 @@ rule build_demand:
         },
         sample_profile=PROFILE,
         building_csv="resources/buildings/buildings_type.csv",
-        create_network="networks/base.nc",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
         clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
     output:
@@ -147,6 +146,7 @@ rule build_shapes:
 rule create_network:
     input:
         clusters="resources/buildings/clustered_buildings.geojson",
+        load="resources/demand/microgrid_load.csv",
     output:
         "networks/base.nc",
     log:

@@ -215,7 +215,7 @@ def attach_wind_and_solar(
             # {microgrid},
             " " + tech,  # TODO: review indexes
             # bus=f"new_bus_{microgrid}",
-            bus=ds.indexes["bus"],
+            bus="microgrids_gen_bus",
             carrier=tech,
             p_nom_extendable=tech in extendable_carriers["Generator"],
             p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
@@ -280,7 +280,7 @@ def attach_conventional_generators(
         "Generator",
         ppl.index,
         carrier=ppl.carrier,
-        bus=ppl.bus,
+        bus="microgrids_gen_bus",
         p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
         p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
         p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"])
@@ -331,7 +331,7 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
             "StorageUnit",
             microgrid_ids,
             " " + tech,
-            bus=["bus_9"],
+            bus="microgrids_gen_bus",
             carrier=tech,
             p_nom_extendable=True,
             capital_cost=costs.at[tech, "capital_cost"],
