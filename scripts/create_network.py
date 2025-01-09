@@ -63,6 +63,7 @@ def calculate_power_node_position(load_file, cluster_bus):
 
     return x, y
 
+
 def create_microgrid_network(
     n, input_file, voltage_level, line_type, microgrid_list, input_path
 ):
