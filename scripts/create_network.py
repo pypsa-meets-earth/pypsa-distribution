@@ -37,7 +37,9 @@ def create_network():
     # Return the created network
     return n
 
-def calculate_power_node_position(load_file, cluster_bus):
+
+def calculate_power_node_position(input_path, cluster_path):
+    load_file = pd.read_csv(input_path, index_col=False)
     load_sums = load_file.sum(numeric_only=True)
     gdf = cluster_bus
     data = []
@@ -63,9 +65,9 @@ def calculate_power_node_position(load_file, cluster_bus):
     return x, y
 
 
-
-    
-def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_list, input_path):
+def create_microgrid_network(
+    n, input_file, voltage_level, line_type, microgrid_list, input_path
+):
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
     the buildings data, stored in "resources/buildings/microgrids_buildings.geojson".
@@ -283,10 +285,10 @@ if __name__ == "__main__":
         microgrids_list,
         snakemake.input["load"],
     )
-    #calculate_power_node_position(
-       # snakemake.input["load"],
-       # snakemake.input["clusters"]
-    #)
+    # calculate_power_node_position(
+    # snakemake.input["load"],
+    # snakemake.input["clusters"]
+    # )
     # add_bus_at_center(n,
     #                   snakemake.config["microgrids_list"],
     #                   snakemake.config["electricity"]["voltage"],
