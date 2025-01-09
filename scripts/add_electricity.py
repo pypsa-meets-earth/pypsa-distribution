@@ -202,7 +202,7 @@ def attach_wind_and_solar(
 
             suptech = tech.split("-", 2)[0]
             # Add the wind and solar generators to the power network
-        
+
             for bus_index in ds.indexes["bus"]:
                 gen_bus = f"{bus_index}"
                 n.madd(
@@ -218,10 +218,12 @@ def attach_wind_and_solar(
                     efficiency=costs.at[suptech, "efficiency"],
                     p_set=ds["profile"]
                     .to_pandas()
-                    .reindex(n.snapshots).loc[:, bus_index],
+                    .reindex(n.snapshots)
+                    .loc[:, bus_index],
                     p_max_pu=ds["profile"]
                     .to_pandas()
-                    .reindex(n.snapshots).loc[:, bus_index],
+                    .reindex(n.snapshots)
+                    .loc[:, bus_index],
                 )
 
 
@@ -253,7 +255,7 @@ def attach_conventional_generators(
     extendable_carriers,
     conventional_config,
     conventional_inputs,
-    number_microgrids
+    number_microgrids,
 ):
     # Create a set of all conventional and extendable carriers
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
@@ -286,7 +288,7 @@ def attach_conventional_generators(
             p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
             efficiency=ppl.efficiency,
             marginal_cost=ppl.marginal_cost,
-            build_year=1984, #TODO: review this
+            build_year=1984,  # TODO: review this
             lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
         )
 
@@ -325,7 +327,9 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
 
     # Add the storage units to the power network
     for tech in technologies:
-        microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids.keys()))]
+        microgrid_ids = [
+            f"microgrid_{i+1}" for i in range(len(number_microgrids.keys()))
+        ]
         for microgrid in microgrid_ids:
             gen_bus = f"{microgrid}_gen_bus"
             n.madd(
@@ -342,7 +346,9 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
                 efficiency_dispatch=costs.at[
                     lookup_dispatch["battery"], "efficiency"
                 ],  # Lead_acid and lithium have the same value
-                max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
+                max_hours=max_hours[
+                    "battery"
+                ],  # Lead_acid and lithium have the same value
                 cyclic_state_of_charge=True,
             )
 
@@ -400,7 +406,7 @@ if __name__ == "__main__":
         snakemake.config["electricity"]["extendable_carriers"],
         snakemake.config.get("conventional", {}),
         conventional_inputs,
-        snakemake.config["microgrids_list"]
+        snakemake.config["microgrids_list"],
     )
 
     attach_storageunits(
