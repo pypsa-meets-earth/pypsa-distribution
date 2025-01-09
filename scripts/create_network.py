@@ -38,8 +38,7 @@ def create_network():
     return n
 
 
-def calculate_power_node_position(input_path, cluster_path):
-    load_file = pd.read_csv(input_path, index_col=False)
+def calculate_power_node_position(load_file, cluster_bus):
     load_sums = load_file.sum(numeric_only=True)
     gdf = cluster_bus
     data = []
@@ -63,7 +62,6 @@ def calculate_power_node_position(input_path, cluster_path):
         y += df.loc[i, "y"] * df.loc[i, "weight"]
 
     return x, y
-
 
 def create_microgrid_network(
     n, input_file, voltage_level, line_type, microgrid_list, input_path
