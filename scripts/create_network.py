@@ -106,7 +106,14 @@ def create_microgrid_network(
         load_data = load[[col for col in load.columns if grid_name in col]]
         x_gen_bus, y_gen_bus = calculate_power_node_position(load_data, grid_data)
         gen_bus_name = f"{grid_name}_gen_bus"
-        n.add("Bus", gen_bus_name, x=x_gen_bus, y=y_gen_bus, v_nom=voltage_level, sub_network=grid_name)
+        n.add(
+            "Bus",
+            gen_bus_name,
+            x=x_gen_bus,
+            y=y_gen_bus,
+            v_nom=voltage_level,
+            sub_network=grid_name,
+        )
         microgrid_buses.append(gen_bus_name)
         bus_positions.append((x_gen_bus, y_gen_bus))
 
