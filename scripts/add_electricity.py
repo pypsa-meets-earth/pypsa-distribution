@@ -87,20 +87,13 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
 
 def load_costs(tech_costs, config, elec_config, Nyears=1):
     """
-    Set all asset costs and other parameters.
+    set all asset costs and other parameters
     """
-    idx = pd.IndexSlice
     costs = pd.read_csv(tech_costs, index_col=list(range(3))).sort_index()
 
-    costs.loc[
-        costs.unit.str.contains("/kWel"), "value"
-    ] *= 1e3  # Convert EUR/kW to EUR/MW
-    costs.loc[
-        costs.unit.str.contains("/kWh"), "value"
-    ] *= 1e3  # Convert EUR/kWh to EUR/MWh
-    costs.loc[costs.unit.str.contains("USD"), "value"] *= config[
-        "USD2013_to_EUR2013"
-    ]  # Convert USD to EUR
+    # correct units to MW and EUR
+    costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
+    costs.loc[costs.unit.str.contains("USD"), "value"] *= config["USD2013_to_EUR2013"]
 
     costs = (
         costs.loc[idx[:, config["year"], :], "value"]
@@ -156,13 +149,17 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
 
     max_hours = elec_config["max_hours"]
     costs.loc["battery"] = costs_for_storage(
-        costs.loc["lithium"],
+        costs.loc[
+            "lithium"
+        ],  # line 119 in file costs.csv' which was battery storage was modified into lithium (same values left)
         costs.loc["battery inverter"],
         max_hours=max_hours["battery"],
     )
-
+    max_hours = elec_config["max_hours"]
     costs.loc["battery"] = costs_for_storage(
-        costs.loc["lead acid"],
+        costs.loc[
+            "lead acid"
+        ],  # line 120 in file 'costs.csv' which was battery storage was modified into lithium (same values left)
         costs.loc["battery inverter"],
         max_hours=max_hours["battery"],
     )
@@ -193,45 +190,39 @@ def attach_wind_and_solar(
     # Add any missing carriers from the costs data to the tech_modelling variable
     _add_missing_carriers_from_costs(n, costs, tech_modelling)
 
-    number_microgrids = len(number_microgrids.keys())
-    microgrid_ids = [f"microgrid_{i+1}" for i in range(number_microgrids)]
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids.keys()))]
 
     # Iterate over each technology
     for tech in tech_modelling:
-        # Iterate through each microgrid
-        # for microgrid in microgrid_ids: #TODO: review this function
-
         # Open the dataset for the current technology from the input_profiles
         with xr.open_dataset(getattr(snakemake.input, "profile_" + tech)) as ds:
             # If the dataset's "bus" index is empty, skip to the next technology
             if ds.indexes["bus"].empty:
                 continue
 
-        suptech = tech.split("-", 2)[0]
-        # Add the wind and solar generators to the power network
-        n.madd(
-            "Generator",
-            ds.indexes["bus"],
-            # {microgrid},
-            " " + tech,  # TODO: review indexes
-            # bus=f"new_bus_{microgrid}",
-            bus="microgrids_gen_bus",
-            carrier=tech,
-            p_nom_extendable=tech in extendable_carriers["Generator"],
-            p_nom_max=ds["p_nom_max"].to_pandas(),  # look at the config
-            weight=ds["weight"].to_pandas(),
-            marginal_cost=costs.at[suptech, "marginal_cost"],
-            capital_cost=costs.at[tech, "capital_cost"],
-            efficiency=costs.at[suptech, "efficiency"],
-            p_set=ds["profile"]
-            .transpose("time", "bus")
-            .to_pandas()
-            .reindex(n.snapshots),
-            p_max_pu=ds["profile"]
-            .transpose("time", "bus")
-            .to_pandas()
-            .reindex(n.snapshots),
-        )
+            suptech = tech.split("-", 2)[0]
+            # Add the wind and solar generators to the power network
+        
+            for bus_index in ds.indexes["bus"]:
+                gen_bus = f"{bus_index}"
+                n.madd(
+                    "Generator",
+                    [f"{tech}_{bus_index}"],
+                    carrier=tech,
+                    bus=gen_bus,
+                    p_nom_extendable=tech in extendable_carriers["Generator"],
+                    p_nom_max=ds["p_nom_max"].to_pandas().loc[bus_index],
+                    weight=ds["weight"].to_pandas().loc[bus_index],
+                    marginal_cost=costs.at[suptech, "marginal_cost"],
+                    capital_cost=costs.at[tech, "capital_cost"],
+                    efficiency=costs.at[suptech, "efficiency"],
+                    p_set=ds["profile"]
+                    .to_pandas()
+                    .reindex(n.snapshots).loc[:, bus_index],
+                    p_max_pu=ds["profile"]
+                    .to_pandas()
+                    .reindex(n.snapshots).loc[:, bus_index],
+                )
 
 
 def load_powerplants(ppl_fn):
@@ -262,11 +253,15 @@ def attach_conventional_generators(
     extendable_carriers,
     conventional_config,
     conventional_inputs,
+    number_microgrids
 ):
+    # Create a set of all conventional and extendable carriers
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
 
+    # Add any missing carriers from the costs data to the "carriers" variable
     _add_missing_carriers_from_costs(n, costs, carriers)
 
+    # Filter the ppl dataframe to only include the relevant carriers
     ppl = (
         ppl.query("carrier in @carriers")
         .join(costs, on="carrier", rsuffix="_r")
@@ -274,26 +269,29 @@ def attach_conventional_generators(
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency)
 
-    buses_i = n.buses.index
+    # Get the index of the buses in the power network
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids.keys()))]
+    for microgrid in microgrid_ids:
+        gen_bus = f"{microgrid}_gen_bus"
+        gen_name = [f"{microgrid}_gen"]
 
-    n.madd(
-        "Generator",
-        ppl.index,
-        carrier=ppl.carrier,
-        bus="microgrids_gen_bus",
-        p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
-        p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
-        p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"])
-        | (ppl.carrier == "diesel"),
-        efficiency=ppl.efficiency,
-        marginal_cost=ppl.marginal_cost,
-        capital_cost=ppl.capital_cost,
-        build_year=ppl.datein.fillna(0).astype(int),
-        lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
-    )
+        # Add conventional generators to each bus in the power network (one for microgrid)
+        n.madd(
+            "Generator",
+            gen_name,
+            carrier=ppl.carrier,
+            bus=gen_bus,
+            p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
+            efficiency=ppl.efficiency,
+            marginal_cost=ppl.marginal_cost,
+            build_year=1984, #TODO: review this
+            lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
+        )
 
     for carrier in conventional_config:
-        # Generatori con tecnologia influenzata
+        # Generators with technology affected
         idx = n.generators.query("carrier == @carrier").index
 
         for attr in list(set(conventional_config[carrier]) & set(n.generators)):
@@ -308,7 +306,7 @@ def attach_conventional_generators(
                     n.generators.loc[idx].bus.map(bus_values).dropna()
                 )
             else:
-                # Single value affecting all k technology generators regardless of country.
+                # Single value affecting all generators of technology k indiscriminately of country
                 n.generators.loc[idx, attr] = values
 
 
@@ -327,24 +325,26 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
 
     # Add the storage units to the power network
     for tech in technologies:
-        n.madd(
-            "StorageUnit",
-            microgrid_ids,
-            " " + tech,
-            bus="microgrids_gen_bus",
-            carrier=tech,
-            p_nom_extendable=True,
-            capital_cost=costs.at[tech, "capital_cost"],
-            marginal_cost=costs.at[tech, "marginal_cost"],
-            efficiency_store=costs.at[
-                lookup_store["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            efficiency_dispatch=costs.at[
-                lookup_dispatch["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
-            cyclic_state_of_charge=True,
-        )
+        microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids.keys()))]
+        for microgrid in microgrid_ids:
+            gen_bus = f"{microgrid}_gen_bus"
+            n.madd(
+                "StorageUnit",
+                [f"{microgrid}_{tech}"],
+                bus=gen_bus,
+                carrier=tech,
+                p_nom_extendable=True,
+                capital_cost=costs.at[tech, "capital_cost"],
+                marginal_cost=costs.at[tech, "marginal_cost"],
+                efficiency_store=costs.at[
+                    lookup_store["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                efficiency_dispatch=costs.at[
+                    lookup_dispatch["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
+                cyclic_state_of_charge=True,
+            )
 
 
 def attach_load(n, load_file, tech_modelling):
@@ -353,12 +353,6 @@ def attach_load(n, load_file, tech_modelling):
 
     # Attach load to the central bus of each microgrid
     n.madd("Load", demand_df.columns, bus=demand_df.columns, p_set=demand_df)
-
-
-def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=False):
-    n.lines["capital_cost"] = (
-        n.lines["length"] * length_factor * costs.at["MVAC overhead", "capital_cost"]
-    )
 
 
 if __name__ == "__main__":
@@ -406,6 +400,7 @@ if __name__ == "__main__":
         snakemake.config["electricity"]["extendable_carriers"],
         snakemake.config.get("conventional", {}),
         conventional_inputs,
+        snakemake.config["microgrids_list"]
     )
 
     attach_storageunits(
@@ -422,7 +417,5 @@ if __name__ == "__main__":
         load_file,
         snakemake.config["tech_modelling"]["load_carriers"],
     )
-
-    update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=False)
 
     n.export_to_netcdf(snakemake.output[0])

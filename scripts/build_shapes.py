@@ -84,7 +84,7 @@ def create_bus_regions(microgrids_list, output_path):
     # Iterate over each column in the DataFrame
     for col in range(len(microgrids_list_df.columns)):
         values = microgrids_list_df.iloc[:, col]
-        microgrid_name = microgrids_list_df.columns[col] + "_bus_renewable"
+        microgrid_name = microgrids_list_df.columns[col] + "_gen_bus"
 
         # Define the vertices of the rectangle
         Top_left = (values[0], values[3])
