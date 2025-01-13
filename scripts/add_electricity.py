@@ -250,58 +250,59 @@ def load_powerplants(ppl_fn):
         .replace({"carrier": carrier_dict})
     )
 
+
 def attach_conventional_generators(
-        n,
-        costs,
-        ppl,
-        conventional_carriers,
-        extendable_carriers,
-        conventional_config,
-        conventional_inputs,
-        number_microgrids,
-    ):
-        carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
-        _add_missing_carriers_from_costs(n, costs, carriers)
+    n,
+    costs,
+    ppl,
+    conventional_carriers,
+    extendable_carriers,
+    conventional_config,
+    conventional_inputs,
+    number_microgrids,
+):
+    carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
+    _add_missing_carriers_from_costs(n, costs, carriers)
 
-        ppl = (
-            ppl.query("carrier in @carriers")
-            .join(costs, on="carrier", rsuffix="_r")
-            .rename(index=lambda s: "C" + str(s))
+    ppl = (
+        ppl.query("carrier in @carriers")
+        .join(costs, on="carrier", rsuffix="_r")
+        .rename(index=lambda s: "C" + str(s))
+    )
+    ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency)
+    microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
+    for microgrid in microgrid_ids:
+        ppl.index = ppl.index + "_" + microgrid  # TODO: review this
+        ppl["bus"] = microgrid + "_gen_bus"
+        n.madd(
+            "Generator",
+            ppl.index,
+            carrier=ppl.carrier,
+            bus=ppl.bus,
+            p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
+            efficiency=ppl.efficiency,
+            marginal_cost=ppl.marginal_cost,
+            capital_cost=ppl.capital_cost,
+            build_year=ppl.datein.fillna(0).astype(pd.Int64Dtype()),
+            lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
         )
-        ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency)
-        microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
-        for microgrid in microgrid_ids:
-            ppl.index = ppl.index + "_" + microgrid #TODO: review this
-            ppl["bus"] = microgrid + "_gen_bus"
-            n.madd(
-                "Generator",
-                ppl.index,
-                carrier=ppl.carrier,
-                bus=ppl.bus,
-                p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
-                p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
-                p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
-                efficiency=ppl.efficiency,
-                marginal_cost=ppl.marginal_cost,
-                capital_cost=ppl.capital_cost,
-                build_year=ppl.datein.fillna(0).astype(pd.Int64Dtype()),
-                lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
-            )
 
-        for carrier in conventional_config:
-            idx = n.generators.query("carrier == @carrier").index
+    for carrier in conventional_config:
+        idx = n.generators.query("carrier == @carrier").index
 
-            for attr in list(set(conventional_config[carrier]) & set(n.generators)):
-                values = conventional_config[carrier][attr]
+        for attr in list(set(conventional_config[carrier]) & set(n.generators)):
+            values = conventional_config[carrier][attr]
 
-                if f"conventional_{carrier}_{attr}" in conventional_inputs:
-                    values = pd.read_csv(values, index_col=0).iloc[:, 0]
-                    bus_values = n.buses.country.map(values)
-                    n.generators[attr].update(
-                        n.generators.loc[idx].bus.map(bus_values).dropna()
-                    )
-                else:
-                    n.generators.loc[idx, attr] = values
+            if f"conventional_{carrier}_{attr}" in conventional_inputs:
+                values = pd.read_csv(values, index_col=0).iloc[:, 0]
+                bus_values = n.buses.country.map(values)
+                n.generators[attr].update(
+                    n.generators.loc[idx].bus.map(bus_values).dropna()
+                )
+            else:
+                n.generators.loc[idx, attr] = values
 
 
 def attach_storageunits(n, costs, number_microgrids, technologies, extendable_carriers):
