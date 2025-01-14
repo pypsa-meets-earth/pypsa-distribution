@@ -336,7 +336,9 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
                 efficiency_dispatch=costs.at[
                     lookup_dispatch["battery"], "efficiency"
                 ],  # Lead_acid and lithium have the same value
-                max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
+                max_hours=max_hours[
+                    "battery"
+                ],  # Lead_acid and lithium have the same value
                 cyclic_state_of_charge=True,
             )
 
