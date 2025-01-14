@@ -318,25 +318,26 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
     microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
 
     # Add the storage units to the power network
-    for i, tech in enumerate(technologies):
-        n.madd(
-            "StorageUnit",
-            [microgrid_ids[i]],
-            " " + tech,
-            bus=[f"microgrid_{i+1}_gen_bus"],
-            carrier=tech,
-            p_nom_extendable=True,
-            capital_cost=costs.at[tech, "capital_cost"],
-            marginal_cost=costs.at[tech, "marginal_cost"],
-            efficiency_store=costs.at[
-                lookup_store["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            efficiency_dispatch=costs.at[
-                lookup_dispatch["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
-            cyclic_state_of_charge=True,
-        )
+    for tech in technologies:
+        for microgrid in microgrid_ids:
+            n.madd(
+                "StorageUnit",
+                [microgrid],
+                " " + tech,
+                bus=[f"{microgrid}_gen_bus"],
+                carrier=tech,
+                p_nom_extendable=True,
+                capital_cost=costs.at[tech, "capital_cost"],
+                marginal_cost=costs.at[tech, "marginal_cost"],
+                efficiency_store=costs.at[
+                    lookup_store["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                efficiency_dispatch=costs.at[
+                    lookup_dispatch["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
+                cyclic_state_of_charge=True,
+            )
 
 
 def attach_load(n, load_file, tech_modelling):
