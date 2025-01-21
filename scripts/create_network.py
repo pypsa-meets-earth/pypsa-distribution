@@ -41,9 +41,9 @@ def create_network():
 def calculate_power_node_position(load_file, cluster_bus):
     load_sums = load_file.sum(numeric_only=True)
     load_sums.index = cluster_bus["cluster"]
-    gdf = cluster_bus.set_index("cluster") 
+    gdf = cluster_bus.set_index("cluster")
     gdf["cluster_load"] = load_sums.values.T
-    x_wgt_avg = (gdf.geometry.x * load_sums / load_sums).sum() 
+    x_wgt_avg = (gdf.geometry.x * load_sums / load_sums).sum()
     y_wgt_avg = (gdf.geometry.y * load_sums / load_sums).sum()
 
     return x_wgt_avg, y_wgt_avg
