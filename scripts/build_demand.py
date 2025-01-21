@@ -290,12 +290,7 @@ def calculate_load(
 
     # Concatenate all microgrid DataFrames horizontally
     all_load_per_cluster = pd.concat(microgrid_dataframes.values(), axis=1)
-
-    # Verify that the length of snapshots matches the length of the load data
-    if len(snapshots_range) == len(all_load_per_cluster):
-        all_load_per_cluster.insert(0, "timestamp", snapshots_range)
-    else:
-        raise ValueError("Mismatch between the length of snapshots and load data rows.")
+    all_load_per_cluster.index = snapshots_range
 
     # Save the cumulative results to a CSV file
     all_load_per_cluster.to_csv(output_file, index=False)

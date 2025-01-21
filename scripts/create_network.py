@@ -40,28 +40,13 @@ def create_network():
 
 def calculate_power_node_position(load_file, cluster_bus):
     load_sums = load_file.sum(numeric_only=True)
-    gdf = cluster_bus
-    data = []
-    for _, feature in gdf.iterrows():
-        cluster = feature["cluster"]
-        coordinates = feature.geometry.coords[0]
-        data.append({"cluster": cluster, "x": coordinates[0], "y": coordinates[1]})
-    # Create a DataFrame
-    df = pd.DataFrame(data)
-    # Add load_sums as a new column to the DataFrame
-    df["cluster_load"] = load_sums.values
-    weights = []
-    for i in load_sums.values:
-        weight = i / sum(load_sums.values)
-        weights.append(weight)
-    df["weight"] = weights
-    x = 0
-    y = 0
-    for i in range(len(df)):
-        x += df.loc[i, "x"] * df.loc[i, "weight"]
-        y += df.loc[i, "y"] * df.loc[i, "weight"]
+    load_sums.index = cluster_bus["cluster"]
+    gdf = cluster_bus.set_index("cluster") 
+    gdf["cluster_load"] = load_sums.values.T
+    x_wgt_avg = (gdf.geometry.x * load_sums / load_sums).sum() 
+    y_wgt_avg = (gdf.geometry.y * load_sums / load_sums).sum()
 
-    return x, y
+    return x_wgt_avg, y_wgt_avg
 
 
 def create_microgrid_network(
