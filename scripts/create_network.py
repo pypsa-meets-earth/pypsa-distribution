@@ -291,15 +291,5 @@ if __name__ == "__main__":
         microgrids_list,
         snakemake.input["load"],
     )
-    # calculate_power_node_position(
-    # snakemake.input["load"],
-    # snakemake.input["clusters"]
-    # )
-    # add_bus_at_center(n,
-    #                   snakemake.config["microgrids_list"],
-    #                   snakemake.config["electricity"]["voltage"],
-    #                   snakemake.config["electricity"]["line_type"])
-
-    # plot_microgrid_network(n)
     a = 12
     n.export_to_netcdf(snakemake.output[0])
