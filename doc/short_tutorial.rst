@@ -15,7 +15,8 @@ Short tutorial
 
 The installation procedure installs PyPSA-Distribution model with all the software dependencies needed to build and run it.
 The purpose of this section is to make available to the user a simplified case study through which to become familiar with the code and its execution.
-To this aim, we have chosen to present the simulation of a microgrid in Nigeria, choosing the tutorial mode within the configuration file. In this way, the user can explore the different possibilities of the tool, but at a lower expense of computational resources than in the case of a full simulation.
+To this aim, we have chosen to present the simulation of a microgrid in Nigeria, choosing the tutorial mode within the configuration file. In this way, the user can explore the different possibilities of the tool,
+but at a lower expense of computational resources than in the case of a full simulation.
 
 Before we get into the heart of the tutorial, it is important to make a few preliminaries for using the tool if you have a Windows operating system.
 
@@ -33,7 +34,8 @@ Follow the procedure shown in the prompt, and when finished, restart the device.
 
 You may probably need to install conda and create the pypsa-earth environment in the WSL execution environment as well.
 To do this you need to first download the linux version from https://docs.anaconda.com/free/miniconda/. 
-Once the download is done open the wsl terminal ( you can just type wsl in the search panel),place yourself in the folder where the file you just downloaded is located, and run the following commands.
+Once the download is done open the wsl terminal ( you can just type wsl in the search panel), place yourself in the folder where the file you just downloaded is located, 
+and run the following commands.
 
 .. code:: bash
     \your-path (base) % bash <conda-installer-name>-latest-Linux-x86_64.sh
@@ -63,7 +65,7 @@ Finally:
 .. code:: bash
     \pypsa-earth % mamba env create -f envs/environment.yaml
 
-Now everything should be ready to run the tutorial.
+Now everything should be ready to run the tutorial!
 
 Set the IDE:
 ---------------------
@@ -71,7 +73,8 @@ Set the IDE:
     In this example we will refer to the use of the Visual Studio Code IDE.
 
 First, we have to set up the IDE in order to run the tutorial. 
-In particular it will be necessary, first, to open a new terminal. To do this, simply select the "terminal" option at the top left of the VSC interface and select new terminal.
+In particular it will be necessary, first, to open a new terminal. To do this, simply select the "terminal" option 
+at the top left of the VSC interface and select new terminal.
 
 Once this is done we will see a window appear at the bottom of the interface. 
 For Windows users by default, the terminal will be a cmd, however for proper execution of the tool it is necessary to move to a WSL terminal. 
@@ -83,7 +86,7 @@ To activate the environment simply run the following command in the terminal you
 .. code:: bash
     .../your-folder (base) % conda activate pypsa-earth
 
-Now you just have to move to the folder in which you want to work, and you'll be all ready to get into the thick of the simulation.
+Now you just have to move to the folder in which you want to work, and you'll be ready to get into the thick of the simulation.
 
 .. code:: bash
     .../your-folder (pypsa-earth) % cd your-work-folder
@@ -121,3 +124,5 @@ To run the whole modeling workflow you just need the following command:
 
 This command will trigger loading of the whole dataset needed to build the model for a tutorial case if both tutorial and retrieve_databundle flags are on. 
 The tutorial model run simulation will take a while (about 20..50 minutes).
+If the simulation was successful, you should be able to display an elec.nc file representing 
+the optimised network in the networks/results folder.

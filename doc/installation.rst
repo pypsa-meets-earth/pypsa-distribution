@@ -27,6 +27,7 @@ Clone the Repository
 
   **For Windows users**. Please, that windows is supported using WSL (Windows Subsystem Linux), due `Issue 392 Snakemake <https://github.com/snakemake/snakemake/issues/392>`_
   Windows users may install the WSL as discussed in `this link <https://code.visualstudio.com/docs/remote/wsl>`_, also including the setup of Visual Studio Code.
+  More information in the short_tutorial section
 
 First of all, clone the `PyPSA-Distribution repository <https://github.com/pypsa-meets-earth/pypsa-distribution/>`_ using the version control system ``git``.
 The path to the directory into which the ``git repository`` is cloned, must **not** have any spaces.
