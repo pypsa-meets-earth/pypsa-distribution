@@ -20,7 +20,7 @@ Examples of possible applications of the model are:
 - **Distribution network tariff design**: The model can be used to design tariffs for the distribution network, e.g. to incentivize the use of renewable energy sources or to avoid congestions.
 - **Are we missing something?**: Please let us know if you have any other ideas for applications of the model!
 
-.. image:: doc/img/workflow.png
+.. image:: doc/.png
   :alt: Exemple of application of the model
   :align: center
 
@@ -35,7 +35,7 @@ produce (their corresponding input and output files). The ``snakemake`` tool the
 rules' input/output dependencies. Moreover, it is able to track, what parts of the workflow have to be regenerated, when a data file or a
 script is modified/updated. Please, refer to PyPSA-Earth documentation for more.
 The following image represents the workflow performed by snakemake.
-.. image:: doc/img/workflow.png
+.. image:: doc/workflow.png
   :alt: Workflow Diagram
   :align: center
 
