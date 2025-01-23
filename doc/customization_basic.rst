@@ -148,4 +148,3 @@ This makes it possible to select the methodology adopted by the code for estimat
 When 0 is selected, a preset consumption profile is used, which is scaled appropriately for the inhabitants of the area. 
 Selecting 1 makes it possible to use the RAMP tool for the generation of costumised usage profiles. 
 For more in-depth information, it may be useful to see the information page: https://rampdemand.org/
-
