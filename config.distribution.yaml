@@ -57,12 +57,11 @@ house_area_limit:
   area_limit: 255  # All buildings without a specified tag, having an area less than house_limit will be considered houses
 
 build_demand_type:
-  type: 0
+  type: "From_file"
   std: "on"
 # type allows to select the mode by which the microgrid demand profile is generated.
-# 0 = a predetermined hourly profile is used
-# 0 = a predetermined hourly profile is used
-# 1 = an average hourly profile is calculated by exploiting the ramp tool when std on also the
+# From_file = a predetermined hourly profile is used
+# Ramp = an average hourly profile is calculated by exploiting the ramp tool when std on also the
 #     standard deviation is calculated and used to calculate demand.
 
 # definition of the Coordinate Reference Systems

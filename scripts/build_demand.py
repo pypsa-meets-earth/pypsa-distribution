@@ -478,7 +478,7 @@ if __name__ == "__main__":
         snakemake.input["microgrid_shapes"],
         snakemake.output["electric_load"],
     )
-    if build_demand_model == 0:
+    if build_demand_model == "From_file":
         calculate_load(
             snakemake.config["load"]["scaling_factor"],
             worldpop_path,
@@ -492,7 +492,7 @@ if __name__ == "__main__":
             inclusive,
         )
 
-    elif build_demand_model == 1:
+    elif build_demand_model == "Ramp":
         calculate_load_ramp(
             snakemake.input["clusters_with_buildings"],
             snakemake.config["load"]["scaling_factor"],
