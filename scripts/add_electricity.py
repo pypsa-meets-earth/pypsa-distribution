@@ -87,20 +87,13 @@ def _add_missing_carriers_from_costs(n, costs, carriers):
 
 def load_costs(tech_costs, config, elec_config, Nyears=1):
     """
-    Set all asset costs and other parameters.
+    set all asset costs and other parameters
     """
-    idx = pd.IndexSlice
     costs = pd.read_csv(tech_costs, index_col=list(range(3))).sort_index()
 
-    costs.loc[
-        costs.unit.str.contains("/kWel"), "value"
-    ] *= 1e3  # Convert EUR/kW to EUR/MW
-    costs.loc[
-        costs.unit.str.contains("/kWh"), "value"
-    ] *= 1e3  # Convert EUR/kWh to EUR/MWh
-    costs.loc[costs.unit.str.contains("USD"), "value"] *= config[
-        "USD2013_to_EUR2013"
-    ]  # Convert USD to EUR
+    # correct units to MW and EUR
+    costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
+    costs.loc[costs.unit.str.contains("USD"), "value"] *= config["USD2013_to_EUR2013"]
 
     costs = (
         costs.loc[idx[:, config["year"], :], "value"]
@@ -156,13 +149,17 @@ def load_costs(tech_costs, config, elec_config, Nyears=1):
 
     max_hours = elec_config["max_hours"]
     costs.loc["battery"] = costs_for_storage(
-        costs.loc["lithium"],
+        costs.loc[
+            "lithium"
+        ],  # line 119 in file costs.csv' which was battery storage was modified into lithium (same values left)
         costs.loc["battery inverter"],
         max_hours=max_hours["battery"],
     )
-
+    max_hours = elec_config["max_hours"]
     costs.loc["battery"] = costs_for_storage(
-        costs.loc["lead acid"],
+        costs.loc[
+            "lead acid"
+        ],  # line 120 in file 'costs.csv' which was battery storage was modified into lithium (same values left)
         costs.loc["battery inverter"],
         max_hours=max_hours["battery"],
     )
@@ -327,24 +324,27 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
 
     # Add the storage units to the power network
     for tech in technologies:
-        n.madd(
-            "StorageUnit",
-            microgrid_ids,
-            " " + tech,
-            bus=["bus_9"],
-            carrier=tech,
-            p_nom_extendable=True,
-            capital_cost=costs.at[tech, "capital_cost"],
-            marginal_cost=costs.at[tech, "marginal_cost"],
-            efficiency_store=costs.at[
-                lookup_store["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            efficiency_dispatch=costs.at[
-                lookup_dispatch["battery"], "efficiency"
-            ],  # Lead_acid and lithium have the same value
-            max_hours=max_hours["battery"],  # Lead_acid and lithium have the same value
-            cyclic_state_of_charge=True,
-        )
+        for microgrid in microgrid_ids:
+            n.madd(
+                "StorageUnit",
+                [microgrid],
+                " " + tech,
+                bus=[f"{microgrid}_gen_bus"],
+                carrier=tech,
+                p_nom_extendable=True,
+                capital_cost=costs.at[tech, "capital_cost"],
+                marginal_cost=costs.at[tech, "marginal_cost"],
+                efficiency_store=costs.at[
+                    lookup_store["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                efficiency_dispatch=costs.at[
+                    lookup_dispatch["battery"], "efficiency"
+                ],  # Lead_acid and lithium have the same value
+                max_hours=max_hours[
+                    "battery"
+                ],  # Lead_acid and lithium have the same value
+                cyclic_state_of_charge=True,
+            )
 
 
 def attach_load(n, load_file, tech_modelling):
@@ -353,12 +353,6 @@ def attach_load(n, load_file, tech_modelling):
 
     # Attach load to the central bus of each microgrid
     n.madd("Load", demand_df.columns, bus=demand_df.columns, p_set=demand_df)
-
-
-def update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=False):
-    n.lines["capital_cost"] = (
-        n.lines["length"] * length_factor * costs.at["MVAC overhead", "capital_cost"]
-    )
 
 
 if __name__ == "__main__":
@@ -422,7 +416,5 @@ if __name__ == "__main__":
         load_file,
         snakemake.config["tech_modelling"]["load_carriers"],
     )
-
-    update_transmission_costs(n, costs, length_factor=1.0, simple_hvdc_costs=False)
 
     n.export_to_netcdf(snakemake.output[0])

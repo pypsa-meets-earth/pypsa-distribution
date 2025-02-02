@@ -38,12 +38,25 @@ def create_network():
     return n
 
 
-def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_list):
+def calculate_power_node_position(load_file, cluster_bus):
+    load_sums = load_file.sum(numeric_only=True)
+    load_sums.index = cluster_bus["cluster"]
+    gdf = cluster_bus.set_index("cluster")
+    gdf["cluster_load"] = load_sums.values.T
+    x_wgt_avg = (gdf.geometry.x * load_sums).sum() / load_sums.sum()
+    y_wgt_avg = (gdf.geometry.y * load_sums).sum() / load_sums.sum()
+
+    return x_wgt_avg, y_wgt_avg
+
+
+def create_microgrid_network(
+    n, input_file, voltage_level, line_type, microgrid_list, input_path
+):
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
     the buildings data, stored in "resources/buildings/microgrids_buildings.geojson".
     Each bus corresponds to a cluster of buildings within a microgrid, with its coordinates defined in the input GeoJSON file.
-    The lines connecting buses are determined using Delaunay triangulation,ensuring minimal total line length.
+    The lines connecting buses are determined using Delaunay triangulation, ensuring minimal total line length.
     The function avoids duplicate buses and ensures buses are assigned to the correct SubNetwork.
         Parameters
     ----------
@@ -66,19 +79,33 @@ def create_microgrid_network(n, input_file, voltage_level, line_type, microgrid_
     """
 
     data = gpd.read_file(input_file)
+    load = pd.read_csv(input_path)
     bus_coords = set()  # Keep track of bus coordinates to avoid duplicates
 
     for grid_name, grid_data in microgrid_list.items():
+        # List to store bus names and their positions for triangulation
+        microgrid_buses = []
+        bus_positions = []
+
         # Filter data for the current microgrid
         grid_data = data[data["name_microgrid"] == grid_name]
+        load_data = load[[col for col in load.columns if grid_name in col]]
+        x_gen_bus, y_gen_bus = calculate_power_node_position(load_data, grid_data)
+        gen_bus_name = f"{grid_name}_gen_bus"
+        n.add(
+            "Bus",
+            gen_bus_name,
+            x=x_gen_bus,
+            y=y_gen_bus,
+            v_nom=voltage_level,
+            sub_network=grid_name,
+        )
+        microgrid_buses.append(gen_bus_name)
+        bus_positions.append((x_gen_bus, y_gen_bus))
 
         # Create a SubNetwork for the current microgrid if it does not exist
         if grid_name not in n.sub_networks.index:
             n.add("SubNetwork", grid_name, carrier="electricity")
-
-        # List to store bus names and their positions for triangulation
-        microgrid_buses = []
-        bus_positions = []
 
         for _, feature in grid_data.iterrows():
             point_geom = feature.geometry
@@ -247,13 +274,7 @@ if __name__ == "__main__":
         snakemake.config["electricity"]["voltage"],
         snakemake.config["electricity"]["line_type"],
         microgrids_list,
+        snakemake.input["load"],
     )
-
-    # add_bus_at_center(n,
-    #                   snakemake.config["microgrids_list"],
-    #                   snakemake.config["electricity"]["voltage"],
-    #                   snakemake.config["electricity"]["line_type"])
-
-    # plot_microgrid_network(n)
     a = 12
     n.export_to_netcdf(snakemake.output[0])
