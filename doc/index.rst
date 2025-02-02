@@ -76,8 +76,8 @@ Documentation
 
 * :doc:`introduction`
 * :doc:`installation`
-* :doc:`customization_basic1`
 * :doc:`short_tutorial`
+
 
 .. toctree::
    :hidden:
@@ -86,6 +86,10 @@ Documentation
 
    introduction
    installation
+   short_tutorial
+
+**Model Costumization**
+* :doc:`customization_basic`
 
 **Work flow and API**
 

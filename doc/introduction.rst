@@ -20,6 +20,9 @@ Examples of possible applications of the model are:
 - **Distribution network tariff design**: The model can be used to design tariffs for the distribution network, e.g. to incentivize the use of renewable energy sources or to avoid congestions.
 - **Are we missing something?**: Please let us know if you have any other ideas for applications of the model!
 
+.. image:: doc/.png
+  :alt: Exemple of application of the model
+  :align: center
 
 
 Workflow
@@ -31,7 +34,13 @@ the ``Snakefile`` declares for each python script in the ``scripts`` directory a
 produce (their corresponding input and output files). The ``snakemake`` tool then runs the scripts in the correct order according to the
 rules' input/output dependencies. Moreover, it is able to track, what parts of the workflow have to be regenerated, when a data file or a
 script is modified/updated. Please, refer to PyPSA-Earth documentation for more.
+The following image represents the workflow performed by snakemake.
+.. image:: doc/workflow.png
+  :alt: Workflow Diagram
+  :align: center
 
+The blocks represent the individual rules which are required to create the file networks/elec_s_128.nc. Each rule requires scripts (e.g. Python) 
+to convert inputs to outputs. The arrows indicate the outputs from preceding rules which a particular rule takes as input data.
 
 Folder structure
 ================
