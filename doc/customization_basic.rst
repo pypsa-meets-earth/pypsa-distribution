@@ -2,7 +2,7 @@
 ..
 .. SPDX-License-Identifier: CC-BY-4.0
 
-.. _customization_basic1:
+.. _customization_basic:
 
 #######################
 Basic customization

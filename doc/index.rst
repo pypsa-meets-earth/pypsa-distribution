@@ -91,6 +91,7 @@ Documentation
 **Model Costumization**
 
 * :doc:`customization_basic`
+* :doc:`Run_your_personal_case`
   
 
 .. toctree::
@@ -99,6 +100,8 @@ Documentation
    :caption: Model Costumization
 
     customization_basic
+    Run_your_personal_case
+
 
 
 .. toctree::
