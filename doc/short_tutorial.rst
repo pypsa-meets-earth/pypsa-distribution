@@ -38,7 +38,8 @@ Once the download is done open the wsl terminal ( you can just type wsl in the s
 and run the following commands.
 
 .. code:: bash
-    \your-path (base) % bash <conda-installer-name>-latest-Linux-x86_64.sh
+
+    /your-path (base) % bash <conda-installer-name>-latest-Linux-x86_64.sh
 
 Where conda-installer-name will be one of "Miniconda3", "Anaconda", or "Miniforge3".
 Follow the prompts on the installer screens. If you are unsure about any setting, accept the defaults. You can change them later.
@@ -46,30 +47,35 @@ Follow the prompts on the installer screens. If you are unsure about any setting
 To check if the installation was successful you can run the following command:
 
 .. code:: bash
-    \your-path (base) % conda list
+
+    /your-path (base) % conda list
 
 If you see a list of packages after execution, everything should be okay.
 
 To create the environment, simply open the wsl terminal, open to the pypsa-earth folder and run the following commands:
 
 .. code:: bash
-    \pypsa-earth % conda activate base
+
+    /pypsa-earth % conda activate base
 
 After that:
 
 .. code:: bash
-    \pypsa-earth % conda install -c conda-forge mamba
+
+    /pypsa-earth % conda install -c conda-forge mamba
 
 Finally:
 
 .. code:: bash
-    \pypsa-earth % mamba env create -f envs/environment.yaml
+
+    /pypsa-earth % mamba env create -f envs/environment.yaml
 
 Now everything should be ready to run the tutorial!
 
 Set the IDE:
 ---------------------
 .. note::
+
     In this example we will refer to the use of the Visual Studio Code IDE.
 
 First, we have to set up the IDE in order to run the tutorial. 
@@ -84,11 +90,13 @@ At this point we can move on to activate the previously created pypsa-earth envi
 To activate the environment simply run the following command in the terminal you just opened:
 
 .. code:: bash
+
     .../your-folder (base) % conda activate pypsa-earth
 
 Now you just have to move to the folder in which you want to work, and you'll be ready to get into the thick of the simulation.
 
 .. code:: bash
+
     .../your-folder (pypsa-earth) % cd your-work-folder
 
 
@@ -107,15 +115,18 @@ Currently, the tutorial case study refers to a microgrid in Nigeria whose covera
 Before actually running the tool, it is always a good idea to check how it will look by using -dryrun or -n Snakemake option:
 
 .. code:: bash
+
     .../pypsa-distribution (pypsa-earth) % snakemake -j 1 solve_all_networks --dryrun
 
 
 To run the whole modeling workflow you just need the following command:
 
 .. code:: bash
+
     .../pypsa-distribution (pypsa-earth) % snakemake -j 1 solve_network
 
 .. note::
+
     Before running these commands always make sure:
     - you are in the correct folder ( i.e., the folder related to the project where the snakefile is located)
     - that you have enabled the pypsa-earth environment
