@@ -141,30 +141,10 @@ This section specifies some parameters needed to generate demand profiles.
 .. code:: yaml
 
     build_demand_type:
-        type: 1
+        type: "From_file"
         std: "on"
 
 This makes it possible to select the methodology adopted by the code for estimating demand. 
-When 0 is selected, a preset consumption profile is used, which is scaled appropriately for the inhabitants of the area. 
-Selecting 1 makes it possible to use the RAMP tool for the generation of costumised usage profiles. 
+When "From_file" is selected, a preset consumption profile is used, which is scaled appropriately for the inhabitants of the area. 
+Selecting "Ramp" makes it possible to use the RAMP tool for the generation of costumised usage profiles. 
 For more in-depth information, it may be useful to see the information page: https://rampdemand.org/
-
-Configure `atlite` section
---------------------------
-
-To accurately model both temporally and spatially renewable availabilities such as wind and solar energy, historical climate data are processed with the atlite package.
-
-.. code:: yaml
-
-    atlite:
-        nprocesses: 4
-        cutouts:
-            cutout-2013-era5:
-                module: era5
-                dx: 0.3  # cutout resolution
-                dy: 0.3  # cutout resolution
-                # The cutout time is automatically set by the snapshot range.
-
-When you use precompiled cutouts, no editing of this section is required. 
-However, when using precompiled cutouts, you must replace all "cutout-2013-era5" entries with the name of the custom cutout.
-E.g.: if you simulate Kazakhstan with cutout: asia-2013-era5, each occurrence of cutout-2013-era5 should be updated to asia-2013-era5, which refers to the asia-2013-era5.nc file generated in the cutout folder.
