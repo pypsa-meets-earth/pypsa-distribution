@@ -2,7 +2,7 @@
 ..
 .. SPDX-License-Identifier: CC-BY-4.0
 
-.. _customization_basic1:
+.. _customization_basic:
 
 #######################
 Basic customization
@@ -141,10 +141,10 @@ This section specifies some parameters needed to generate demand profiles.
 .. code:: yaml
 
     build_demand_type:
-        type: 1
+        type: "From_file"
         std: "on"
 
 This makes it possible to select the methodology adopted by the code for estimating demand. 
-When 0 is selected, a preset consumption profile is used, which is scaled appropriately for the inhabitants of the area. 
-Selecting 1 makes it possible to use the RAMP tool for the generation of costumised usage profiles. 
+When "From_file" is selected, a preset consumption profile is used, which is scaled appropriately for the inhabitants of the area. 
+Selecting "Ramp" makes it possible to use the RAMP tool for the generation of costumised usage profiles. 
 For more in-depth information, it may be useful to see the information page: https://rampdemand.org/
