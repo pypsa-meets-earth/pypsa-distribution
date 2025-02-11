@@ -31,6 +31,7 @@ It is possible to run simulations with the Pypsa Distribution tool in two modes:
 
 - tutorial mode: this is a faster simulation in which less data is used. It was created to allow users to become familiar with the tool, without necessarily having to run heavy simulations.
   Remember: For realistic case studies it will be necessary to run the tool in full configuration and not in tutorial one.
+  
 - full ( non-tutorial) mode: in this case a full simulation is performed and the use of committed resources is greater.
 
 Since the tutorial mode is designed only to become familiar with the tool, and not to perform analysis in a broad sense, it is possible to run the simulation in tutorial mode located in these nations: 
