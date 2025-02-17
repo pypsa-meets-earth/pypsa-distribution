@@ -48,8 +48,8 @@ One of the most important tasks is certainly to correctly select the location of
 
 .. note::
     A useful strategy for knowing the coordinates to be entered in the code is to use www.openstreetmap.org. 
-    Once you have selected the area of interest by moving around the map, press the ‘export’ button. 
-    You should now see a window on the left with a set of co-ordinates. By selecting ‘Select a different area manually’ 
+    Once you have selected the area of interest by moving around the map, press the "export" button. 
+    You should now see a window on the left with a set of co-ordinates. By selecting "Select a different area manually" 
     you can change the boundaries of the micro-network and find the desired set of co-ordinates to insert into the tool.
 
 To enter the coordinates, simply change the values in the microgrid_list section to the desired values, 
@@ -100,14 +100,13 @@ Reference can also be made to the documentation in PyPSA-Earth on this.
         build_natura_raster: false  # If True, than an exclusion raster will be build
 
 
-Specify the weather year scope
-------------------------------
+specify simulation time horizon:
+----------------------------------
 Let us assume, as already mentioned, that we want to run a simulation on an annual horizon. 
 With this operation, the snapshots that will be associated with the network are set.
 
 .. note::
-    Attention: with this operation, the year of the climate data used for the calculation of the renewable yield is not selected, 
-    this information depends on the cutout used. 
+    Attention: Currently, it is important not to change the year of the simulation, but only the extent of it.
 
 .. code:: yaml
 
@@ -116,12 +115,17 @@ With this operation, the snapshots that will be associated with the network are 
         end: "2014-01-01"
         inclusive: "left" # end is not inclusive
 
-specify the method of load calculation :
-------------------------------
+Choose load forecasting strategy:
+---------------------------------
 Currently, energy demand can be simulated with two different strategies. 
+- "From_file" : In this case, the electricity demand forecast is made by scaling a static demand profile based on the population associated with each node in the network. 
+  The profile used is in the "data" folder.
+- "Ramp" : In this case, the demand profile associated with each node in the network is estimated using the RAMP tool. 
+  The population is modelled on the basis of 5 different user classes, from tier 0, with no access to the electricity carrier, to tier 5 with maximum access (in the data/ramp folder, you can see the files that allow each user class to be modelled). 
+  Within the configuration file is the "tier percent" parameter, which allows the percentage of the population belonging to each tier to be determined for each node in the network.
+  An average demand profile and its standard deviation is generated for each tier. 
+  The demand profile associated with each node is calculated by aggregating the individual demand profiles associated with the node.
 Let us assume in this case that we want to use the strategy based on RAMP. 
-With this modelling, the utility is divided into five representative classes, the amount of population associated with each "tier" is determined with the config.yaml parameter "tier_percent".
-Inside the data/ramp folder are the excel files with the representative parameters of each class, which can be modified if necessary.
 
 .. code:: yaml
 
@@ -157,4 +161,4 @@ Run the simulation:
 You are now officially ready to run the simulation, remember to open a wsl terminal and use the command to execute the run!
 
 .. code:: bash
-    .../pypsa-distribution (pypsa-earth) % snakemake -j 1 solve_network
+     .../pypsa-distribution (pypsa-earth) % snakemake -j 1 solve_network

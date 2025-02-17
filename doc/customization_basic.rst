@@ -115,8 +115,8 @@ Regarding topics in the enable section:
   After the initial run, it is recommended to set the retrieval of databundle and cost data to ``false`` to prevent unnecessary redownloading of data.
 
 
-Specify the weather year scope
-------------------------------
+specify simulation time horizon:
+----------------------------------
 With these arguments, it is possible to set the time horizon of the simulation
 Likewise, the example's temporal scope can be restricted (e.g. to 7 days):
 
