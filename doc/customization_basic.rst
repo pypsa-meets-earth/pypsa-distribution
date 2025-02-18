@@ -2,7 +2,7 @@
 ..
 .. SPDX-License-Identifier: CC-BY-4.0
 
-.. _customization_basic1:
+.. _customization_basic:
 
 #######################
 Basic customization
@@ -31,6 +31,7 @@ It is possible to run simulations with the Pypsa Distribution tool in two modes:
 
 - tutorial mode: this is a faster simulation in which less data is used. It was created to allow users to become familiar with the tool, without necessarily having to run heavy simulations.
   Remember: For realistic case studies it will be necessary to run the tool in full configuration and not in tutorial one.
+  
 - full ( non-tutorial) mode: in this case a full simulation is performed and the use of committed resources is greater.
 
 Since the tutorial mode is designed only to become familiar with the tool, and not to perform analysis in a broad sense, it is possible to run the simulation in tutorial mode located in these nations: 
@@ -114,8 +115,8 @@ Regarding topics in the enable section:
   After the initial run, it is recommended to set the retrieval of databundle and cost data to ``false`` to prevent unnecessary redownloading of data.
 
 
-Specify the weather year scope
-------------------------------
+specify simulation time horizon:
+----------------------------------
 With these arguments, it is possible to set the time horizon of the simulation
 Likewise, the example's temporal scope can be restricted (e.g. to 7 days):
 
@@ -141,10 +142,10 @@ This section specifies some parameters needed to generate demand profiles.
 .. code:: yaml
 
     build_demand_type:
-        type: 1
+        type: "From_file"
         std: "on"
 
 This makes it possible to select the methodology adopted by the code for estimating demand. 
-When 0 is selected, a preset consumption profile is used, which is scaled appropriately for the inhabitants of the area. 
-Selecting 1 makes it possible to use the RAMP tool for the generation of costumised usage profiles. 
+When "From_file" is selected, a preset consumption profile is used, which is scaled appropriately for the inhabitants of the area. 
+Selecting "Ramp" makes it possible to use the RAMP tool for the generation of costumised usage profiles. 
 For more in-depth information, it may be useful to see the information page: https://rampdemand.org/

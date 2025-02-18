@@ -89,7 +89,28 @@ Documentation
    short_tutorial
 
 **Model Costumization**
+
 * :doc:`customization_basic`
+* :doc:`Run_your_personal_case`
+  
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Model Costumization
+
+    customization_basic
+    Run_your_personal_case
+
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Model Costumization
+
+    customization_basic
+
 
 **Work flow and API**
 
