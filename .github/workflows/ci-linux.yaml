@@ -36,7 +36,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup micromamba
       uses: mamba-org/setup-micromamba@v2
@@ -54,7 +54,7 @@ jobs:
         git submodule update
 
     - name: Create environment cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       id: cache
       with:
         path: ${{ matrix.prefix }}
