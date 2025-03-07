@@ -50,7 +50,8 @@ The recurrent meeting on PyPSA-Distribution is every second Tuesday at 15:00 AM 
      .../pypsa-distribution % mamba env create -f pypsa-earth/envs/environment.yaml
    ```
 
-3. For running the optimization one has to install the solver. We can recommend the open source HiGHs solver which installation manual is given [here](https://github.com/PyPSA/PyPSA/blob/633669d3f940ea256fb0a2313c7a499cbe0122a5/pypsa/linopt.py#L608-L632).
+3. For running the optimization one has to install a solver. Check the [installation](https://pypsa-earth.readthedocs.io/en/latest/installation.html) guideline for more details.
+
 4. To use jupyter lab (new jupyter notebooks) **continue** with the [ipython kernel installation](http://echrislynch.com/2019/02/01/adding-an-environment-to-jupyter-notebooks/) and test if your jupyter lab works:
 
    ```bash
