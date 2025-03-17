@@ -171,7 +171,96 @@ def create_microgrid_network(
                 s_nom_extendable=True,
             )
 
+def create_microgrid_manually(n, microgrids_list, bus_dict, bus_connections, voltage_level, line_type):
+    number_buses = len(bus_dict)
+    for i in microgrids_list.keys(): #Loop over each microgrid defined in the config file.
+        buses_out = []
 
+        lon_lower_bound = microgrids_list[i]["lon_min"]
+        lon_upper_bound = microgrids_list[i]["lon_max"]
+        lat_lower_bound = microgrids_list[i]["lat_min"]
+        lat_upper_bound = microgrids_list[i]["lat_max"]
+
+        bus_dict_per_microgrid = bus_dict[i]
+        number_buses = len(bus_dict_per_microgrid)
+
+        for j in range(number_buses): # Loop over each bus for each microgrid.
+            bus_ids = f"bus_{j+1}"
+            bus_name = f"{i}_{bus_ids}"
+            bus_dict_per_microgrid[bus_ids]["lon"]
+            bus_dict_per_microgrid[bus_ids]["lat"]
+            if (bus_dict_per_microgrid[bus_ids]["lon"] > lon_lower_bound and bus_dict_per_microgrid[bus_ids]["lon"] < lon_upper_bound) and (bus_dict_per_microgrid[bus_ids]["lat"] > lat_lower_bound and bus_dict_per_microgrid[bus_ids]["lat"] < lat_upper_bound): 
+                n.add(
+                        "Bus",
+                        bus_name,
+                        x= bus_dict_per_microgrid[bus_ids]["lon"],
+                        y= bus_dict_per_microgrid[bus_ids]["lat"],
+                        v_nom=voltage_level,
+                        sub_network=i,
+                    )
+            else:
+                del bus_dict[i][bus_ids]
+                buses_out.append(bus_ids) # Buses list that are outside the microgrid.
+
+        if i in list(bus_connections.keys()): # Determine whether the bus connections of the microgrid is included in the config.
+            for l in buses_out:
+                microgrid_key_list = list(bus_connections[i].keys())
+                if l in microgrid_key_list:
+                    del bus_connections[i][l] # Deletion of a bus key outside the microgrid region in bus_connection dictionary.
+                    microgrid_key_list = list(bus_connections[i].keys()) #Updated microgrid connection key list.
+                for m in microgrid_key_list:
+                    if l in bus_connections[i][m]:
+                        bus_connections[i][m].remove(l)
+                if len(bus_connections["microgrid_interconnections"]) != 0: # Cleaning lines that are interconnected.
+                    if l in bus_connections["microgrid_interconnections"][i]:
+                        bus_connections["microgrid_interconnections"][i].remove(l) 
+            
+            for each in bus_connections[i].keys():
+                bus0 = each
+                number_cleaned_buses = len(bus_connections[i][each])
+                if number_cleaned_buses > 0:
+                    for index in range(number_cleaned_buses):
+                        bus1 = bus_connections[i][each][index]
+                        x1, y1 = bus_dict_per_microgrid[bus0]["lon"], bus_dict_per_microgrid[bus0]["lat"]                        
+                        x2, y2 = bus_dict_per_microgrid[bus1]["lon"], bus_dict_per_microgrid[bus1]["lat"]
+                        length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
+                        line_name = f"line_{i}_{bus0}_{i}_{bus1}" 
+                        if line_name in n.lines.index:
+                            continue
+                        n.add(
+                            "Line",
+                            line_name,
+                            bus0=bus0,
+                            bus1=bus1,
+                            type=line_type,
+                            length=length,
+                            s_nom=0.1,
+                            s_nom_extendable=True,
+                        ) 
+
+    list_of_interconnections = list(bus_connections["microgrid_interconnections"].keys()) # Interconnecting microgrids with single lines if exist.
+    if len(list_of_interconnections) > 1:
+        for c in range(len(list_of_interconnections)):
+            if c != len(list_of_interconnections) - 1:
+                bus0 = bus_connections["microgrid_interconnections"][list_of_interconnections[c]][0]
+                bus1 = bus_connections["microgrid_interconnections"][list_of_interconnections[c+1]][0]
+                x1, y1 = bus_dict[list_of_interconnections[c]][bus0]["lon"], bus_dict[list_of_interconnections[c]][bus0]["lat"]                        
+                x2, y2 = bus_dict[list_of_interconnections[c+1]][bus1]["lon"], bus_dict[list_of_interconnections[c+1]][bus1]["lat"]
+                length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
+                line_name = f"line_{list_of_interconnections[c]}_{bus0}_{list_of_interconnections[c+1]}_{bus1}"
+                if line_name in n.lines.index:
+                    continue
+                n.add(
+                    "Line",
+                    line_name,
+                    bus0=bus0,
+                    bus1=bus1,
+                    type=line_type,
+                    length=length,
+                    s_nom=0.1,
+                    s_nom_extendable=True,
+                    ) 
+ 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
 #     """
 #     Adds a new bus to each network at the center of the existing buses.
@@ -267,14 +356,21 @@ if __name__ == "__main__":
 
     n = create_network()
     microgrids_list = snakemake.config["microgrids_list"]
+    if snakemake.config["enable"]["manual_add_buses_lines"] == False:
+        create_microgrid_network(
+            n,
+            snakemake.input["clusters"],
+            snakemake.config["electricity"]["voltage"],
+            snakemake.config["electricity"]["line_type"],
+            microgrids_list,
+            snakemake.input["load"],
+        )
+    elif snakemake.config["enable"]["manual_add_buses_lines"] == True:
+        bus_dict = snakemake.config["microgrid_bus_list"]
+        bus_connections = snakemake.config["microgrid_bus_connections"]
+        voltage_level = snakemake.config["electricity"]["voltage"]
+        line_type = snakemake.config["electricity"]["line_type"]
+        create_microgrid_manually(n, microgrids_list, bus_dict, bus_connections, voltage_level, line_type)
 
-    create_microgrid_network(
-        n,
-        snakemake.input["clusters"],
-        snakemake.config["electricity"]["voltage"],
-        snakemake.config["electricity"]["line_type"],
-        microgrids_list,
-        snakemake.input["load"],
-    )
     a = 12
     n.export_to_netcdf(snakemake.output[0])
