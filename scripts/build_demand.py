@@ -292,8 +292,8 @@ def calculate_load(
     all_load_per_cluster = pd.concat(microgrid_dataframes.values(), axis=1)
     all_load_per_cluster.index = snapshots_range
 
-    # Save the cumulative results to a CSV file
-    all_load_per_cluster.to_csv(output_file, index=False)
+    # Save the cumulative results to a CSV file with time index as the first column
+    all_load_per_cluster.to_csv(output_file, index_label="Time")
     return all_load_per_cluster
 
 
