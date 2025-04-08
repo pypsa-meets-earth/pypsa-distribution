@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 version: 0.0.1
-tutorial: true
+tutorial: false
 
 logging:
   level: INFO
@@ -14,7 +14,7 @@ disable_subworkflow: false
 
 enable:
   # prepare_links_p_nom: false
-  retrieve_databundle: true
+  retrieve_databundle: false
   retrieve_cost_data: true
   download_osm_data: true
   download_osm_buildings: true
@@ -25,6 +25,7 @@ enable:
   # https://atlite.readthedocs.io/en/latest/introduction.html#datasets
   build_cutout: false
   build_natura_raster: false  # If True, then build_natura_raster can be run
+  manual_add_buses_lines: true #If True, then buses and lines must be added manually below
 
 scenario:
   simpl: ['']
@@ -33,7 +34,7 @@ scenario:
   opts: [Co2L-3H]  # Co2L adds an overall absolute carbon-dioxide emissions limit
                    # 3H resamples the time-resolution by averaging over every 3 snapshots
 
-countries: ["NG"]
+countries: ["TR"]
 # Can be replaced by country ["NG", "BJ"] or user specific region, more at
 # https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
@@ -124,12 +125,68 @@ tech_modelling:
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
+microgrid_bus_list:  # MICROGRIDS IN NIGERIA
+  microgrid_1:
+    bus_1:       # WORKING
+      lat: 37.1
+      lon: 35.34
+    bus_2:       # WORKING
+      lat: 37.08
+      lon: 35.39
+    bus_3:       # WORKING
+      lat: 37
+      lon: 35.37
+    bus_4:       # WORKING
+      lat: 21.3
+      lon: 30.5
+    bus_5:
+      lon: 70
+      lat: 70
+
+  microgrid_2:
+    bus_1:     # WORKING
+      lat: 4.7008
+      lon: 7.3714
+    bus_2:     # WORKING
+      lat: 4.6351
+      lon: 7.2916
+    bus_3:     # WORKING
+      lat: 4.6951
+      lon: 7.3616
+    bus_4:     # WORKING
+      lat: 4.6551
+      lon: 7.3116
+    bus_5:     # WORKING
+      lat: 14.6551
+      lon: 17.3116
+
+microgrid_bus_connections:  # MICROGRIDS IN NIGERIA
+  microgrid_1:
+    bus_1: ["bus_2", "bus_4", "bus_3", "bus_5"]     # WORKING
+    bus_2: ["bus_3", "bus_4", "bus_5"]     # WORKING
+
+  microgrid_2:
+    bus_1: ["bus_3", "bus_4", "bus_5"]     # WORKING
+    bus_2: ["bus_3", "bus_4", "bus_5"]     # WORKING
+
+  microgrid_interconnections:
+    microgrid_1: ["bus_3"]
+    microgrid_2: ["bus_2"]
+
+
 microgrids_list:  # MICROGRIDS IN NIGERIA
   microgrid_1:     # WORKING
+    lon_min: 35.32
+    lon_max: 35.40
+    lat_max: 37.12
+    lat_min: 36.95
+
+  microgrid_2:     # WORKING
     lon_max: 7.3914
     lon_min: 7.2616
     lat_min: 4.6151
     lat_max: 4.7208
+
 load:
   scaling_factor: 15000
 
