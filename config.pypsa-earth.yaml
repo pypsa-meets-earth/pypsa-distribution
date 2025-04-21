@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: CC0-1.0
 
 version: 0.3.0
-tutorial: true
+tutorial: false
 
 logging:
   level: INFO
   format: "%(levelname)s:%(name)s:%(message)s"
 
-countries: ["NG"]
+countries: ["TR"]
 
   # ['DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CM', 'CF', 'TD', 'CG', 'CD',
   # 'DJ', 'EG', 'GQ', 'ER', 'ET', 'GA', 'GH', 'GN', 'CI', 'KE', 'LS', 'LR', 'LY',
