@@ -27,16 +27,16 @@ e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenanc
 fuel costs, efficiency, carbon-dioxide intensity.
 - ``resources/powerplants.csv``: confer :ref:`powerplants`
 - ``resources/profile_{}.nc``: all technologies in ``config["renewables"].keys()``, confer :ref:`renewableprofiles`
-- ``resources/demand/microgrid_load.csv``: microgrid electric demand 
+- ``resources/demand/microgrid_load.csv``: microgrid electric demand
 - ``networks/base.nc``: confer :ref:`base`
-     
+
 Outputs
 -------
 - ``networks/elec.nc``: output network
 
 Description
 -----------
-The rule :mod:`add_electricity` takes as input the network generated in the rule "create_network" and adds to it both renewable and conventional generation, storage units and load, resulting in a network that is stored in ``networks/elec.nc``. 
+The rule :mod:`add_electricity` takes as input the network generated in the rule "create_network" and adds to it both renewable and conventional generation, storage units and load, resulting in a network that is stored in ``networks/elec.nc``.
 """
 
 import os
