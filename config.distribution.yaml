@@ -139,7 +139,6 @@ load:
   scaling_factor: 15000
 
 buildings:
-  microgrid_1:
-    n_clusters: 3
-  microgrid_2:
-    n_clusters: 13
+  n_clusters: # either specify a number (n_clusters: 10) or specify the number of clusters by microgrid as in the following
+    microgrid_1: 3
+    microgrid_2: 13

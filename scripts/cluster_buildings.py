@@ -60,6 +60,7 @@ def buildings_classification(input_file, crs):
 def get_central_points_geojson_with_buildings(
     input_filepath,
     output_filepath_centroids,
+    n_clusters,
     crs,
     house_area_limit,
     output_filepath_buildings,
@@ -112,9 +113,8 @@ def get_central_points_geojson_with_buildings(
             for row in filtered_buildings.itertuples()
         ]
         centroids_building = np.array(centroids_building)
-        n_clusters = snakemake.config["buildings"][grid_name]["n_clusters"]
         # Apply KMeans clustering to group the buildings
-        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(centroids_building)
+        kmeans = KMeans(n_clusters=n_clusters[grid_name], random_state=0).fit(centroids_building)
         # Get the coordinates of cluster centroids
         centroids = kmeans.cluster_centers_
         # Identify the central point for each cluster
@@ -187,6 +187,7 @@ if __name__ == "__main__":
     get_central_points_geojson_with_buildings(
         snakemake.input["buildings_geojson"],
         snakemake.output["clusters"],
+        snakemake.config["buildings"]["n_clusters"],
         crs,
         house_area_limit,
         snakemake.output["clusters_with_buildings"],
