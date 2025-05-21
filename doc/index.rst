@@ -66,7 +66,7 @@ Get Involved
 
 Discussions on the PyPSA-Distribution tool are hosted on the `PyPSA meets Earth Discord <https://discord.gg/AnuJBk23FU>`_.
 
-The recurrent meeting on PyPSA-Distribution is every second Tuesday at 15:00 AM (CEST time) on Discord, please reach out and join! A calendar invitation may be loaded `here <https://drive.google.com/file/d/1qGsUOKfoBt3FtXnEXiiLC-H16DiQvyVy/view?usp=drive_link>`_.
+The recurrent meeting on PyPSA-Distribution is every second Tuesday at 17:00 AM (CEST time) on Discord, please reach out and join! A calendar invitation may be loaded `here <https://drive.google.com/file/d/1qGsUOKfoBt3FtXnEXiiLC-H16DiQvyVy/view?usp=drive_link>`_.
 
 =============
 Documentation
