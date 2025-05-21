@@ -23,7 +23,7 @@ Currently it focuses on electric off-grid applications as it is at an infant sta
 There are multiple ways to get involved and learn more about our work.
 Please, checkout the [PyPSA-Earth list](https://github.com/pypsa-meets-earth/pypsa-earth)
 
-The recurrent meeting on PyPSA-Distribution is every second Tuesday at 15:00 AM (CEST time) on Discord, please reach out and join! A calendar invitation may be found [here](https://drive.google.com/file/d/1qGsUOKfoBt3FtXnEXiiLC-H16DiQvyVy/view?usp=drive_link).
+The recurrent meeting on PyPSA-Distribution is every second Tuesday at 17:00 AM (CEST time) on Discord, please reach out and join! A calendar invitation may be found [here](https://drive.google.com/file/d/1qGsUOKfoBt3FtXnEXiiLC-H16DiQvyVy/view?usp=drive_link).
 
 ## Installation
 
