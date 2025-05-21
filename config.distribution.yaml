@@ -130,15 +130,15 @@ microgrids_list:  # MICROGRIDS IN NIGERIA
     lon_min: 7.2616
     lat_min: 4.6151
     lat_max: 4.7208
-  microgrid_2:     # WORKING
-    lon_max: 7.6
-    lon_min: 7.5
-    lat_min: 4.4
-    lat_max: 4.5
+# microgrid_2:     # WORKING
+#   lon_max: 7.6
+#   lon_min: 7.5
+#   lat_min: 4.4
+#   lat_max: 4.5
 load:
   scaling_factor: 15000
 
 buildings:
-  n_clusters: # either specify a number (n_clusters: 10) or specify the number of clusters by microgrid as in the following
-    microgrid_1: 3
-    microgrid_2: 13
+  n_clusters: 10 # either specify a number (n_clusters: 10) or specify the number of clusters by microgrid as in the following
+#   microgrid_1: 3
+#   microgrid_2: 13
