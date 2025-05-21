@@ -116,12 +116,12 @@ def get_central_points_geojson_with_buildings(
         # Apply KMeans clustering to group the buildings
         if isinstance(n_clusters, dict):
             kmeans = KMeans(n_clusters=n_clusters[grid_name], random_state=0).fit(
-            centroids_building
-        )
+                centroids_building
+            )
         else:
             kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(
-            centroids_building
-        )
+                centroids_building
+            )
         # Get the coordinates of cluster centroids
         centroids = kmeans.cluster_centers_
         # Identify the central point for each cluster
