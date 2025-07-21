@@ -2,19 +2,20 @@
 import json
 import logging
 import os
+import re
 import shutil
-import pandas as pd
+import tempfile
+from pathlib import Path
+
 import geopandas as gpd
 import mercantile
-import tempfile
-from shapely import geometry
-from tqdm import tqdm
-from pathlib import Path
-import re
+import pandas as pd
 import requests
 import yaml
 from _helpers_dist import configure_logging, create_logger, read_osm_config
 from earth_osm import eo
+from shapely import geometry
+from tqdm import tqdm
 
 logger = create_logger(__name__)
 
@@ -170,13 +171,17 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
                 continue
 
             try:
-                logger.info(f"Querying Overpass API for microgrid: {grid_name} with feature: {feature}")
+                logger.info(
+                    f"Querying Overpass API for microgrid: {grid_name} with feature: {feature}"
+                )
                 response = requests.get(url, params={"data": overpass_query})
                 response.raise_for_status()
                 data = response.json()
 
                 if "elements" not in data:
-                    logger.error(f"No elements found for microgrid: {grid_name} with feature: {feature}")
+                    logger.error(
+                        f"No elements found for microgrid: {grid_name} with feature: {feature}"
+                    )
                     continue
 
                 node_coordinates = {
@@ -201,7 +206,9 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
                         ]
 
                         if not coordinates:
-                            logger.warning(f"No coordinates for {feature}: {element['id']}")
+                            logger.warning(
+                                f"No coordinates for {feature}: {element['id']}"
+                            )
                             continue
 
                         properties = {"name_microgrid": grid_name, "id": element["id"]}
@@ -212,15 +219,26 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
                             "type": "Feature",
                             "properties": properties,
                             "geometry": {
-                            "type": geometry_type,
-                            "coordinates": [coordinates] if geometry_type == "Polygon" else coordinates,
-                        }}
-                        geojson_features.append(json.dumps(feature, separators=(",", ":")))
+                                "type": geometry_type,
+                                "coordinates": (
+                                    [coordinates]
+                                    if geometry_type == "Polygon"
+                                    else coordinates
+                                ),
+                            },
+                        }
+                        geojson_features.append(
+                            json.dumps(feature, separators=(",", ":"))
+                        )
 
             except json.JSONDecodeError:
-                logger.error(f"JSON decoding error for microgrid: {grid_name} with feature: {feature}")
+                logger.error(
+                    f"JSON decoding error for microgrid: {grid_name} with feature: {feature}"
+                )
             except requests.exceptions.RequestException as e:
-                logger.error(f"Request error for microgrid: {grid_name}: {e} with feature: {feature}")
+                logger.error(
+                    f"Request error for microgrid: {grid_name}: {e} with feature: {feature}"
+                )
 
         try:
             outpath = Path(path) / filename
@@ -253,10 +271,14 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
         )
         microgrid_shape = geometry.box(lon_min, lat_min, lon_max, lat_max)
 
-        quad_keys = list({
-            mercantile.quadkey(tile)
-            for tile in mercantile.tiles(lon_min, lat_min, lon_max, lat_max, zooms=9)
-        })
+        quad_keys = list(
+            {
+                mercantile.quadkey(tile)
+                for tile in mercantile.tiles(
+                    lon_min, lat_min, lon_max, lat_max, zooms=9
+                )
+            }
+        )
 
         logger.info(f"[{gridname}] AOI spans {len(quad_keys)} tiles.")
 
@@ -265,7 +287,9 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
 
             if row.shape[0] == 1:
                 json_url = row.iloc[0]["Url"]
-                logger.info(f"[{gridname}] Downloading {json_url} for quad_key {quad_key}")
+                logger.info(
+                    f"[{gridname}] Downloading {json_url} for quad_key {quad_key}"
+                )
                 try:
                     df_json = pd.read_json(json_url, lines=True)
                 except Exception as e:
@@ -273,7 +297,9 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
                     continue
 
                 if "geometry" not in df_json.columns:
-                    logger.warning(f"[{gridname}] No geometry found for quad_key {quad_key}")
+                    logger.warning(
+                        f"[{gridname}] No geometry found for quad_key {quad_key}"
+                    )
                     continue
 
                 df_json["geometry"] = df_json["geometry"].apply(geometry.shape)
@@ -319,7 +345,8 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
         mML_row = mML_gdf.loc[idx]
 
         osm_props = {
-            k: v for k, v in row.drop(labels=["index_right", "geometry"]).items()
+            k: v
+            for k, v in row.drop(labels=["index_right", "geometry"]).items()
             if pd.notna(v)
         }
 
@@ -339,17 +366,22 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
 
     clean_data = final_gdf.drop(columns=["geometry"]).apply(
         lambda row: {
-            k: v for k, v in row.items()
+            k: v
+            for k, v in row.items()
             if pd.notna(v) and str(v).strip().lower() not in ["", "null", "none"]
         },
-        axis=1
+        axis=1,
     )
 
-    final_gdf_cleaned = gpd.GeoDataFrame(geometry=final_gdf["geometry"], crs="EPSG:4326")
+    final_gdf_cleaned = gpd.GeoDataFrame(
+        geometry=final_gdf["geometry"], crs="EPSG:4326"
+    )
     final_gdf_cleaned["properties"] = clean_data
 
     final_gdf_cleaned.to_file(export_path, driver="GeoJSON", index=False)
-    logger.info("Merge completed: OSM with height added where overlapping with Microsoft ML data.")
+    logger.info(
+        "Merge completed: OSM with height added where overlapping with Microsoft ML data."
+    )
 
 
 if __name__ == "__main__":
@@ -398,13 +430,28 @@ if __name__ == "__main__":
 
     elif snakemake.config["enable"]["download_osm_method"] == "overpass":
         microgrids_list = snakemake.config["microgrids_list"]
-        features = ["building", 'minor_line','generator','substation_and_pole']
+        features = ["building", "minor_line", "generator", "substation_and_pole"]
         overpass_url = "https://overpass-api.de/api/interpreter"
         output_file = Path.cwd() / "resources" / RDIR / "osm" / "raw"
         retrieve_osm_data_geojson(microgrids_list, features, overpass_url, output_file)
         if snakemake.config["enable"]["download_and_merge_microsoft_ML_building"]:
-            osm_path = Path.cwd() / "resources" / RDIR / "osm" / "raw" / "all_raw_building.geojson"
+            osm_path = (
+                Path.cwd()
+                / "resources"
+                / RDIR
+                / "osm"
+                / "raw"
+                / "all_raw_building.geojson"
+            )
             microsoft_data_url = "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv"
-            export_path = Path.cwd() / "resources" / RDIR / "osm" / "raw" / "all_raw_building.geojson"
-            retrive_and_merge_osm_with_ml(microgrids_list, microsoft_data_url, osm_path, export_path)
-
+            export_path = (
+                Path.cwd()
+                / "resources"
+                / RDIR
+                / "osm"
+                / "raw"
+                / "all_raw_building.geojson"
+            )
+            retrive_and_merge_osm_with_ml(
+                microgrids_list, microsoft_data_url, osm_path, export_path
+            )
