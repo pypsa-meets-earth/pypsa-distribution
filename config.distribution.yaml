@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 version: 0.0.1
-tutorial: true
+tutorial: false
 
 logging:
   level: INFO
@@ -19,6 +19,7 @@ enable:
   download_osm_data: true
   download_osm_buildings: true
   download_osm_method: overpass # or earth_osm
+  download_and_merge_microsoft_ML_building: true # Select true only if download osm_method is overpass, if True, then retrieve_and_merge_microsoft_ML_building can be run
   # If "build_cutout" : true # requires cds API key
   # https://cds.climate.copernicus.eu/api-how-to
   # More information
@@ -33,7 +34,7 @@ scenario:
   opts: [Co2L-3H]  # Co2L adds an overall absolute carbon-dioxide emissions limit
                    # 3H resamples the time-resolution by averaging over every 3 snapshots
 
-countries: ["NG"]
+countries: ["IT"]
 # Can be replaced by country ["NG", "BJ"] or user specific region, more at
 # https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
@@ -126,10 +127,10 @@ tech_modelling:
 
 microgrids_list:  # MICROGRIDS IN NIGERIA
   microgrid_1:     # WORKING
-    lon_max: 7.3914
-    lon_min: 7.2616
-    lat_min: 4.6151
-    lat_max: 4.7208
+    lon_max: 10.4700
+    lon_min: 10.0937
+    lat_min: 42.6966
+    lat_max: 42.8810
 # microgrid_2:     # WORKING
 #   lon_max: 7.6
 #   lon_min: 7.5
