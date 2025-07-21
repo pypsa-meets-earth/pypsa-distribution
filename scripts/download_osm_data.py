@@ -112,7 +112,7 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
 
             # Determina filename e geometry_type UNA VOLTA per ogni feature_name
             if feature == "building":
-                filename = "all_raw_building.geojson"
+                filename = "all_raw_buildings.geojson"
                 geometry_type = "Polygon"
                 overpass_query = f"""
                 [out:json][timeout:60];
@@ -403,8 +403,8 @@ if __name__ == "__main__":
         output_file = Path.cwd() / "resources" / RDIR / "osm" / "raw"
         retrieve_osm_data_geojson(microgrids_list, features, overpass_url, output_file)
         if snakemake.config["enable"]["download_and_merge_microsoft_ML_building"]:
-            osm_path = Path.cwd() / "resources" / RDIR / "osm" / "raw" / "all_raw_building.geojson"
+            osm_path = Path.cwd() / "resources" / RDIR / "osm" / "raw" / "all_raw_buildings.geojson"
             microsoft_data_url = "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv"
-            export_path = Path.cwd() / "resources" / RDIR / "osm" / "raw" / "all_raw_building.geojson"
+            export_path = Path.cwd() / "resources" / RDIR / "osm" / "raw" / "all_raw_buildings.geojson"
             retrive_and_merge_osm_with_ml(microgrids_list, microsoft_data_url, osm_path, export_path)
 
