@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 version: 0.0.1
-tutorial: false
+tutorial: true
 
 logging:
   level: INFO
@@ -34,7 +34,7 @@ scenario:
   opts: [Co2L-3H]  # Co2L adds an overall absolute carbon-dioxide emissions limit
                    # 3H resamples the time-resolution by averaging over every 3 snapshots
 
-countries: ["IT"]
+countries: ["NG"]
 # Can be replaced by country ["NG", "BJ"] or user specific region, more at
 # https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
@@ -127,10 +127,10 @@ tech_modelling:
 
 microgrids_list:  # MICROGRIDS IN NIGERIA
   microgrid_1:     # WORKING
-    lon_max: 10.4700
-    lon_min: 10.0937
-    lat_min: 42.6966
-    lat_max: 42.8810
+    lon_max: 7.3914
+    lon_min: 7.2616
+    lat_min: 4.6151
+    lat_max: 4.7208
 # microgrid_2:     # WORKING
 #   lon_max: 7.6
 #   lon_min: 7.5
