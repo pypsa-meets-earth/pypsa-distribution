@@ -2,19 +2,16 @@
 import json
 import logging
 import os
-import re
 import shutil
-import tempfile
 from pathlib import Path
-
 import geopandas as gpd
 import mercantile
 import pandas as pd
 import requests
-import yaml
 from _helpers_dist import configure_logging, create_logger, read_osm_config
 from earth_osm import eo
 from shapely import geometry
+from shapely.geometry import mapping
 from tqdm import tqdm
 
 logger = create_logger(__name__)
@@ -258,6 +255,7 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
 
 
 def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
+
     link = pd.read_csv(url, dtype=str)
     mML_gdf = gpd.GeoDataFrame()
     idx = 0
@@ -271,14 +269,10 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
         )
         microgrid_shape = geometry.box(lon_min, lat_min, lon_max, lat_max)
 
-        quad_keys = list(
-            {
-                mercantile.quadkey(tile)
-                for tile in mercantile.tiles(
-                    lon_min, lat_min, lon_max, lat_max, zooms=9
-                )
-            }
-        )
+        quad_keys = list({
+            mercantile.quadkey(tile)
+            for tile in mercantile.tiles(lon_min, lat_min, lon_max, lat_max, zooms=9)
+        })
 
         logger.info(f"[{gridname}] AOI spans {len(quad_keys)} tiles.")
 
@@ -287,9 +281,7 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
 
             if row.shape[0] == 1:
                 json_url = row.iloc[0]["Url"]
-                logger.info(
-                    f"[{gridname}] Downloading {json_url} for quad_key {quad_key}"
-                )
+                logger.info(f"[{gridname}] Downloading {json_url} for quad_key {quad_key}")
                 try:
                     df_json = pd.read_json(json_url, lines=True)
                 except Exception as e:
@@ -297,9 +289,7 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
                     continue
 
                 if "geometry" not in df_json.columns:
-                    logger.warning(
-                        f"[{gridname}] No geometry found for quad_key {quad_key}"
-                    )
+                    logger.warning(f"[{gridname}] No geometry found for quad_key {quad_key}")
                     continue
 
                 df_json["geometry"] = df_json["geometry"].apply(geometry.shape)
@@ -357,31 +347,39 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
         merged_features.append({"geometry": geometry_, **osm_props})
 
     merged_duplicates_gdf = gpd.GeoDataFrame(merged_features, crs=crs_meters)
-
     duplicate_idxs = joined.index
     cluster_unique = osm_gdf.drop(index=duplicate_idxs)
-
     final_gdf = pd.concat([merged_duplicates_gdf, cluster_unique], ignore_index=True)
     final_gdf = final_gdf.to_crs("EPSG:4326")
 
-    clean_data = final_gdf.drop(columns=["geometry"]).apply(
-        lambda row: {
+    features = []
+
+    for _, row in final_gdf.iterrows():
+        props = {
             k: v
             for k, v in row.items()
-            if pd.notna(v) and str(v).strip().lower() not in ["", "null", "none"]
-        },
-        axis=1,
-    )
+            if k != "geometry"
+            and pd.notna(v)
+            and str(v).strip().lower() not in ["", "null", "none"]
+        }
+        geom = row["geometry"]
+        if geom is not None and not geom.is_empty:
+            features.append({
+                "type": "Feature",
+                "properties": props,
+                "geometry": mapping(geom)
+            })
 
-    final_gdf_cleaned = gpd.GeoDataFrame(
-        geometry=final_gdf["geometry"], crs="EPSG:4326"
-    )
-    final_gdf_cleaned["properties"] = clean_data
+    with open(export_path, "w") as f:
+        json.dump(
+            {"type": "FeatureCollection", "features": features},
+            f,
+            separators=(",", ":")
+        )
 
-    final_gdf_cleaned.to_file(export_path, driver="GeoJSON", index=False)
-    logger.info(
-        "Merge completed: OSM with height added where overlapping with Microsoft ML data."
-    )
+    logger.info("Merge completed and saved as compact GeoJSON (FeatureCollection with single-line Features).")
+
+
 
 
 if __name__ == "__main__":
