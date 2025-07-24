@@ -111,7 +111,7 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
 
             # Determina filename e geometry_type UNA VOLTA per ogni feature_name
             if feature == "building":
-                filename = "all_raw_buildings.geojson"
+                filename = "all_raw_building.geojson"
                 geometry_type = "Polygon"
                 overpass_query = f"""
                 [out:json][timeout:60];
@@ -385,7 +385,7 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
                 f.write(line + "\n")
         f.write("]}")
 
-    logger.info(" Merge completato e salvato come GeoJSON formattato riga-per-riga.")
+    logger.info(" Merge completed.")
 
 
 if __name__ == "__main__":
@@ -445,7 +445,7 @@ if __name__ == "__main__":
                 / RDIR
                 / "osm"
                 / "raw"
-                / "all_raw_buildings.geojson"
+                / "all_raw_building.geojson"
             )
             microsoft_data_url = "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv"
             export_path = (
@@ -454,7 +454,7 @@ if __name__ == "__main__":
                 / RDIR
                 / "osm"
                 / "raw"
-                / "all_raw_buildings.geojson"
+                / "all_raw_building.geojson"
             )
             retrive_and_merge_osm_with_ml(
                 microgrids_list, microsoft_data_url, osm_path, export_path
