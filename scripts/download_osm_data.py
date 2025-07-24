@@ -371,13 +371,16 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
             })
 
     with open(export_path, "w") as f:
-        json.dump(
-            {"type": "FeatureCollection", "features": features},
-            f,
-            separators=(",", ":")
-        )
+        f.write('{"type":"FeatureCollection","features":[\n')
+        for i, feature in enumerate(features):
+            line = json.dumps(feature, separators=(",", ":"))
+            if i < len(features) - 1:
+                f.write(line + ",\n")
+            else:
+                f.write(line + "\n")
+        f.write("]}")
 
-    logger.info("Merge completed and saved as compact GeoJSON (FeatureCollection with single-line Features).")
+    logger.info(" Merge completato e salvato come GeoJSON formattato riga-per-riga.")
 
 
 
