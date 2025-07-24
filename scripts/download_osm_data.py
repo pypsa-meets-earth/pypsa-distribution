@@ -269,10 +269,14 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
         )
         microgrid_shape = geometry.box(lon_min, lat_min, lon_max, lat_max)
 
-        quad_keys = list({
-            mercantile.quadkey(tile)
-            for tile in mercantile.tiles(lon_min, lat_min, lon_max, lat_max, zooms=9)
-        })
+        quad_keys = list(
+            {
+                mercantile.quadkey(tile)
+                for tile in mercantile.tiles(
+                    lon_min, lat_min, lon_max, lat_max, zooms=9
+                )
+            }
+        )
 
         logger.info(f"[{gridname}] AOI spans {len(quad_keys)} tiles.")
 
@@ -281,7 +285,9 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
 
             if row.shape[0] == 1:
                 json_url = row.iloc[0]["Url"]
-                logger.info(f"[{gridname}] Downloading {json_url} for quad_key {quad_key}")
+                logger.info(
+                    f"[{gridname}] Downloading {json_url} for quad_key {quad_key}"
+                )
                 try:
                     df_json = pd.read_json(json_url, lines=True)
                 except Exception as e:
@@ -289,7 +295,9 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
                     continue
 
                 if "geometry" not in df_json.columns:
-                    logger.warning(f"[{gridname}] No geometry found for quad_key {quad_key}")
+                    logger.warning(
+                        f"[{gridname}] No geometry found for quad_key {quad_key}"
+                    )
                     continue
 
                 df_json["geometry"] = df_json["geometry"].apply(geometry.shape)
@@ -363,13 +371,10 @@ def retrive_and_merge_osm_with_ml(microgrid_list, url, osm_path, export_path):
         }
         geom = row["geometry"]
         if geom is not None and not geom.is_empty:
-            features.append({
-                "type": "Feature",
-                "properties": props,
-                "geometry": mapping(geom)
-            })
+            features.append(
+                {"type": "Feature", "properties": props, "geometry": mapping(geom)}
+            )
 
-    
     with open(export_path, "w") as f:
         f.write('{"type":"FeatureCollection","features":[\n')
         for i, feature in enumerate(features):
