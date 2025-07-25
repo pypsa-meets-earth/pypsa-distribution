@@ -19,6 +19,7 @@ enable:
   download_osm_data: true
   download_osm_buildings: true
   download_osm_method: overpass # or earth_osm
+  download_and_merge_microsoft_ML_building: true # Select true only if download osm_method is overpass, if True, then retrieve_and_merge_microsoft_ML_building can be run
   # If "build_cutout" : true # requires cds API key
   # https://cds.climate.copernicus.eu/api-how-to
   # More information
