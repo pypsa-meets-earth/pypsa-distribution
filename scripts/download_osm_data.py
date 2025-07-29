@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 import json
 import logging
 import os
 import shutil
 from pathlib import Path
-import pandas as pd
+
 import geopandas as gpd
 import mercantile
+import pandas as pd
 import requests
 import yaml
 from _helpers_dist import configure_logging, create_logger, read_osm_config
@@ -95,11 +97,10 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
         lat_max = grid_data["lat_max"]
         lon_max = grid_data["lon_max"]
 
-
         if feature == "building":
-                filename = "all_raw_building.geojson"
-                geometry_type = "Polygon"
-                overpass_query = f"""
+            filename = "all_raw_building.geojson"
+            geometry_type = "Polygon"
+            overpass_query = f"""
                 [out:json][timeout:60];
                 (
                 way["building"]({lat_min},{lon_min},{lat_max},{lon_max});
@@ -166,7 +167,9 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
 
             # Check if the response contains any elements
             if "elements" not in data:
-                logger.error(f"No elements found for microgrid: {grid_name} with feature: {feature}")
+                logger.error(
+                    f"No elements found for microgrid: {grid_name} with feature: {feature}"
+                )
                 continue
             # Extract node coordinates from the response
             node_coordinates = {
@@ -184,9 +187,7 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                         if node_id in node_coordinates
                     ]
                     if not coordinates:
-                        logger.warning(
-                                f"No coordinates for {feature}: {element['id']}"
-                            )
+                        logger.warning(f"No coordinates for {feature}: {element['id']}")
                         continue
 
                     # Add properties for the feature, including the microgrid name and element ID
@@ -208,10 +209,14 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
 
         except json.JSONDecodeError:
             # Handle JSON parsing errors
-            logger.error(f"JSON decoding error for microgrid: {grid_name}  with feature: {feature}")
+            logger.error(
+                f"JSON decoding error for microgrid: {grid_name}  with feature: {feature}"
+            )
         except requests.exceptions.RequestException as e:
             # Handle request-related errors
-            logger.error(f"Request error for microgrid: {grid_name}: {e}  with feature: {feature}")
+            logger.error(
+                f"Request error for microgrid: {grid_name}: {e}  with feature: {feature}"
+            )
 
             # Save all features to a single GeoJSON file
         try:
@@ -230,6 +235,7 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
         except IOError as e:
             logger.error(f"Error saving GeoJSON file: {e}")
 
+
 def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output_path):
     # Load tile-to-URL mapping from Microsoft building dataset
     link = pd.read_csv(url, dtype=str)
@@ -247,10 +253,14 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
         microgrid_shape = geometry.box(lon_min, lat_min, lon_max, lat_max)
 
         # Get quadkeys covering the bounding box at zoom level 9
-        quad_keys = list({
-            mercantile.quadkey(tile)
-            for tile in mercantile.tiles(lon_min, lat_min, lon_max, lat_max, zooms=9)
-        })
+        quad_keys = list(
+            {
+                mercantile.quadkey(tile)
+                for tile in mercantile.tiles(
+                    lon_min, lat_min, lon_max, lat_max, zooms=9
+                )
+            }
+        )
 
         # Download and filter building geometries per quadkey
         for quad_key in quad_keys:
@@ -281,9 +291,11 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
 
     # Extract height field from nested 'properties' dictionary
     mML_gdf["height"] = mML_gdf["properties"].apply(
-        lambda s: max(s.get("height", 0), 0)
-        if isinstance(s, dict) and isinstance(s.get("height", None), (int, float))
-        else 0
+        lambda s: (
+            max(s.get("height", 0), 0)
+            if isinstance(s, dict) and isinstance(s.get("height", None), (int, float))
+            else 0
+        )
     )
 
     # Load OSM buildings
@@ -347,10 +359,6 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
         f.write('{"type":"FeatureCollection","features":[\n')
         f.write(",\n".join([json.dumps(feature) for feature in features]))
         f.write("\n]}\n")
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -421,7 +429,7 @@ if __name__ == "__main__":
                 / "raw"
                 / "all_raw_building.geojson"
             )
-            
+
             download_and_merge_Microsoft_buildings(
                 microsoft_data_url, microgrids_list, osm_path, export_path
             )
