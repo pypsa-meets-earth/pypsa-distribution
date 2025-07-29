@@ -88,152 +88,153 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
         Directory where the GeoJSON file will be saved.
     """
     # Collect all features from all microgrids
-    geojson_features = []
+    for feature in features:
+        geojson_features = []
 
-    for grid_name, grid_data in microgrids_list.items():
-        # Extract the bounding box coordinates for the current microgrid to construct the query
-        lat_min = grid_data["lat_min"]
-        lon_min = grid_data["lon_min"]
-        lat_max = grid_data["lat_max"]
-        lon_max = grid_data["lon_max"]
+        for grid_name, grid_data in microgrids_list.items():
+            # Extract the bounding box coordinates for the current microgrid to construct the query
+            lat_min = grid_data["lat_min"]
+            lon_min = grid_data["lon_min"]
+            lat_max = grid_data["lat_max"]
+            lon_max = grid_data["lon_max"]
 
-        if feature == "building":
-            filename = "all_raw_building.geojson"
-            geometry_type = "Polygon"
-            overpass_query = f"""
+            if feature == "building":
+                filename = "all_raw_building.geojson"
+                geometry_type = "Polygon"
+                overpass_query = f"""
+                    [out:json][timeout:60];
+                    (
+                    way["building"]({lat_min},{lon_min},{lat_max},{lon_max});
+                    );
+                    (._;>;);
+                    out body;
+                    """
+
+            elif feature == "minor_line":
+                filename = "all_raw_line.geojson"
+                geometry_type = "LineString"
+                overpass_query = f"""
                 [out:json][timeout:60];
                 (
-                way["building"]({lat_min},{lon_min},{lat_max},{lon_max});
+                way["power"~"^(cable|minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max});
+                relation["power"~"^(cable|minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max});
                 );
                 (._;>;);
                 out body;
                 """
 
-        elif feature == "minor_line":
-            filename = "all_raw_line.geojson"
-            geometry_type = "LineString"
-            overpass_query = f"""
-            [out:json][timeout:60];
-            (
-            way["power"~"^(cable|minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max});
-            relation["power"~"^(cable|minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max});
-            );
-            (._;>;);
-            out body;
-            """
+            elif feature == "generator":
+                filename = "all_raw_generator.geojson"
+                geometry_type = "Polygon"
+                overpass_query = f"""
+                [out:json][timeout:60];
+                (
+                node["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
+                way["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
+                relation["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
+                );
+                (._;>;);
+                out body;
+                """
 
-        elif feature == "generator":
-            filename = "all_raw_generator.geojson"
-            geometry_type = "Polygon"
-            overpass_query = f"""
-            [out:json][timeout:60];
-            (
-            node["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
-            way["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
-            relation["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
-            );
-            (._;>;);
-            out body;
-            """
+            elif feature == "substation_and_pole":
+                filename = "all_raw_substation.geojson"
+                geometry_type = "Polygon"
+                overpass_query = f"""
+                [out:json][timeout:60];
+                (
+                node["power"="pole"]({lat_min},{lon_min},{lat_max},{lon_max});
+                node["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
+                way["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
+                relation["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
+                );
+                (._;>;);
+                out body;
+                """
 
-        elif feature == "substation_and_pole":
-            filename = "all_raw_substation.geojson"
-            geometry_type = "Polygon"
-            overpass_query = f"""
-            [out:json][timeout:60];
-            (
-            node["power"="pole"]({lat_min},{lon_min},{lat_max},{lon_max});
-            node["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
-            way["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
-            relation["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
-            );
-            (._;>;);
-            out body;
-            """
-
-        else:
-            logger.error(f"Unsupported feature: {feature}")
-            continue
-
-        try:
-            logger.info(
-                f"Querying Overpass API for microgrid: {grid_name} with feature: {feature}"
-            )  # Log the current query
-            response = requests.get(
-                url, params={"data": overpass_query}
-            )  # Send the query to Overpass API
-            response.raise_for_status()  # Raise an error if the request fails
-            data = response.json()  # Parse the JSON response
-
-            # Check if the response contains any elements
-            if "elements" not in data:
-                logger.error(
-                    f"No elements found for microgrid: {grid_name} with feature: {feature}"
-                )
+            else:
+                logger.error(f"Unsupported feature: {feature}")
                 continue
-            # Extract node coordinates from the response
-            node_coordinates = {
-                node["id"]: [node["lon"], node["lat"]]
-                for node in data["elements"]
-                if node["type"] == "node"
-            }
-            # Process "way" elements to construct polygon geometries
-            for element in data["elements"]:
-                if element["type"] == "way" and "nodes" in element:
-                    # Get the coordinates of the nodes that form the way
-                    coordinates = [
-                        node_coordinates[node_id]
-                        for node_id in element["nodes"]
-                        if node_id in node_coordinates
-                    ]
-                    if not coordinates:
-                        logger.warning(f"No coordinates for {feature}: {element['id']}")
-                        continue
 
-                    # Add properties for the feature, including the microgrid name and element ID
-                    properties = {"name_microgrid": grid_name, "id": element["id"]}
-                    if "tags" in element:  # Include additional tags if available
-                        properties.update(element["tags"])
+            try:
+                logger.info(
+                    f"Querying Overpass API for microgrid: {grid_name} with feature: {feature}"
+                )  # Log the current query
+                response = requests.get(
+                    url, params={"data": overpass_query}
+                )  # Send the query to Overpass API
+                response.raise_for_status()  # Raise an error if the request fails
+                data = response.json()  # Parse the JSON response
 
-                    # Create a GeoJSON feature for the way
-                    feature = {
-                        "type": "Feature",
-                        "properties": properties,
-                        "geometry": {
-                            "type": geometry_type,
-                            "coordinates": [coordinates],
-                        },
-                    }
-                    # Serialize each feature as a compact JSON string and add it to the list
-                    geojson_features.append(json.dumps(feature, separators=(",", ":")))
+                # Check if the response contains any elements
+                if "elements" not in data:
+                    logger.error(
+                        f"No elements found for microgrid: {grid_name} with feature: {feature}"
+                    )
+                    continue
+                # Extract node coordinates from the response
+                node_coordinates = {
+                    node["id"]: [node["lon"], node["lat"]]
+                    for node in data["elements"]
+                    if node["type"] == "node"
+                }
+                # Process "way" elements to construct polygon geometries
+                for element in data["elements"]:
+                    if element["type"] == "way" and "nodes" in element:
+                        # Get the coordinates of the nodes that form the way
+                        coordinates = [
+                            node_coordinates[node_id]
+                            for node_id in element["nodes"]
+                            if node_id in node_coordinates
+                        ]
+                        if not coordinates:
+                            logger.warning(f"No coordinates for {feature}: {element['id']}")
+                            continue
 
-        except json.JSONDecodeError:
-            # Handle JSON parsing errors
-            logger.error(
-                f"JSON decoding error for microgrid: {grid_name}  with feature: {feature}"
-            )
-        except requests.exceptions.RequestException as e:
-            # Handle request-related errors
-            logger.error(
-                f"Request error for microgrid: {grid_name}: {e}  with feature: {feature}"
-            )
+                        # Add properties for the feature, including the microgrid name and element ID
+                        properties = {"name_microgrid": grid_name, "id": element["id"]}
+                        if "tags" in element:  # Include additional tags if available
+                            properties.update(element["tags"])
 
-            # Save all features to a single GeoJSON file
-        try:
-            outpath = Path(path) / "all_raw_building.geojson"
-            outpath.parent.mkdir(parents=True, exist_ok=True)
+                        # Create a GeoJSON feature for the way
+                        feature = {
+                            "type": "Feature",
+                            "properties": properties,
+                            "geometry": {
+                                "type": geometry_type,
+                                "coordinates": [coordinates],
+                            },
+                        }
+                        # Serialize each feature as a compact JSON string and add it to the list
+                        geojson_features.append(json.dumps(feature, separators=(",", ":")))
 
-            with open(outpath, "w") as f:
-                f.write('{"type":"FeatureCollection","features":[\n')
-                f.write(
-                    ",\n".join(geojson_features)
-                )  # Write features in one-line format
-                f.write("\n]}\n")
+            except json.JSONDecodeError:
+                # Handle JSON parsing errors
+                logger.error(
+                    f"JSON decoding error for microgrid: {grid_name}  with feature: {feature}"
+                )
+            except requests.exceptions.RequestException as e:
+                # Handle request-related errors
+                logger.error(
+                    f"Request error for microgrid: {grid_name}: {e}  with feature: {feature}"
+                )
 
-            logger.info(f"Combined GeoJSON saved to {outpath}")
+                # Save all features to a single GeoJSON file
+            try:
+                outpath = Path(path) / filename
+                outpath.parent.mkdir(parents=True, exist_ok=True)
 
-        except IOError as e:
-            logger.error(f"Error saving GeoJSON file: {e}")
+                with open(outpath, "w") as f:
+                    f.write('{"type":"FeatureCollection","features":[\n')
+                    f.write(
+                        ",\n".join(geojson_features)
+                    )  # Write features in one-line format
+                    f.write("\n]}\n")
+
+                logger.info(f"Combined GeoJSON saved to {outpath}")
+
+            except IOError as e:
+                logger.error(f"Error saving GeoJSON file: {e}")
 
 
 def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output_path):
@@ -407,7 +408,7 @@ if __name__ == "__main__":
 
     elif snakemake.config["enable"]["download_osm_method"] == "overpass":
         microgrids_list = snakemake.config["microgrids_list"]
-        features = "building"
+        features = ["building", "minor_line", "generator", "substation_and_pole"]
         overpass_url = "https://overpass-api.de/api/interpreter"
         output_file = Path.cwd() / "resources" / RDIR / "osm" / "raw"
         retrieve_osm_data_geojson(microgrids_list, features, overpass_url, output_file)
