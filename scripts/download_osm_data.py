@@ -188,7 +188,9 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                             if node_id in node_coordinates
                         ]
                         if not coordinates:
-                            logger.warning(f"No coordinates for {feature}: {element['id']}")
+                            logger.warning(
+                                f"No coordinates for {feature}: {element['id']}"
+                            )
                             continue
 
                         # Add properties for the feature, including the microgrid name and element ID
@@ -206,7 +208,9 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                             },
                         }
                         # Serialize each feature as a compact JSON string and add it to the list
-                        geojson_features.append(json.dumps(feature, separators=(",", ":")))
+                        geojson_features.append(
+                            json.dumps(feature, separators=(",", ":"))
+                        )
 
             except json.JSONDecodeError:
                 # Handle JSON parsing errors
