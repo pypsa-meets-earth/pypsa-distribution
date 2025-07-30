@@ -354,12 +354,12 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
         }
         geom = row["geometry"]
         safe_props = {
-        k: (v.isoformat() if isinstance(v, pd.Timestamp) else v)
-        for k, v in props.items()
-    }
+            k: (v.isoformat() if isinstance(v, pd.Timestamp) else v)
+            for k, v in props.items()
+        }
         if geom is not None and not geom.is_empty:
             features.append(
-             {"type": "Feature", "properties": safe_props, "geometry": mapping(geom)}
+                {"type": "Feature", "properties": safe_props, "geometry": mapping(geom)}
             )
 
     # Write to GeoJSON file
