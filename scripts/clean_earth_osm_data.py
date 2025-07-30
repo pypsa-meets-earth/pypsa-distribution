@@ -13,7 +13,14 @@ from _helpers_dist import configure_logging, sets_path_to_root
 from shapely.geometry import Point, Polygon
 
 
-def extract_points(microgrid_shape_path, buildings_path, line_path,generator_path,substation_and_pole_path,output_path):
+def extract_points(
+    microgrid_shape_path,
+    buildings_path,
+    line_path,
+    generator_path,
+    substation_and_pole_path,
+    output_path,
+):
     """
     From the downloaded data, extracts buildings located within the boundaries of each microgrid geometry
     and associates them with the respective microgrid name.
