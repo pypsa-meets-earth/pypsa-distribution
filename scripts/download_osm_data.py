@@ -178,39 +178,105 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                     for node in data["elements"]
                     if node["type"] == "node"
                 }
-                # Process "way" elements to construct polygon geometries
-                for element in data["elements"]:
-                    if element["type"] == "way" and "nodes" in element:
-                        # Get the coordinates of the nodes that form the way
-                        coordinates = [
-                            node_coordinates[node_id]
-                            for node_id in element["nodes"]
-                            if node_id in node_coordinates
-                        ]
-                        if not coordinates:
-                            logger.warning(
-                                f"No coordinates for {feature}: {element['id']}"
-                            )
-                            continue
 
-                        # Add properties for the feature, including the microgrid name and element ID
-                        properties = {"name_microgrid": grid_name, "id": element["id"]}
-                        if "tags" in element:  # Include additional tags if available
-                            properties.update(element["tags"])
+                if feature == "substation_and_pole":
+                    for element in data["elements"]:
+                        if element["type"] == "node" and "lon" in element and "lat" in element:
+                            properties = {"name_microgrid": grid_name, "id": element["id"]}
+                            if "tags" in element:
+                                properties.update(element["tags"])
 
-                        # Create a GeoJSON feature for the way
-                        feature = {
-                            "type": "Feature",
-                            "properties": properties,
-                            "geometry": {
-                                "type": geometry_type,
-                                "coordinates": [coordinates],
-                            },
-                        }
-                        # Serialize each feature as a compact JSON string and add it to the list
-                        geojson_features.append(
-                            json.dumps(feature, separators=(",", ":"))
-                        )
+                            geometry = {
+                                "type": "Point",
+                                "coordinates": [element["lon"], element["lat"]],
+                            }
+
+                            feature = {
+                                "type": "Feature",
+                                "properties": properties,
+                                "geometry": geometry,
+                            }
+
+                            geojson_features.append(json.dumps(feature, separators=(",", ":")))
+                        # Process "way" elements to construct polygon geometries
+                        elif element["type"] == "way" and "nodes" in element:
+                                # Get the coordinates of the nodes that form the way
+                                coordinates = [
+                                    node_coordinates[node_id]
+                                    for node_id in element["nodes"]
+                                    if node_id in node_coordinates
+                                ]
+                                if not coordinates:
+                                    logger.warning(
+                                        f"No coordinates for {feature}: {element['id']}"
+                                    )
+                                    continue
+
+                                # Add properties for the feature, including the microgrid name and element ID
+                                properties = {"name_microgrid": grid_name, "id": element["id"]}
+                                if "tags" in element:  # Include additional tags if available
+                                    properties.update(element["tags"])
+
+                                # Create a GeoJSON feature for the way
+                                if geometry_type == "Polygon":
+                                    geometry = {
+                                        "type": "Polygon",
+                                        "coordinates": [coordinates],  # Close the polygon
+                                    }
+                                else:
+                                    geometry = {
+                                        "type": "LineString",
+                                        "coordinates": coordinates,
+                                    }
+                                feature = {
+                                    "type": "Feature",
+                                    "properties": properties,
+                                    "geometry": geometry,
+                                }
+                                # Serialize each feature as a compact JSON string and add it to the list
+                                geojson_features.append(
+                                    json.dumps(feature, separators=(",", ":"))
+                                )
+                else:
+                    for element in data["elements"]:
+                        if element["type"] == "way" and "nodes" in element:
+                                    # Get the coordinates of the nodes that form the way
+                                    coordinates = [
+                                        node_coordinates[node_id]
+                                        for node_id in element["nodes"]
+                                        if node_id in node_coordinates
+                                    ]
+                                    if not coordinates:
+                                        logger.warning(
+                                            f"No coordinates for {feature}: {element['id']}"
+                                        )
+                                        continue
+
+                                    # Add properties for the feature, including the microgrid name and element ID
+                                    properties = {"name_microgrid": grid_name, "id": element["id"]}
+                                    if "tags" in element:  # Include additional tags if available
+                                        properties.update(element["tags"])
+
+                                    # Create a GeoJSON feature for the way
+                                    if geometry_type == "Polygon":
+                                        geometry = {
+                                            "type": "Polygon",
+                                            "coordinates": [coordinates],  # Close the polygon
+                                        }
+                                    else:
+                                        geometry = {
+                                            "type": "LineString",
+                                            "coordinates": coordinates,
+                                        }
+                                    feature = {
+                                        "type": "Feature",
+                                        "properties": properties,
+                                        "geometry": geometry,
+                                    }
+                                    # Serialize each feature as a compact JSON string and add it to the list
+                                    geojson_features.append(
+                                        json.dumps(feature, separators=(",", ":"))
+                                    )
 
             except json.JSONDecodeError:
                 # Handle JSON parsing errors
