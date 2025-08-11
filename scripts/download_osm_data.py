@@ -190,8 +190,9 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                                 "name_microgrid": grid_name,
                                 "id": element["id"],
                             }
-                            if "tags" in element:
-                                properties.update(element["tags"])
+                            tags = element.get("tags")
+                            if isinstance(tags, dict):
+                                properties.update(tags)
 
                             geometry = {
                                 "type": "Point",
@@ -226,10 +227,9 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                                 "name_microgrid": grid_name,
                                 "id": element["id"],
                             }
-                            if (
-                                "tags" in element
-                            ):  # Include additional tags if available
-                                properties.update(element["tags"])
+                            tags = element.get("tags")
+                            if isinstance(tags, dict):
+                                properties.update(tags)
 
                             # Create a GeoJSON feature for the way
                             if geometry_type == "Polygon":
@@ -271,10 +271,9 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                                 "name_microgrid": grid_name,
                                 "id": element["id"],
                             }
-                            if (
-                                "tags" in element
-                            ):  # Include additional tags if available
-                                properties.update(element["tags"])
+                            tags = element.get("tags")
+                            if isinstance(tags, dict):
+                                properties.update(tags)
 
                             # Create a GeoJSON feature for the way
                             if geometry_type == "Polygon":
