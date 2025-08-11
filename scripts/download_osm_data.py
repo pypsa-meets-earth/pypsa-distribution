@@ -122,7 +122,7 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                 (._;>;);
                 out body;
                 """
-            
+
             elif feature == "cable":
                 filename = "all_raw_cable.geojson"
                 geometry_type = "LineString"
@@ -513,7 +513,13 @@ if __name__ == "__main__":
 
     elif snakemake.config["enable"]["download_osm_method"] == "overpass":
         microgrids_list = snakemake.config["microgrids_list"]
-        features = ["building", "minor_line", "cable", "generator", "substation_and_pole"]
+        features = [
+            "building",
+            "minor_line",
+            "cable",
+            "generator",
+            "substation_and_pole",
+        ]
         overpass_url = "https://overpass-api.de/api/interpreter"
         output_file = Path.cwd() / "resources" / RDIR / "osm" / "raw"
         retrieve_osm_data_geojson(microgrids_list, features, overpass_url, output_file)
