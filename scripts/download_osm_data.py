@@ -111,7 +111,7 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                     """
 
             elif feature == "minor_line":
-                filename = "all_raw_line.geojson"
+                filename = "all_raw_lines.geojson"
                 geometry_type = "LineString"
                 overpass_query = f"""
                 [out:json][timeout:60];
@@ -124,7 +124,7 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                 """
 
             elif feature == "cable":
-                filename = "all_raw_cable.geojson"
+                filename = "all_raw_cables.geojson"
                 geometry_type = "LineString"
                 overpass_query = f"""
                 [out:json][timeout:60];
@@ -137,7 +137,7 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                 """
 
             elif feature == "generator":
-                filename = "all_raw_generator.geojson"
+                filename = "all_raw_generators.geojson"
                 geometry_type = "Polygon"
                 overpass_query = f"""
                 [out:json][timeout:60];
@@ -150,8 +150,23 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                 out body;
                 """
 
-            elif feature == "substation_and_pole":
-                filename = "all_raw_substation.geojson"
+            elif feature == "substation":
+                filename = "all_raw_substations.geojson"
+                geometry_type = "Polygon"
+                overpass_query = f"""
+                [out:json][timeout:60];
+                (
+                node["power"="pole"]({lat_min},{lon_min},{lat_max},{lon_max});
+                node["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
+                way["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
+                relation["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
+                );
+                (._;>;);
+                out body;
+                """
+
+            elif feature == "pole":
+                filename = "all_raw_poles.geojson"
                 geometry_type = "Polygon"
                 overpass_query = f"""
                 [out:json][timeout:60];
@@ -192,7 +207,7 @@ def retrieve_osm_data_geojson(microgrids_list, feature, url, path):
                     if node["type"] == "node"
                 }
 
-                if feature == "substation_and_pole":
+                if feature == "pole":
                     for element in data["elements"]:
                         if (
                             element["type"] == "node"
@@ -518,7 +533,8 @@ if __name__ == "__main__":
             "minor_line",
             "cable",
             "generator",
-            "substation_and_pole",
+            "substation",
+            "pole",
         ]
         overpass_url = "https://overpass-api.de/api/interpreter"
         output_file = Path.cwd() / "resources" / RDIR / "osm" / "raw"
