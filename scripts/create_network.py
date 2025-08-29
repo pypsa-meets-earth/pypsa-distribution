@@ -50,7 +50,7 @@ def calculate_power_node_position(load_file, cluster_bus):
 
 
 def create_microgrid_network(
-    n, input_file, voltage_level, line_type, microgrid_list, input_path
+    n, input_file, voltage_level, line_type, interconnect_microgrids, microgrid_list, input_path
 ):
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
@@ -71,13 +71,15 @@ def create_microgrid_network(
     microgrid_list : dict
         A dictionary containing the list of microgrids. Keys are microgrid names,
         and values are metadata about each microgrid.
+    interconnect_microgrids: bool
+        An option to interconnect microgrids. True interconnects all the microgrids via Delaunay triangulation.
     Output
     ------
     The PyPSA network (`n`) is updated with:
     - Buses for each microgrid, identified by cluster ID and associated with a SubNetwork.
     - Lines connecting buses within each microgrid based on Delaunay triangulation.
     """
-
+    
     data = gpd.read_file(input_file)
     load = pd.read_csv(input_path)
     bus_coords = set()  # Keep track of bus coordinates to avoid duplicates
@@ -147,7 +149,6 @@ def create_microgrid_network(
             bus0 = microgrid_buses[i]
             bus1 = microgrid_buses[j]
             line_name = f"{grid_name}_line_{bus0}_{bus1}"
-
             # Skip if the line already exists
             if line_name in n.lines.index:
                 continue
@@ -155,7 +156,11 @@ def create_microgrid_network(
             # Retrieve the coordinates of the buses
             x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
             x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-
+            df = {'Buses': ['bus0', 'bus1'], 'geometry': [Point(x1, y1), Point(x2, y2)]}
+            gdf = gpd.GeoDataFrame(df, crs=4326)
+            gdf = gdf.to_crs("epsg:3857")
+            x1, y1 = gdf.geometry.x[0], gdf.geometry.y[0]
+            x2, y2 = gdf.geometry.x[1], gdf.geometry.y[1]
             # Calculate the distance between buses (in km)
             length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
 
@@ -170,62 +175,53 @@ def create_microgrid_network(
                 s_nom=0.1,
                 s_nom_extendable=True,
             )
-
-    if len(microgrid_list.keys()) == 2:
-        bus_positions = []
-        microgrids = []
-        for each in microgrid_list.keys():
-            x = n.buses.loc[f"{each}_gen_bus"].x
-            y = n.buses.loc[f"{each}_gen_bus"].y
-            bus_positions.append((x, y))
-            gen_bus_name = f"{each}_gen_bus"
-            microgrids.append(gen_bus_name)
-        bus0 = microgrids[0]
-        bus1 = microgrids[1]
-        line_name = f"interconnection_line_between_{bus0}_and_{bus1}"
-        x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
-        x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-        length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
-        n.add(
-            "Line",
-            line_name,
-            bus0=bus0,
-            bus1=bus1,
-            type=line_type,
-            length=length,
-            s_nom=0.1,
-            s_nom_extendable=True,
-        )
-    elif len(microgrid_list.keys()) > 2:
-        bus_positions = []
-        microgrids = []
-        for each in microgrid_list.keys():
-            x = n.buses.loc[f"{each}_gen_bus"].x
-            y = n.buses.loc[f"{each}_gen_bus"].y
-            bus_positions.append((x, y))
-            gen_bus_name = f"{each}_gen_bus"
-            microgrids.append(gen_bus_name)
-        # add lines between generation buses
-        coords = np.array(bus_positions)
-        tri = Delaunay(coords)
-        # Collect unique edges from the Delaunay triangulation
-        edges = set()
-        for simplex in tri.simplices:
-            for i in range(3):
-                edge = tuple(sorted([simplex[i], simplex[(i + 1) % 3]]))
-                edges.add(edge)
-        # Add lines to the network based on the triangulation edges
-        for i, j in edges:
-            bus0 = microgrids[i]
-            bus1 = microgrids[j]
-            line_name = f"interconnection_line_between_{bus0}_and_{bus1}"
-            if line_name in n.lines.index:
-                continue
-            x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
-            x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-            length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
-            # Add the line to the network
-            n.add(
+    if interconnect_microgrids == True:
+        if len(microgrid_list.keys()) >= 2:
+            bus_positions = []
+            microgrids = []
+            inter_cons = []
+            for each in microgrid_list.keys():
+                x = n.buses.loc[f"{each}_gen_bus"].x
+                y = n.buses.loc[f"{each}_gen_bus"].y
+                bus_positions.append((x, y))
+                gen_bus_name = f"{each}_gen_bus"
+                microgrids.append(gen_bus_name)
+            
+            if len(microgrid_list.keys()) == 2:
+                bus0 = microgrids[0]
+                bus1 = microgrids[1]
+                inter_cons.extend([[bus0,bus1]])
+            
+            if len(microgrid_list.keys()) > 2:   
+                # add lines between gen buses
+                coords = np.array(bus_positions)
+                tri = Delaunay(coords)
+                # Collect unique edges from the Delaunay triangulation
+                edges = set()
+                for simplex in tri.simplices:
+                    for i in range(3):
+                        edge = tuple(sorted([simplex[i], simplex[(i + 1) % 3]]))
+                        edges.add(edge)
+                # Add lines to the network based on the triangulation edges
+                for i, j in edges:
+                    bus0 = microgrids[i]
+                    bus1 = microgrids[j]
+                    inter_cons.extend([[bus0,bus1]])
+            
+            for bus in inter_cons:
+                x1, y1 = n.buses.loc[bus[0]].x, n.buses.loc[bus[0]].y
+                x2, y2 = n.buses.loc[bus[1]].x, n.buses.loc[bus[1]].y
+                df = {'Buses': ['bus0', 'bus1'], 'geometry': [Point(x1, y1), Point(x2, y2)]}
+                gdf = gpd.GeoDataFrame(df, crs=4326)
+                gdf = gdf.to_crs("epsg:3857")
+                x1, y1 = gdf.geometry.x[0], gdf.geometry.y[0]
+                x2, y2 = gdf.geometry.x[1], gdf.geometry.y[1]
+                length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
+                # Add the line to the network
+                line_name = f"interconnection_line_between_{bus[0]}_and_{bus[1]}"
+                if line_name in n.lines.index:
+                    continue
+                n.add(
                 "Line",
                 line_name,
                 bus0=bus0,
@@ -338,6 +334,7 @@ if __name__ == "__main__":
         snakemake.input["clusters"],
         snakemake.config["electricity"]["voltage"],
         snakemake.config["electricity"]["line_type"],
+        snakemake.config["enable"]["interconnect_microgrids"],
         microgrids_list,
         snakemake.input["load"],
     )
