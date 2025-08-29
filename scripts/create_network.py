@@ -50,7 +50,13 @@ def calculate_power_node_position(load_file, cluster_bus):
 
 
 def create_microgrid_network(
-    n, input_file, voltage_level, line_type, interconnect_microgrids, microgrid_list, input_path
+    n,
+    input_file,
+    voltage_level,
+    line_type,
+    interconnect_microgrids,
+    microgrid_list,
+    input_path,
 ):
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
@@ -79,7 +85,7 @@ def create_microgrid_network(
     - Buses for each microgrid, identified by cluster ID and associated with a SubNetwork.
     - Lines connecting buses within each microgrid based on Delaunay triangulation.
     """
-    
+
     data = gpd.read_file(input_file)
     load = pd.read_csv(input_path)
     bus_coords = set()  # Keep track of bus coordinates to avoid duplicates
@@ -156,7 +162,7 @@ def create_microgrid_network(
             # Retrieve the coordinates of the buses
             x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
             x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-            df = {'Buses': ['bus0', 'bus1'], 'geometry': [Point(x1, y1), Point(x2, y2)]}
+            df = {"Buses": ["bus0", "bus1"], "geometry": [Point(x1, y1), Point(x2, y2)]}
             gdf = gpd.GeoDataFrame(df, crs=4326)
             gdf = gdf.to_crs("epsg:3857")
             x1, y1 = gdf.geometry.x[0], gdf.geometry.y[0]
@@ -186,13 +192,13 @@ def create_microgrid_network(
                 bus_positions.append((x, y))
                 gen_bus_name = f"{each}_gen_bus"
                 microgrids.append(gen_bus_name)
-            
+
             if len(microgrid_list.keys()) == 2:
                 bus0 = microgrids[0]
                 bus1 = microgrids[1]
-                inter_cons.extend([[bus0,bus1]])
-            
-            if len(microgrid_list.keys()) > 2:   
+                inter_cons.extend([[bus0, bus1]])
+
+            if len(microgrid_list.keys()) > 2:
                 # add lines between gen buses
                 coords = np.array(bus_positions)
                 tri = Delaunay(coords)
@@ -206,12 +212,15 @@ def create_microgrid_network(
                 for i, j in edges:
                     bus0 = microgrids[i]
                     bus1 = microgrids[j]
-                    inter_cons.extend([[bus0,bus1]])
-            
+                    inter_cons.extend([[bus0, bus1]])
+
             for bus in inter_cons:
                 x1, y1 = n.buses.loc[bus[0]].x, n.buses.loc[bus[0]].y
                 x2, y2 = n.buses.loc[bus[1]].x, n.buses.loc[bus[1]].y
-                df = {'Buses': ['bus0', 'bus1'], 'geometry': [Point(x1, y1), Point(x2, y2)]}
+                df = {
+                    "Buses": ["bus0", "bus1"],
+                    "geometry": [Point(x1, y1), Point(x2, y2)],
+                }
                 gdf = gpd.GeoDataFrame(df, crs=4326)
                 gdf = gdf.to_crs("epsg:3857")
                 x1, y1 = gdf.geometry.x[0], gdf.geometry.y[0]
@@ -222,15 +231,15 @@ def create_microgrid_network(
                 if line_name in n.lines.index:
                     continue
                 n.add(
-                "Line",
-                line_name,
-                bus0=bus0,
-                bus1=bus1,
-                type=line_type,
-                length=length,
-                s_nom=0.1,
-                s_nom_extendable=True,
-            )
+                    "Line",
+                    line_name,
+                    bus0=bus0,
+                    bus1=bus1,
+                    type=line_type,
+                    length=length,
+                    s_nom=0.1,
+                    s_nom_extendable=True,
+                )
 
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
