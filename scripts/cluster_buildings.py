@@ -169,7 +169,7 @@ def get_central_points_geojson_with_buildings(
 
     # Save centroids as GeoJSON (invariato)
     all_central_features.to_file(output_filepath_centroids, driver="GeoJSON")
-        # Save clustered buildings as GeoJSON: pulizia per-feature + una feature per riga
+    # Save clustered buildings as GeoJSON: pulizia per-feature + una feature per riga
     if all_microgrid_buildings.columns.duplicated().any():
         all_microgrid_buildings = all_microgrid_buildings.loc[
             :, ~all_microgrid_buildings.columns.duplicated(keep="first")
@@ -199,7 +199,6 @@ def get_central_points_geojson_with_buildings(
         f.write("\n]}\n")
     # Save building type counts as CSV (invariato)
     all_buildings_class.to_csv(output_path_csv, index=False)
-
 
 
 if __name__ == "__main__":

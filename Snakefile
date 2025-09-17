@@ -1,4 +1,3 @@
-
 import sys
 
 sys.path.append("./scripts")
@@ -194,6 +193,7 @@ rule clean_earth_osm_data:
     script:
         "scripts/clean_earth_osm_data.py"
 
+
 rule clean_osm_data:
     params:
         crs=config["crs"],
@@ -221,26 +221,37 @@ rule clean_osm_data:
 
 rule build_osm_network:
     params:
-        build_osm_network = config.get("build_osm_network", {}),
-        countries = config["countries"],
-        crs = config["crs"],
+        build_osm_network=config.get("build_osm_network", {}),
+        countries=config["countries"],
+        crs=config["crs"],
     input:
-        generators   = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_generators.geojson"),
-        lines        = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_lines.geojson"),
-        substations  = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_substations.geojson"),
+        generators=os.path.abspath(
+            "resources/" + RDIR + "osm/clean/all_clean_generators.geojson"
+        ),
+        lines=os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_lines.geojson"),
+        substations=os.path.abspath(
+            "resources/" + RDIR + "osm/clean/all_clean_substations.geojson"
+        ),
         country_shapes=pypsaearth("resources/" + RDIR + "shapes/country_shapes.geojson"),
     output:
-        lines        = os.path.abspath("resources/" + RDIR + "base_network/all_lines_build_network.csv"),
-        converters   = os.path.abspath("resources/" + RDIR + "base_network/all_converters_build_network.csv"),
-        transformers = os.path.abspath("resources/" + RDIR + "base_network/all_transformers_build_network.csv"),
-        substations  = os.path.abspath("resources/" + RDIR + "base_network/all_buses_build_network.csv"),
+        lines=os.path.abspath(
+            "resources/" + RDIR + "base_network/all_lines_build_network.csv"
+        ),
+        converters=os.path.abspath(
+            "resources/" + RDIR + "base_network/all_converters_build_network.csv"
+        ),
+        transformers=os.path.abspath(
+            "resources/" + RDIR + "base_network/all_transformers_build_network.csv"
+        ),
+        substations=os.path.abspath(
+            "resources/" + RDIR + "base_network/all_buses_build_network.csv"
+        ),
     log:
         "logs/" + RDIR + "build_osm_network.log",
     benchmark:
         "benchmarks/" + RDIR + "build_osm_network"
     script:
         pypsaearth("scripts/build_osm_network.py")
-
 
 
 rule cluster_buildings:

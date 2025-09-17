@@ -39,6 +39,8 @@ def convert_iso_to_geofk(
 
 
 import time
+
+
 def retrieve_osm_data_geojson(microgrids_list, features, url, path):
     """
     Retrieve OpenStreetMap data from the Overpass API for a list of microgrids.
@@ -76,10 +78,11 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
             continue
 
         for grid_name, grid_data in microgrids_list.items():
-            lat_min = grid_data["lat_min"]; lon_min = grid_data["lon_min"]
-            lat_max = grid_data["lat_max"]; lon_max = grid_data["lon_max"]
+            lat_min = grid_data["lat_min"]
+            lon_min = grid_data["lon_min"]
+            lat_max = grid_data["lat_max"]
+            lon_max = grid_data["lon_max"]
 
-            
             if feature == "building":
                 overpass_query = f"""
                 [out:json][timeout:120];
@@ -139,7 +142,9 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
                 """
 
             try:
-                logger.info(f"Querying Overpass API for microgrid: {grid_name} with feature: {feature}")
+                logger.info(
+                    f"Querying Overpass API for microgrid: {grid_name} with feature: {feature}"
+                )
                 response = requests.get(url, params={"data": overpass_query})
                 response.raise_for_status()
                 data = response.json()
@@ -150,32 +155,61 @@ def retrieve_osm_data_geojson(microgrids_list, features, url, path):
                     if node["type"] == "node"
                 }
 
-                
                 for element in data.get("elements", []):
                     if feature == "pole":
-                        if element["type"] == "node" and "lon" in element and "lat" in element:
+                        if (
+                            element["type"] == "node"
+                            and "lon" in element
+                            and "lat" in element
+                        ):
                             props = {"name_microgrid": grid_name, "id": element["id"]}
                             tags = element.get("tags")
                             if isinstance(tags, dict):
                                 props.update(tags)
-                            geom = {"type": "Point","coordinates":[element["lon"],element["lat"]]}
-                            geojson_features.append(json.dumps({"type":"Feature","properties":props,"geometry":geom}))
+                            geom = {
+                                "type": "Point",
+                                "coordinates": [element["lon"], element["lat"]],
+                            }
+                            geojson_features.append(
+                                json.dumps(
+                                    {
+                                        "type": "Feature",
+                                        "properties": props,
+                                        "geometry": geom,
+                                    }
+                                )
+                            )
                     else:
                         if element["type"] == "way" and "nodes" in element:
-                            coords = [node_coordinates[nid] for nid in element["nodes"] if nid in node_coordinates]
-                            if not coords: continue
+                            coords = [
+                                node_coordinates[nid]
+                                for nid in element["nodes"]
+                                if nid in node_coordinates
+                            ]
+                            if not coords:
+                                continue
                             props = {"name_microgrid": grid_name, "id": element["id"]}
                             tags = element.get("tags")
                             if isinstance(tags, dict):
                                 props.update(tags)
                             if geometry_type == "Polygon":
-                                geom = {"type":"Polygon","coordinates":[coords]}
+                                geom = {"type": "Polygon", "coordinates": [coords]}
                             else:
-                                geom = {"type":"LineString","coordinates":coords}
-                            geojson_features.append(json.dumps({"type":"Feature","properties":props,"geometry":geom}))
+                                geom = {"type": "LineString", "coordinates": coords}
+                            geojson_features.append(
+                                json.dumps(
+                                    {
+                                        "type": "Feature",
+                                        "properties": props,
+                                        "geometry": geom,
+                                    }
+                                )
+                            )
 
             except Exception as e:
-                logger.error(f"Request/JSON error for microgrid: {grid_name} feature {feature}: {e}")
+                logger.error(
+                    f"Request/JSON error for microgrid: {grid_name} feature {feature}: {e}"
+                )
 
         # write output file for this feature
         outpath = Path(path) / filename
@@ -371,10 +405,13 @@ if __name__ == "__main__":
 
         for f in out_formats:
             # SALVA AL PLURALE
-            new_file_name = Path.joinpath(store_path_resources, f"all_raw_buildings.{f}")
+            new_file_name = Path.joinpath(
+                store_path_resources, f"all_raw_buildings.{f}"
+            )
             # accetta sia *buildings.* sia *building.* prodotti da earth_osm
-            old_file = (list(Path(out_path).glob(f"*buildings.{f}"))
-                        or list(Path(out_path).glob(f"*building.{f}")))
+            old_file = list(Path(out_path).glob(f"*buildings.{f}")) or list(
+                Path(out_path).glob(f"*building.{f}")
+            )
 
             if not old_file:
                 # crea file vuoto valido

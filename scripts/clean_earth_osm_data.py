@@ -4,6 +4,7 @@
 
 import json
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -11,7 +12,7 @@ import numpy as np
 import pandas as pd
 from _helpers_dist import configure_logging, sets_path_to_root
 from shapely.geometry import Point, Polygon
-from pathlib import Path
+
 
 def extract_points(microgrid_shape_path, buildings_path, output_path):
     """
@@ -56,14 +57,18 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
     geojson_features = []
     try:
         for feat in result.iterfeatures(na="drop", drop_id=True):
-            geojson_features.append(json.dumps(feat, ensure_ascii=False, separators=(",", ":")))
+            geojson_features.append(
+                json.dumps(feat, ensure_ascii=False, separators=(",", ":"))
+            )
     except TypeError:
         raw = json.loads(result.to_json())
         for feat in raw.get("features", []):
             props = feat.get("properties", {}) or {}
             for k in [k for k, v in list(props.items()) if v is None]:
                 props.pop(k, None)
-            geojson_features.append(json.dumps(feat, ensure_ascii=False, separators=(",", ":")))
+            geojson_features.append(
+                json.dumps(feat, ensure_ascii=False, separators=(",", ":"))
+            )
     outpath = Path(output_path)
     outpath.parent.mkdir(parents=True, exist_ok=True)
     with open(outpath, "w", encoding="utf-8") as f:
