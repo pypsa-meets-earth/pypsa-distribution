@@ -1,4 +1,3 @@
-
 import sys
 
 sys.path.append("./scripts")
@@ -193,7 +192,6 @@ rule clean_earth_osm_data:
         mem_mb=3000,
     script:
         "scripts/clean_earth_osm_data.py"
-
 
 
 rule cluster_buildings:
