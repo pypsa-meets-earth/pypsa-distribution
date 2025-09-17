@@ -1,3 +1,4 @@
+
 import sys
 
 sys.path.append("./scripts")
@@ -11,6 +12,7 @@ from os.path import normpath, exists, isdir
 from shutil import copyfile
 from pathlib import Path
 from _helpers import create_country_list
+import os
 
 import sys
 
@@ -164,7 +166,7 @@ if config["enable"].get("download_osm_buildings", True):
 
     rule download_osm_data:
         output:
-            building_resources="resources/" + RDIR + "osm/raw/all_raw_building.geojson",
+            building_resources="resources/" + RDIR + "osm/raw/all_raw_buildings.geojson",
         log:
             "logs/" + RDIR + "download_osm_data.log",
         benchmark:
@@ -178,7 +180,7 @@ if config["enable"].get("download_osm_buildings", True):
 
 rule clean_earth_osm_data:
     input:
-        all_buildings="resources/" + RDIR + "osm/raw/all_raw_building.geojson",
+        all_buildings="resources/" + RDIR + "osm/raw/all_raw_buildings.geojson",
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
     output:
         microgrid_building="resources/buildings/microgrid_building.geojson",
@@ -191,6 +193,54 @@ rule clean_earth_osm_data:
         mem_mb=3000,
     script:
         "scripts/clean_earth_osm_data.py"
+
+rule clean_osm_data:
+    params:
+        crs=config["crs"],
+        clean_osm_data_options=config["clean_osm_data_options"],
+    input:
+        cables="resources/" + RDIR + "osm/raw/all_raw_cables.geojson",
+        generators="resources/" + RDIR + "osm/raw/all_raw_generators.geojson",
+        lines="resources/" + RDIR + "osm/raw/all_raw_lines.geojson",
+        substations="resources/" + RDIR + "osm/raw/all_raw_substations.geojson",
+        country_shapes="resources/shapes/microgrid_shapes.geojson",
+        offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
+        africa_shape=pypsaearth("resources/shapes/africa_shape.geojson"),
+    output:
+        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
+        generators_csv="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
+        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
+        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
+    log:
+        "logs/" + RDIR + "clean_osm_data.log",
+    benchmark:
+        "benchmarks/" + RDIR + "clean_osm_data"
+    script:
+        pypsaearth("scripts/clean_osm_data.py")
+
+
+rule build_osm_network:
+    params:
+        build_osm_network = config.get("build_osm_network", {}),
+        countries = config["countries"],
+        crs = config["crs"],
+    input:
+        generators   = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_generators.geojson"),
+        lines        = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_lines.geojson"),
+        substations  = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_substations.geojson"),
+        country_shapes=pypsaearth("resources/" + RDIR + "shapes/country_shapes.geojson"),
+    output:
+        lines        = os.path.abspath("resources/" + RDIR + "base_network/all_lines_build_network.csv"),
+        converters   = os.path.abspath("resources/" + RDIR + "base_network/all_converters_build_network.csv"),
+        transformers = os.path.abspath("resources/" + RDIR + "base_network/all_transformers_build_network.csv"),
+        substations  = os.path.abspath("resources/" + RDIR + "base_network/all_buses_build_network.csv"),
+    log:
+        "logs/" + RDIR + "build_osm_network.log",
+    benchmark:
+        "benchmarks/" + RDIR + "build_osm_network"
+    script:
+        pypsaearth("scripts/build_osm_network.py")
+
 
 
 rule cluster_buildings:

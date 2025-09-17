@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from collections import Counter
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
@@ -166,16 +167,39 @@ def get_central_points_geojson_with_buildings(
             [all_buildings_class, buildings_class], ignore_index=True
         )
 
-    # Save all the results to their respective output files
-    all_central_features.to_file(
-        output_filepath_centroids, driver="GeoJSON"
-    )  # Save cluster centroids as GeoJSON
-    all_microgrid_buildings.to_file(
-        output_filepath_buildings, driver="GeoJSON"
-    )  # Save clustered buildings as GeoJSON
-    all_buildings_class.to_csv(
-        output_path_csv, index=False
-    )  # Save building type counts as CSV
+    # Save centroids as GeoJSON (invariato)
+    all_central_features.to_file(output_filepath_centroids, driver="GeoJSON")
+        # Save clustered buildings as GeoJSON: pulizia per-feature + una feature per riga
+    if all_microgrid_buildings.columns.duplicated().any():
+        all_microgrid_buildings = all_microgrid_buildings.loc[
+            :, ~all_microgrid_buildings.columns.duplicated(keep="first")
+        ].copy()
+
+    geojson_features = []
+    try:
+        for feat in all_microgrid_buildings.iterfeatures(na="drop"):
+            geojson_features.append(
+                json.dumps(feat, ensure_ascii=False, separators=(",", ":"))
+            )
+    except TypeError:
+        raw = json.loads(all_microgrid_buildings.to_json())
+        for feat in raw.get("features", []):
+            props = feat.get("properties", {}) or {}
+            for k in [k for k, v in list(props.items()) if v is None]:
+                props.pop(k, None)
+            geojson_features.append(
+                json.dumps(feat, ensure_ascii=False, separators=(",", ":"))
+            )
+
+    outpath = Path(output_filepath_buildings)
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(outpath, "w", encoding="utf-8") as f:
+        f.write('{"type":"FeatureCollection","features":[\n')
+        f.write(",\n".join(geojson_features))
+        f.write("\n]}\n")
+    # Save building type counts as CSV (invariato)
+    all_buildings_class.to_csv(output_path_csv, index=False)
+
 
 
 if __name__ == "__main__":

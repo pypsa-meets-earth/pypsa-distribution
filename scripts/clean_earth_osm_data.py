@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from _helpers_dist import configure_logging, sets_path_to_root
 from shapely.geometry import Point, Polygon
-
+from pathlib import Path
 
 def extract_points(microgrid_shape_path, buildings_path, output_path):
     """
@@ -33,7 +33,6 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
         A GeoDataFrame containing the filtered buildings with an added field "name_microgrid"
         that associates each building to its corresponding microgrid.
     """
-
     # Load the GeoJSON files
     microgrid = gpd.read_file(microgrid_shape_path)
     buildings = gpd.read_file(buildings_path)
@@ -54,9 +53,23 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
         result = gpd.GeoDataFrame(
             pd.concat([result, buildings_in_microgrid], ignore_index=True)
         )
-    # Save the final result as a GeoJSON file
-    result.to_file(output_path, driver="GeoJSON")
-
+    geojson_features = []
+    try:
+        for feat in result.iterfeatures(na="drop", drop_id=True):
+            geojson_features.append(json.dumps(feat, ensure_ascii=False, separators=(",", ":")))
+    except TypeError:
+        raw = json.loads(result.to_json())
+        for feat in raw.get("features", []):
+            props = feat.get("properties", {}) or {}
+            for k in [k for k, v in list(props.items()) if v is None]:
+                props.pop(k, None)
+            geojson_features.append(json.dumps(feat, ensure_ascii=False, separators=(",", ":")))
+    outpath = Path(output_path)
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(outpath, "w", encoding="utf-8") as f:
+        f.write('{"type":"FeatureCollection","features":[\n')
+        f.write(",\n".join(geojson_features))
+        f.write("\n]}\n")
     return result
 
 
