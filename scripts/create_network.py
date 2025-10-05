@@ -151,36 +151,38 @@ def create_microgrid_network(
                 edges.add(edge)
 
         # Add lines to the network based on the triangulation edges
+        df = pd.DataFrame()
         for i, j in edges:
             bus0 = microgrid_buses[i]
             bus1 = microgrid_buses[j]
             line_name = f"{grid_name}_line_{bus0}_{bus1}"
-            # Skip if the line already exists
-            if line_name in n.lines.index:
-                continue
-
             # Retrieve the coordinates of the buses
             x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
             x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-            df = {"Buses": ["bus0", "bus1"], "geometry": [Point(x1, y1), Point(x2, y2)]}
-            gdf = gpd.GeoDataFrame(df, crs=4326)
-            gdf = gdf.to_crs("epsg:3857")
-            x1, y1 = gdf.geometry.x[0], gdf.geometry.y[0]
-            x2, y2 = gdf.geometry.x[1], gdf.geometry.y[1]
-            # Calculate the distance between buses (in km)
-            length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
-
-            # Add the line to the network
-            n.add(
-                "Line",
-                line_name,
-                bus0=bus0,
-                bus1=bus1,
-                type=line_type,
-                length=length,
-                s_nom=0.1,
-                s_nom_extendable=True,
-            )
+            bus0_coord = Point(x1,y1)
+            bus1_coord = Point(x2,y2)
+            # Create a GeoSeries with a defined CRS (WGS84 - EPSG:4326)
+            gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
+            # Convert to a projected CRS (e.g., EPSG:3857 for meters)
+            gdf_proj = gdf.to_crs(epsg=3857)
+            # Calculate distance (in meters)
+            distance_km = gdf_proj[0].distance(gdf_proj[1])/1000
+            df_aux = pd.DataFrame({
+            'line_name': [line_name],
+            'bus0': [bus0],
+            'bus1': [bus1],
+            'line_type': line_type,
+            's_nom': [0.1],
+            's_nom_extendable': True,
+            'length': [distance_km]
+            })
+            df = pd.concat([df,df_aux])
+            
+        df.index = df["line_name"]
+        df.drop('line_name', axis=1, inplace=True)
+        n.import_components_from_dataframe(df,"Line")
+    
+    df = pd.DataFrame()
     if interconnect_microgrids == True:
         if len(microgrid_list.keys()) >= 2:
             bus_positions = []
@@ -199,7 +201,6 @@ def create_microgrid_network(
                 inter_cons.extend([[bus0, bus1]])
 
             if len(microgrid_list.keys()) > 2:
-                # add lines between gen buses
                 coords = np.array(bus_positions)
                 tri = Delaunay(coords)
                 # Collect unique edges from the Delaunay triangulation
@@ -217,29 +218,28 @@ def create_microgrid_network(
             for bus in inter_cons:
                 x1, y1 = n.buses.loc[bus[0]].x, n.buses.loc[bus[0]].y
                 x2, y2 = n.buses.loc[bus[1]].x, n.buses.loc[bus[1]].y
-                df = {
-                    "Buses": ["bus0", "bus1"],
-                    "geometry": [Point(x1, y1), Point(x2, y2)],
-                }
-                gdf = gpd.GeoDataFrame(df, crs=4326)
-                gdf = gdf.to_crs("epsg:3857")
-                x1, y1 = gdf.geometry.x[0], gdf.geometry.y[0]
-                x2, y2 = gdf.geometry.x[1], gdf.geometry.y[1]
-                length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
-                # Add the line to the network
                 line_name = f"interconnection_line_between_{bus[0]}_and_{bus[1]}"
-                if line_name in n.lines.index:
-                    continue
-                n.add(
-                    "Line",
-                    line_name,
-                    bus0=bus0,
-                    bus1=bus1,
-                    type=line_type,
-                    length=length,
-                    s_nom=0.1,
-                    s_nom_extendable=True,
-                )
+                bus0_coord = Point(x1,y1)
+                bus1_coord = Point(x2,y2)
+                # Create a GeoSeries with a defined CRS (WGS84 - EPSG:4326)
+                gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
+                # Convert to a projected CRS (e.g., EPSG:3857 for meters)
+                gdf_proj = gdf.to_crs(epsg=3857)
+                # Calculate distance (in meters)
+                distance_km = gdf_proj[0].distance(gdf_proj[1])/1000
+                df_aux = pd.DataFrame({
+                'line_name': [line_name],
+                'bus0': [bus[0]],
+                'bus1': [bus[1]],
+                'line_type': line_type,
+                's_nom': [0.1],
+                's_nom_extendable': True,
+                'length': [distance_km]
+                })
+                df = pd.concat([df,df_aux])
+            df.index = df["line_name"]
+            df.drop('line_name', axis=1, inplace=True)
+            n.import_components_from_dataframe(df,"Line")
 
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
