@@ -159,29 +159,31 @@ def create_microgrid_network(
             # Retrieve the coordinates of the buses
             x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
             x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-            bus0_coord = Point(x1,y1)
-            bus1_coord = Point(x2,y2)
+            bus0_coord = Point(x1, y1)
+            bus1_coord = Point(x2, y2)
             # Create a GeoSeries with a defined CRS (WGS84 - EPSG:4326)
             gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
             # Convert to a projected CRS (e.g., EPSG:3857 for meters)
             gdf_proj = gdf.to_crs(epsg=3857)
             # Calculate distance (in meters)
-            distance_km = gdf_proj[0].distance(gdf_proj[1])/1000
-            df_aux = pd.DataFrame({
-            'line_name': [line_name],
-            'bus0': [bus0],
-            'bus1': [bus1],
-            'line_type': line_type,
-            's_nom': [0.1],
-            's_nom_extendable': True,
-            'length': [distance_km]
-            })
-            df = pd.concat([df,df_aux])
-            
+            distance_km = gdf_proj[0].distance(gdf_proj[1]) / 1000
+            df_aux = pd.DataFrame(
+                {
+                    "line_name": [line_name],
+                    "bus0": [bus0],
+                    "bus1": [bus1],
+                    "line_type": line_type,
+                    "s_nom": [0.1],
+                    "s_nom_extendable": True,
+                    "length": [distance_km],
+                }
+            )
+            df = pd.concat([df, df_aux])
+
         df.index = df["line_name"]
-        df.drop('line_name', axis=1, inplace=True)
-        n.import_components_from_dataframe(df,"Line")
-    
+        df.drop("line_name", axis=1, inplace=True)
+        n.import_components_from_dataframe(df, "Line")
+
     df = pd.DataFrame()
     if interconnect_microgrids == True:
         if len(microgrid_list.keys()) >= 2:
@@ -219,27 +221,29 @@ def create_microgrid_network(
                 x1, y1 = n.buses.loc[bus[0]].x, n.buses.loc[bus[0]].y
                 x2, y2 = n.buses.loc[bus[1]].x, n.buses.loc[bus[1]].y
                 line_name = f"interconnection_line_between_{bus[0]}_and_{bus[1]}"
-                bus0_coord = Point(x1,y1)
-                bus1_coord = Point(x2,y2)
+                bus0_coord = Point(x1, y1)
+                bus1_coord = Point(x2, y2)
                 # Create a GeoSeries with a defined CRS (WGS84 - EPSG:4326)
                 gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
                 # Convert to a projected CRS (e.g., EPSG:3857 for meters)
                 gdf_proj = gdf.to_crs(epsg=3857)
                 # Calculate distance (in meters)
-                distance_km = gdf_proj[0].distance(gdf_proj[1])/1000
-                df_aux = pd.DataFrame({
-                'line_name': [line_name],
-                'bus0': [bus[0]],
-                'bus1': [bus[1]],
-                'line_type': line_type,
-                's_nom': [0.1],
-                's_nom_extendable': True,
-                'length': [distance_km]
-                })
-                df = pd.concat([df,df_aux])
+                distance_km = gdf_proj[0].distance(gdf_proj[1]) / 1000
+                df_aux = pd.DataFrame(
+                    {
+                        "line_name": [line_name],
+                        "bus0": [bus[0]],
+                        "bus1": [bus[1]],
+                        "line_type": line_type,
+                        "s_nom": [0.1],
+                        "s_nom_extendable": True,
+                        "length": [distance_km],
+                    }
+                )
+                df = pd.concat([df, df_aux])
             df.index = df["line_name"]
-            df.drop('line_name', axis=1, inplace=True)
-            n.import_components_from_dataframe(df,"Line")
+            df.drop("line_name", axis=1, inplace=True)
+            n.import_components_from_dataframe(df, "Line")
 
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
