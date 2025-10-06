@@ -117,9 +117,9 @@ def create_bus_regions(microgrids_list, output_path, country_code):
     microgrid_gdf = gpd.GeoDataFrame(
         {
             "name_microgrid": microgrid_names,  # microgrid-specific name
-            "x": microgrid_x,                   # x-coordinates of the centers
-            "y": microgrid_y,                   # y-coordinates of the centers
-            "geometry": microgrid_shapes,       # Polygon shapes of the regions
+            "x": microgrid_x,  # x-coordinates of the centers
+            "y": microgrid_y,  # y-coordinates of the centers
+            "geometry": microgrid_shapes,  # Polygon shapes of the regions
         }
     )
     microgrid_gdf["name"] = country_code
@@ -138,7 +138,6 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     country_code = snakemake.params["countries"]
-    
 
     create_microgrid_shapes(
         snakemake.config["microgrids_list"],
@@ -151,4 +150,3 @@ if __name__ == "__main__":
         snakemake.output["microgrid_bus_shapes"],
         country_code=country_code,
     )
-

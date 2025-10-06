@@ -138,7 +138,11 @@ def get_central_points_geojson_with_buildings(
 
         # Centroids GeoDataFrame (force WGS84 for output)
         central_features = [
-            {"geometry": Point(central_point), "cluster": i, "name_microgrid": grid_name}
+            {
+                "geometry": Point(central_point),
+                "cluster": i,
+                "name_microgrid": grid_name,
+            }
             for i, central_point in enumerate(central_points)
         ]
         central_features_gdf = gpd.GeoDataFrame(
@@ -178,7 +182,8 @@ def get_central_points_geojson_with_buildings(
     # Ensure WGS84 for GeoJSON output
     gdf_out = (
         all_microgrid_buildings.to_crs("EPSG:4326")
-        if all_microgrid_buildings.crs and all_microgrid_buildings.crs.to_string().upper() != "EPSG:4326"
+        if all_microgrid_buildings.crs
+        and all_microgrid_buildings.crs.to_string().upper() != "EPSG:4326"
         else all_microgrid_buildings
     )
     gdf_out.to_file(output_filepath_buildings, driver="GeoJSON")
@@ -210,4 +215,3 @@ if __name__ == "__main__":
         snakemake.output["buildings_type"],
         snakemake.config["microgrids_list"],
     )
-

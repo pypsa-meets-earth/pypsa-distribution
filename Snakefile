@@ -167,12 +167,18 @@ if config["enable"].get("download_osm_buildings", True):
 
     rule download_osm_data:
         output:
-            buildings_resources   = "resources/" + RDIR + "osm/raw/all_raw_buildings.geojson",
-            lines_resources      = "resources/" + RDIR + "osm/raw/all_raw_lines.geojson",
-            cables_resources      = "resources/" + RDIR + "osm/raw/all_raw_cables.geojson",
-            generators_resources  = "resources/" + RDIR + "osm/raw/all_raw_generators.geojson",
-            substations_resources = "resources/" + RDIR + "osm/raw/all_raw_substations.geojson",
-            poles_resources       = "resources/" + RDIR + "osm/raw/all_raw_poles.geojson",
+            buildings_resources="resources/"
+            + RDIR
+            + "osm/raw/all_raw_buildings.geojson",
+            lines_resources="resources/" + RDIR + "osm/raw/all_raw_lines.geojson",
+            cables_resources="resources/" + RDIR + "osm/raw/all_raw_cables.geojson",
+            generators_resources="resources/"
+            + RDIR
+            + "osm/raw/all_raw_generators.geojson",
+            substations_resources="resources/"
+            + RDIR
+            + "osm/raw/all_raw_substations.geojson",
+            poles_resources="resources/" + RDIR + "osm/raw/all_raw_poles.geojson",
         log:
             "logs/" + RDIR + "download_osm_data.log",
         benchmark:

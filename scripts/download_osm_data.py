@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import shutil
+import time
 from pathlib import Path
 
 import geopandas as gpd
@@ -13,9 +14,7 @@ import yaml
 from _helpers_dist import configure_logging, create_logger, read_osm_config
 from earth_osm import eo
 from shapely import geometry
-from shapely.geometry import mapping
-from shapely.geometry import Point, LineString, Polygon
-import time
+from shapely.geometry import LineString, Point, Polygon, mapping
 
 logger = create_logger(__name__)
 
@@ -40,7 +39,6 @@ def convert_iso_to_geofk(
         return iso_code
 
 
-
 def retrieve_osm_data_geojson(
     microgrids_list,
     url,
@@ -53,14 +51,16 @@ def retrieve_osm_data_geojson(
 ):
     def _run_feature(feature, geometry_type, outpath):
         DELAY_S = 2.0
-        EMPTY_RETRY_SLEEP_S = 5.0     
-        last_err: Exception | None = None 
+        EMPTY_RETRY_SLEEP_S = 5.0
+        last_err: Exception | None = None
 
         def _collect_records() -> list[dict]:
             records: list[dict] = []
             for grid_name, grid_data in microgrids_list.items():
-                lat_min = grid_data["lat_min"]; lon_min = grid_data["lon_min"]
-                lat_max = grid_data["lat_max"]; lon_max = grid_data["lon_max"]
+                lat_min = grid_data["lat_min"]
+                lon_min = grid_data["lon_min"]
+                lat_max = grid_data["lat_max"]
+                lon_max = grid_data["lon_max"]
 
                 if feature == "building":
                     overpass_query = f"""
@@ -103,14 +103,18 @@ def retrieve_osm_data_geojson(
                     ( node["power"="pole"]({lat_min},{lon_min},{lat_max},{lon_max}); );
                     out body;"""
                 else:
-                    return records 
+                    return records
 
                 try:
                     logger.info(f"Overpass query: {grid_name} / {feature}")
-                    r = requests.get(url, params={"data": overpass_query}, timeout=240)  # ↑ timeout locale
-                    if r.status_code in (429, 502, 503, 504):                            # retry minimale
+                    r = requests.get(
+                        url, params={"data": overpass_query}, timeout=240
+                    )  # ↑ timeout locale
+                    if r.status_code in (429, 502, 503, 504):  # retry minimale
                         time.sleep(5)
-                        r = requests.get(url, params={"data": overpass_query}, timeout=240)
+                        r = requests.get(
+                            url, params={"data": overpass_query}, timeout=240
+                        )
                     r.raise_for_status()
                     data = r.json()
 
@@ -121,26 +125,43 @@ def retrieve_osm_data_geojson(
                     }
 
                     for el in data.get("elements", []):
-                        if feature == "pole" and el.get("type") == "node" and "lon" in el and "lat" in el:
+                        if (
+                            feature == "pole"
+                            and el.get("type") == "node"
+                            and "lon" in el
+                            and "lat" in el
+                        ):
                             props = {"name_microgrid": grid_name, "id": el.get("id")}
                             props.update(el.get("tags") or {})
-                            records.append({**props, "geometry": Point(el["lon"], el["lat"])})
+                            records.append(
+                                {**props, "geometry": Point(el["lon"], el["lat"])}
+                            )
                             continue
 
                         if el.get("type") == "way" and "nodes" in el:
-                            coords = [node_coords[nid] for nid in el["nodes"] if nid in node_coords]
+                            coords = [
+                                node_coords[nid]
+                                for nid in el["nodes"]
+                                if nid in node_coords
+                            ]
                             if geometry_type == "Polygon":
                                 if len(coords) >= 3:
                                     if coords[0] != coords[-1]:
                                         coords = coords + [coords[0]]
                                     geom = Polygon(coords)
-                                    props = {"name_microgrid": grid_name, "id": el.get("id")}
+                                    props = {
+                                        "name_microgrid": grid_name,
+                                        "id": el.get("id"),
+                                    }
                                     props.update(el.get("tags") or {})
                                     records.append({**props, "geometry": geom})
                             else:
                                 if len(coords) >= 2:
                                     geom = LineString(coords)
-                                    props = {"name_microgrid": grid_name, "id": el.get("id")}
+                                    props = {
+                                        "name_microgrid": grid_name,
+                                        "id": el.get("id"),
+                                    }
                                     props.update(el.get("tags") or {})
                                     records.append({**props, "geometry": geom})
 
@@ -152,10 +173,11 @@ def retrieve_osm_data_geojson(
                     time.sleep(DELAY_S)
             return records
 
-    
         records = _collect_records()
         if not records:
-            logger.warning(f"No data for '{feature}'. Retrying once in {EMPTY_RETRY_SLEEP_S:.0f}s...")
+            logger.warning(
+                f"No data for '{feature}'. Retrying once in {EMPTY_RETRY_SLEEP_S:.0f}s..."
+            )
             time.sleep(EMPTY_RETRY_SLEEP_S)
             records = _collect_records()
 
@@ -164,14 +186,27 @@ def retrieve_osm_data_geojson(
 
         if not records:
             with outpath.open("w", encoding="utf-8") as f:
-                json.dump({"type": "FeatureCollection", "features": []}, f) 
+                json.dump({"type": "FeatureCollection", "features": []}, f)
             msg = f"Empty GeoJSON for '{feature}'. Cause: {last_err or 'no data returned'}"
             logger.warning(msg)
             return
 
         gdf = gpd.GeoDataFrame(records, geometry="geometry", crs="EPSG:4326")
-        keep = ["name_microgrid","building","type","height_right","id","voltage","power",
-                "circuits","wires","cables","frequency","location","operator"]
+        keep = [
+            "name_microgrid",
+            "building",
+            "type",
+            "height_right",
+            "id",
+            "voltage",
+            "power",
+            "circuits",
+            "wires",
+            "cables",
+            "frequency",
+            "location",
+            "operator",
+        ]
         cols = [c for c in keep if c in gdf.columns] + ["geometry"]
         gdf = gdf.loc[:, cols].dropna(axis=1, how="all")
         gdf.to_file(outpath, driver="GeoJSON")
@@ -189,7 +224,6 @@ def retrieve_osm_data_geojson(
         _run_feature("substation", "Polygon", output_path_substations)
     if output_path_poles:
         _run_feature("pole", "Point", output_path_poles)
-
 
 
 def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output_path):
@@ -229,10 +263,14 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
         microgrid_shape = geometry.box(lon_min, lat_min, lon_max, lat_max)
 
         # Quadkeys at zoom 9 covering the bbox
-        quad_keys = list({
-            mercantile.quadkey(tile)
-            for tile in mercantile.tiles(lon_min, lat_min, lon_max, lat_max, zooms=9)
-        })
+        quad_keys = list(
+            {
+                mercantile.quadkey(tile)
+                for tile in mercantile.tiles(
+                    lon_min, lat_min, lon_max, lat_max, zooms=9
+                )
+            }
+        )
 
         # Download and filter buildings per quadkey
         for quad_key in quad_keys:
