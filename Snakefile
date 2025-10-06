@@ -130,6 +130,8 @@ rule build_demand:
 
 
 rule build_shapes:
+    params:
+        countries=config["countries"],
     output:
         microgrid_shapes="resources/shapes/microgrid_shapes.geojson",
         microgrid_bus_shapes="resources/shapes/microgrid_bus_shapes.geojson",
@@ -165,7 +167,12 @@ if config["enable"].get("download_osm_buildings", True):
 
     rule download_osm_data:
         output:
-            building_resources="resources/" + RDIR + "osm/raw/all_raw_buildings.geojson",
+            buildings_resources   = "resources/" + RDIR + "osm/raw/all_raw_buildings.geojson",
+            lines_resources      = "resources/" + RDIR + "osm/raw/all_raw_lines.geojson",
+            cables_resources      = "resources/" + RDIR + "osm/raw/all_raw_cables.geojson",
+            generators_resources  = "resources/" + RDIR + "osm/raw/all_raw_generators.geojson",
+            substations_resources = "resources/" + RDIR + "osm/raw/all_raw_substations.geojson",
+            poles_resources       = "resources/" + RDIR + "osm/raw/all_raw_poles.geojson",
         log:
             "logs/" + RDIR + "download_osm_data.log",
         benchmark:

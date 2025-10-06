@@ -34,48 +34,26 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
         A GeoDataFrame containing the filtered buildings with an added field "name_microgrid"
         that associates each building to its corresponding microgrid.
     """
-    # Load the GeoJSON files
     microgrid = gpd.read_file(microgrid_shape_path)
     buildings = gpd.read_file(buildings_path)
     # Create a GeoDataFrame to accumulate the results
-    result = gpd.GeoDataFrame(columns=buildings.columns)
+    result = gpd.GeoDataFrame(columns=buildings.columns, crs=buildings.crs)
     # Iterate over each microgrid geometry
-    for idx, microgrid_shape in microgrid.iterrows():
+    for _, microgrid_shape in microgrid.iterrows():
         # Extract the name of the microgrid
-        microgrid_name = microgrid_shape["name"]
+        microgrid_name = microgrid_shape["name_microgrid"]
         # Filter buildings located within the microgrid geometry
-        buildings_in_microgrid = buildings[
-            buildings.geometry.within(microgrid_shape.geometry)
-        ]
+        buildings_in_microgrid = buildings[buildings.geometry.within(microgrid_shape.geometry)]
         # Add or replace the "name_microgrid" field with the microgrid name
         buildings_in_microgrid = buildings_in_microgrid.copy()
         buildings_in_microgrid["name_microgrid"] = microgrid_name
         # Append the filtered buildings to the final result
-        result = gpd.GeoDataFrame(
-            pd.concat([result, buildings_in_microgrid], ignore_index=True)
-        )
-    geojson_features = []
-    try:
-        for feat in result.iterfeatures(na="drop", drop_id=True):
-            geojson_features.append(
-                json.dumps(feat, ensure_ascii=False, separators=(",", ":"))
-            )
-    except TypeError:
-        raw = json.loads(result.to_json())
-        for feat in raw.get("features", []):
-            props = feat.get("properties", {}) or {}
-            for k in [k for k, v in list(props.items()) if v is None]:
-                props.pop(k, None)
-            geojson_features.append(
-                json.dumps(feat, ensure_ascii=False, separators=(",", ":"))
-            )
-    outpath = Path(output_path)
-    outpath.parent.mkdir(parents=True, exist_ok=True)
-    with open(outpath, "w", encoding="utf-8") as f:
-        f.write('{"type":"FeatureCollection","features":[\n')
-        f.write(",\n".join(geojson_features))
-        f.write("\n]}\n")
+        result = gpd.GeoDataFrame(pd.concat([result, buildings_in_microgrid], ignore_index=True), crs=buildings.crs)
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    result.to_file(output_path, driver="GeoJSON")
     return result
+
 
 
 if __name__ == "__main__":

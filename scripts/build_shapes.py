@@ -11,7 +11,7 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
 
-def create_microgrid_shapes(microgrids_list, output_path):
+def create_microgrid_shapes(microgrids_list, output_path, country_code):
     """
     Creates rectangular shapes for each microgrid in the list of microgrids in the config.yaml file
     and saves them as a GeoJSON file.
@@ -22,12 +22,14 @@ def create_microgrid_shapes(microgrids_list, output_path):
 
     output_path : str
        Path where the GeoJSON file will be saved.
+    country_code : str
+       Country code to store under the 'name' property.
     """
 
     # Open the input dictionary into a pandas DataFrame for easier processing
     microgrids_list_df = pd.DataFrame(microgrids_list)
 
-    # Initialize lists to store shapes and names oc each microgrids
+    # Initialize lists to store shapes and names of each microgrid
     microgrid_shapes = []
     microgrid_names = []
 
@@ -52,13 +54,15 @@ def create_microgrid_shapes(microgrids_list, output_path):
 
     # Create a GeoDataFrame with the collected names and shapes
     microgrid_gdf = gpd.GeoDataFrame(
-        {"name": microgrid_names, "geometry": microgrid_shapes}
+        {"name_microgrid": microgrid_names, "geometry": microgrid_shapes}
     )
+    microgrid_gdf["name"] = country_code
+
     # Save the GeoDataFrame to a GeoJSON file
     save_to_geojson(microgrid_gdf, output_path)
 
 
-def create_bus_regions(microgrids_list, output_path):
+def create_bus_regions(microgrids_list, output_path, country_code):
     """
     Creates bus regions for each microgrid in the list of microgrids and saves them as a GeoJSON file.
     The generated shape will be used for the calculation of renewable energy producibility,
@@ -70,6 +74,8 @@ def create_bus_regions(microgrids_list, output_path):
 
     output_path : str
        Path where the GeoJSON file will be saved.
+    country_code : str
+       Country code to store under the 'name' property.
     """
 
     # Open the input dictionary as pandas DataFrame for easier processing
@@ -110,12 +116,13 @@ def create_bus_regions(microgrids_list, output_path):
     # Create a GeoDataFrame from the collected names, shapes, and coordinates
     microgrid_gdf = gpd.GeoDataFrame(
         {
-            "name": microgrid_names,  # Names of the bus regions
-            "x": microgrid_x,  # x-coordinates of the centers
-            "y": microgrid_y,  # y-coordinates of the centers
-            "geometry": microgrid_shapes,  # Polygon shapes of the regions
+            "name_microgrid": microgrid_names,  # microgrid-specific name
+            "x": microgrid_x,                   # x-coordinates of the centers
+            "y": microgrid_y,                   # y-coordinates of the centers
+            "geometry": microgrid_shapes,       # Polygon shapes of the regions
         }
     )
+    microgrid_gdf["name"] = country_code
 
     # Save the GeoDataFrame to a GeoJSON file
     save_to_geojson(microgrid_gdf, output_path)
@@ -130,13 +137,18 @@ if __name__ == "__main__":
         sets_path_to_root("pypsa-distribution")
 
     configure_logging(snakemake)
+    country_code = snakemake.params["countries"]
+    
 
     create_microgrid_shapes(
         snakemake.config["microgrids_list"],
         snakemake.output["microgrid_shapes"],
+        country_code=country_code,
     )
 
     create_bus_regions(
         snakemake.config["microgrids_list"],
         snakemake.output["microgrid_bus_shapes"],
+        country_code=country_code,
     )
+

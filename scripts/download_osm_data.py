@@ -14,6 +14,8 @@ from _helpers_dist import configure_logging, create_logger, read_osm_config
 from earth_osm import eo
 from shapely import geometry
 from shapely.geometry import mapping
+from shapely.geometry import Point, LineString, Polygon
+import time
 
 logger = create_logger(__name__)
 
@@ -38,187 +40,156 @@ def convert_iso_to_geofk(
         return iso_code
 
 
-import time
 
+def retrieve_osm_data_geojson(
+    microgrids_list,
+    url,
+    output_path_buildings,
+    output_path_minor_lines,
+    output_path_cables,
+    output_path_generators,
+    output_path_substations,
+    output_path_poles,
+):
+    def _run_feature(feature, geometry_type, outpath):
+        DELAY_S = 2.0
+        EMPTY_RETRY_SLEEP_S = 5.0     
+        last_err: Exception | None = None 
 
-def retrieve_osm_data_geojson(microgrids_list, features, url, path):
-    """
-    Retrieve OpenStreetMap data from the Overpass API for a list of microgrids.
-    For each requested OSM feature (buildings, lines, cables, generators,
-    substations, poles), the function:
-    • runs a single Overpass query per feature per microgrid bounding box,
-    • converts the returned nodes/ways into GeoJSON Features with the proper
-        geometry type (Polygon, LineString or Point),
-    • and writes one GeoJSON file per feature into `path`.
-    """
+        def _collect_records() -> list[dict]:
+            records: list[dict] = []
+            for grid_name, grid_data in microgrids_list.items():
+                lat_min = grid_data["lat_min"]; lon_min = grid_data["lon_min"]
+                lat_max = grid_data["lat_max"]; lon_max = grid_data["lon_max"]
 
-    for feature in features:
-        geojson_features = []
+                if feature == "building":
+                    overpass_query = f"""
+                    [out:json][timeout:300];
+                    ( way["building"]({lat_min},{lon_min},{lat_max},{lon_max}); );
+                    (._;>;);
+                    out body;"""
+                elif feature == "minor_line":
+                    overpass_query = f"""
+                    [out:json][timeout:300];
+                    ( way["power"~"^(minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max});
+                      relation["power"~"^(minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max}); );
+                    (._;>;);
+                    out body;"""
+                elif feature == "cable":
+                    overpass_query = f"""
+                    [out:json][timeout:300];
+                    ( way["power"~"^(cable)$"]({lat_min},{lon_min},{lat_max},{lon_max});
+                      relation["power"~"^(cable)$"]({lat_min},{lon_min},{lat_max},{lon_max}); );
+                    (._;>;);
+                    out body;"""
+                elif feature == "generator":
+                    overpass_query = f"""
+                    [out:json][timeout:300];
+                    ( node["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
+                      way["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
+                      relation["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max}); );
+                    (._;>;);
+                    out body;"""
+                elif feature == "substation":
+                    overpass_query = f"""
+                    [out:json][timeout:300];
+                    ( node["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
+                      way["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max}); );
+                    (._;>;);
+                    out body;"""
+                elif feature == "pole":
+                    overpass_query = f"""
+                    [out:json][timeout:300];
+                    ( node["power"="pole"]({lat_min},{lon_min},{lat_max},{lon_max}); );
+                    out body;"""
+                else:
+                    return records 
 
-        if feature == "building":
-            filename = "all_raw_buildings.geojson"
-            geometry_type = "Polygon"
-        elif feature == "minor_line":
-            filename = "all_raw_lines.geojson"
-            geometry_type = "LineString"
-        elif feature == "cable":
-            filename = "all_raw_cables.geojson"
-            geometry_type = "LineString"
-        elif feature == "generator":
-            filename = "all_raw_generators.geojson"
-            geometry_type = "Polygon"
-        elif feature == "substation":
-            filename = "all_raw_substations.geojson"
-            geometry_type = "Polygon"
-        elif feature == "pole":
-            filename = "all_raw_poles.geojson"
-            geometry_type = "Point"
-        else:
-            logger.error(f"Unsupported feature: {feature}")
-            continue
+                try:
+                    logger.info(f"Overpass query: {grid_name} / {feature}")
+                    r = requests.get(url, params={"data": overpass_query}, timeout=240)  # ↑ timeout locale
+                    if r.status_code in (429, 502, 503, 504):                            # retry minimale
+                        time.sleep(5)
+                        r = requests.get(url, params={"data": overpass_query}, timeout=240)
+                    r.raise_for_status()
+                    data = r.json()
 
-        for grid_name, grid_data in microgrids_list.items():
-            lat_min = grid_data["lat_min"]
-            lon_min = grid_data["lon_min"]
-            lat_max = grid_data["lat_max"]
-            lon_max = grid_data["lon_max"]
+                    node_coords = {
+                        n["id"]: (n["lon"], n["lat"])
+                        for n in data.get("elements", [])
+                        if n.get("type") == "node" and "lon" in n and "lat" in n
+                    }
 
-            if feature == "building":
-                overpass_query = f"""
-                [out:json][timeout:120];
-                ( way["building"]({lat_min},{lon_min},{lat_max},{lon_max}); );
-                (._;>;);
-                out body;
-                """
-            elif feature == "minor_line":
-                overpass_query = f"""
-                [out:json][timeout:120];
-                (
-                  way["power"~"^(minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max});
-                  relation["power"~"^(minor_line)$"]({lat_min},{lon_min},{lat_max},{lon_max});
-                );
-                (._;>;);
-                out body;
-                """
-            elif feature == "cable":
-                overpass_query = f"""
-                [out:json][timeout:120];
-                (
-                  way["power"~"^(cable)$"]({lat_min},{lon_min},{lat_max},{lon_max});
-                  relation["power"~"^(cable)$"]({lat_min},{lon_min},{lat_max},{lon_max});
-                );
-                (._;>;);
-                out body;
-                """
-            elif feature == "generator":
-                overpass_query = f"""
-                [out:json][timeout:120];
-                (
-                  node["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
-                  way["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
-                  relation["power"~"generator|plant"]({lat_min},{lon_min},{lat_max},{lon_max});
-                );
-                (._;>;);
-                out body;
-                """
-            elif feature == "substation":
-                overpass_query = f"""
-                [out:json][timeout:120];
-                (
-                  node["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
-                  way["power"="substation"]({lat_min},{lon_min},{lat_max},{lon_max});
-                );
-                (._;>;);
-                out body;
-                """
-            elif feature == "pole":
-                overpass_query = f"""
-                [out:json][timeout:120];
-                (
-                  node["power"="pole"]({lat_min},{lon_min},{lat_max},{lon_max});
-                );
-                (._;>;);
-                out body;
-                """
+                    for el in data.get("elements", []):
+                        if feature == "pole" and el.get("type") == "node" and "lon" in el and "lat" in el:
+                            props = {"name_microgrid": grid_name, "id": el.get("id")}
+                            props.update(el.get("tags") or {})
+                            records.append({**props, "geometry": Point(el["lon"], el["lat"])})
+                            continue
 
-            try:
-                logger.info(
-                    f"Querying Overpass API for microgrid: {grid_name} with feature: {feature}"
-                )
-                response = requests.get(url, params={"data": overpass_query})
-                response.raise_for_status()
-                data = response.json()
-
-                node_coordinates = {
-                    node["id"]: [node["lon"], node["lat"]]
-                    for node in data.get("elements", [])
-                    if node["type"] == "node"
-                }
-
-                for element in data.get("elements", []):
-                    if feature == "pole":
-                        if (
-                            element["type"] == "node"
-                            and "lon" in element
-                            and "lat" in element
-                        ):
-                            props = {"name_microgrid": grid_name, "id": element["id"]}
-                            tags = element.get("tags")
-                            if isinstance(tags, dict):
-                                props.update(tags)
-                            geom = {
-                                "type": "Point",
-                                "coordinates": [element["lon"], element["lat"]],
-                            }
-                            geojson_features.append(
-                                json.dumps(
-                                    {
-                                        "type": "Feature",
-                                        "properties": props,
-                                        "geometry": geom,
-                                    }
-                                )
-                            )
-                    else:
-                        if element["type"] == "way" and "nodes" in element:
-                            coords = [
-                                node_coordinates[nid]
-                                for nid in element["nodes"]
-                                if nid in node_coordinates
-                            ]
-                            if not coords:
-                                continue
-                            props = {"name_microgrid": grid_name, "id": element["id"]}
-                            tags = element.get("tags")
-                            if isinstance(tags, dict):
-                                props.update(tags)
+                        if el.get("type") == "way" and "nodes" in el:
+                            coords = [node_coords[nid] for nid in el["nodes"] if nid in node_coords]
                             if geometry_type == "Polygon":
-                                geom = {"type": "Polygon", "coordinates": [coords]}
+                                if len(coords) >= 3:
+                                    if coords[0] != coords[-1]:
+                                        coords = coords + [coords[0]]
+                                    geom = Polygon(coords)
+                                    props = {"name_microgrid": grid_name, "id": el.get("id")}
+                                    props.update(el.get("tags") or {})
+                                    records.append({**props, "geometry": geom})
                             else:
-                                geom = {"type": "LineString", "coordinates": coords}
-                            geojson_features.append(
-                                json.dumps(
-                                    {
-                                        "type": "Feature",
-                                        "properties": props,
-                                        "geometry": geom,
-                                    }
-                                )
-                            )
+                                if len(coords) >= 2:
+                                    geom = LineString(coords)
+                                    props = {"name_microgrid": grid_name, "id": el.get("id")}
+                                    props.update(el.get("tags") or {})
+                                    records.append({**props, "geometry": geom})
 
-            except Exception as e:
-                logger.error(
-                    f"Request/JSON error for microgrid: {grid_name} feature {feature}: {e}"
-                )
+                except Exception as e:
+                    nonlocal last_err
+                    last_err = e
+                    logger.warning(f"Overpass error for {grid_name}/{feature}: {e}.")
+                finally:
+                    time.sleep(DELAY_S)
+            return records
 
-        # write output file for this feature
-        outpath = Path(path) / filename
+    
+        records = _collect_records()
+        if not records:
+            logger.warning(f"No data for '{feature}'. Retrying once in {EMPTY_RETRY_SLEEP_S:.0f}s...")
+            time.sleep(EMPTY_RETRY_SLEEP_S)
+            records = _collect_records()
+
+        outpath = Path(outpath)
         outpath.parent.mkdir(parents=True, exist_ok=True)
-        with open(outpath, "w") as f:
-            f.write('{"type":"FeatureCollection","features":[\n')
-            f.write(",\n".join(geojson_features))
-            f.write("\n]}\n")
-        logger.info(f"GeoJSON saved to {outpath}")
+
+        if not records:
+            with outpath.open("w", encoding="utf-8") as f:
+                json.dump({"type": "FeatureCollection", "features": []}, f) 
+            msg = f"Empty GeoJSON for '{feature}'. Cause: {last_err or 'no data returned'}"
+            logger.warning(msg)
+            return
+
+        gdf = gpd.GeoDataFrame(records, geometry="geometry", crs="EPSG:4326")
+        keep = ["name_microgrid","building","type","height_right","id","voltage","power",
+                "circuits","wires","cables","frequency","location","operator"]
+        cols = [c for c in keep if c in gdf.columns] + ["geometry"]
+        gdf = gdf.loc[:, cols].dropna(axis=1, how="all")
+        gdf.to_file(outpath, driver="GeoJSON")
+        logger.info(f"GeoJSON saved to {outpath} ({len(gdf)} features)")
+
+    if output_path_buildings:
+        _run_feature("building", "Polygon", output_path_buildings)
+    if output_path_minor_lines:
+        _run_feature("minor_line", "LineString", output_path_minor_lines)
+    if output_path_cables:
+        _run_feature("cable", "LineString", output_path_cables)
+    if output_path_generators:
+        _run_feature("generator", "Polygon", output_path_generators)
+    if output_path_substations:
+        _run_feature("substation", "Polygon", output_path_substations)
+    if output_path_poles:
+        _run_feature("pole", "Point", output_path_poles)
+
 
 
 def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output_path):
@@ -243,12 +214,11 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
     This produces one unified building dataset combining Microsoft and OSM data
     within the given microgrid areas.
     """
-
     link = pd.read_csv(url, dtype=str)
     mML_gdf = gpd.GeoDataFrame()
     idx = 0
 
-    # Process each microgrid bounding box
+    # Iterate microgrid bounding boxes
     for gridname, grid_data in microgrid_list.items():
         lon_min, lat_min, lon_max, lat_max = (
             grid_data["lon_min"],
@@ -258,31 +228,25 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
         )
         microgrid_shape = geometry.box(lon_min, lat_min, lon_max, lat_max)
 
-        # Get quadkeys covering the bounding box at zoom level 9
-        quad_keys = list(
-            {
-                mercantile.quadkey(tile)
-                for tile in mercantile.tiles(
-                    lon_min, lat_min, lon_max, lat_max, zooms=9
-                )
-            }
-        )
+        # Quadkeys at zoom 9 covering the bbox
+        quad_keys = list({
+            mercantile.quadkey(tile)
+            for tile in mercantile.tiles(lon_min, lat_min, lon_max, lat_max, zooms=9)
+        })
 
-        # Download and filter building geometries per quadkey
+        # Download and filter buildings per quadkey
         for quad_key in quad_keys:
             row = link[link["QuadKey"] == quad_key]
-
             if row.shape[0] == 1:
                 json_url = row.iloc[0]["Url"]
                 try:
                     df_json = pd.read_json(json_url, lines=True)
                 except Exception:
                     continue
-
                 if "geometry" not in df_json.columns:
                     continue
 
-                # Convert JSON geometry to shapely shape and keep only those inside the microgrid
+                # Convert to shapely, clip to microgrid, accumulate
                 df_json["geometry"] = df_json["geometry"].apply(geometry.shape)
                 gdf = gpd.GeoDataFrame(df_json, geometry="geometry", crs="EPSG:4326")
                 gdf = gdf[gdf.geometry.within(microgrid_shape)]
@@ -290,12 +254,12 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
                 idx += len(gdf)
                 mML_gdf = pd.concat([mML_gdf, gdf], ignore_index=True)
 
-    # Exit if no buildings found
+    # Exit early if nothing found
     if mML_gdf.empty:
         print("vuoto")
         return
 
-    # Extract height field from nested 'properties' dictionary
+    # Extract height from nested 'properties' dict (fallback to 0)
     mML_gdf["height"] = mML_gdf["properties"].apply(
         lambda s: (
             max(s.get("height", 0), 0)
@@ -309,66 +273,56 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
     if "geometry" not in osm_gdf.columns:
         raise ValueError("OSM file does not contain 'geometry' column.")
 
-    # Convert both datasets to a common metric CRS
+    # Project both to metric CRS
     crs_meters = "EPSG:32632"
     mML_gdf = mML_gdf.to_crs(crs_meters)
     osm_gdf = osm_gdf.to_crs(crs_meters)
 
-    # Slightly buffer Microsoft buildings for spatial matching
+    # Light buffer to improve matching
     mML_buffered = mML_gdf.copy()
     mML_buffered["geometry"] = mML_buffered.geometry.buffer(1.0)
 
-    # Perform spatial join between OSM and buffered ML buildings
+    # Spatial join (right columns get _right suffix, e.g. height_right)
     joined = gpd.sjoin(osm_gdf, mML_buffered, how="inner", predicate="intersects")
     joined = joined.astype({"index_right": int})
 
-    # Clean and merge matched attributes
+    if "height_right" not in joined.columns and "height" in joined.columns:
+        joined = joined.rename(columns={"height": "height_right"})
+
+    # Clean attributes from matches (drop geometry/properties duplicates)
     clean_join_rows = []
     for _, row in joined.iterrows():
-        geometry_ = row["geometry"]
+        geom_ = row["geometry"]
         cleaned_props = {
             k: v
             for k, v in row.items()
             if pd.notna(v) and v is not None and k not in ["geometry", "properties"]
         }
-        clean_join_rows.append({**cleaned_props, "geometry": geometry_})
+        clean_join_rows.append({**cleaned_props, "geometry": geom_})
 
     cleaned_join_gdf = gpd.GeoDataFrame(clean_join_rows, crs=crs_meters)
 
-    # Remove duplicates from original OSM set
+    # Remove duplicates from original OSM and merge back
     duplicate_idxs = joined.index
     cluster_unique = osm_gdf.drop(index=duplicate_idxs).to_crs(crs_meters)
-
-    # Merge cleaned duplicates with unique untouched buildings
     final_gdf = pd.concat([cleaned_join_gdf, cluster_unique], ignore_index=True)
+    # Reproject to WGS84
     final_gdf = final_gdf.to_crs("EPSG:4326")
 
-    # Convert merged GeoDataFrame to GeoJSON features
-    features = []
-    for _, row in final_gdf.iterrows():
-        props = {
-            k: v
-            for k, v in row.items()
-            if k != "geometry"
-            and pd.notna(v)
-            and str(v).strip().lower() not in ["", "null", "none"]
-        }
-        geom = row["geometry"]
-        safe_props = {
-            k: (v.isoformat() if isinstance(v, pd.Timestamp) else v)
-            for k, v in props.items()
-        }
-        if geom is not None and not geom.is_empty:
-            features.append(
-                {"type": "Feature", "properties": safe_props, "geometry": mapping(geom)}
-            )
+    if "height_right" not in final_gdf.columns and "height" in final_gdf.columns:
+        final_gdf = final_gdf.rename(columns={"height": "height_right"})
 
-    # Write to GeoJSON file
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write('{"type":"FeatureCollection","features":[\n')
-        f.write(",\n".join([json.dumps(feature) for feature in features]))
-        f.write("\n]}\n")
+    # Keep only a minimal set of columns if present
+    if not final_gdf.empty:
+        keep = ["name_microgrid", "building", "type", "height_right"]
+        cols = [c for c in keep if c in final_gdf.columns]
+        cols.append("geometry")
+        final_gdf = final_gdf.loc[:, cols].dropna(axis=1, how="all")
+
+    # Save with GeoPandas
+    outpath = Path(output_path)
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+    final_gdf.to_file(outpath, driver="GeoJSON")
 
 
 if __name__ == "__main__":
@@ -436,10 +390,19 @@ if __name__ == "__main__":
         ]
         overpass_url = "https://overpass-api.de/api/interpreter"
         output_dir = Path.cwd() / "resources" / RDIR / "osm" / "raw"
-        retrieve_osm_data_geojson(microgrids_list, features, overpass_url, output_dir)
+
+        retrieve_osm_data_geojson(
+            microgrids_list,
+            overpass_url,
+            output_path_buildings=snakemake.output["buildings_resources"],
+            output_path_minor_lines=snakemake.output["lines_resources"],
+            output_path_cables=snakemake.output["cables_resources"],
+            output_path_generators=snakemake.output["generators_resources"],
+            output_path_substations=snakemake.output["substations_resources"],
+            output_path_poles=snakemake.output["poles_resources"],
+        )
 
         if snakemake.config["enable"]["download_and_merge_microsoft_ML_building"]:
-            # USA SEMPRE il PLURALE
             osm_path = output_dir / "all_raw_buildings.geojson"
             export_path = output_dir / "all_raw_buildings.geojson"
             microsoft_data_url = "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv"
