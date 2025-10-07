@@ -479,17 +479,14 @@ if __name__ == "__main__":
         out_formats = ["csv", "geojson"]
 
         for f in out_formats:
-            # SALVA AL PLURALE
             new_file_name = Path.joinpath(
                 store_path_resources, f"all_raw_buildings.{f}"
             )
-            # accetta sia *buildings.* sia *building.* prodotti da earth_osm
             old_file = list(Path(out_path).glob(f"*buildings.{f}")) or list(
                 Path(out_path).glob(f"*building.{f}")
             )
 
             if not old_file:
-                # crea file vuoto valido
                 with open(new_file_name, "w", encoding="utf-8") as fp:
                     if f == "geojson":
                         fp.write('{"type":"FeatureCollection","features":[]}\n')

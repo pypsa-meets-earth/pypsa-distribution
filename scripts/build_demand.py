@@ -180,8 +180,7 @@ def estimate_microgrid_population(raster_path, shapes_path, output_file):
     population_df = pd.DataFrame(
         list(population_data.items()), columns=["Microgrid_Name", "Population"]
     )
-    # Save the population estimates to a CSV file
-    # population_df.to_csv(output_file, index=False)
+    
 
     return population_df
 
@@ -438,7 +437,6 @@ def calculate_load_ramp(
 
         all_microgrid_loads = pd.concat([all_microgrid_loads, tot_loads_df], axis=1)
 
-    # Esportazione del DataFrame finale
     all_microgrid_loads.to_csv(output_path_csv)
 
 

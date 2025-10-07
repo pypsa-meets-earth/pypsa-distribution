@@ -183,7 +183,7 @@ def get_central_points_geojson_with_buildings(
     gdf_out = all_microgrid_buildings.to_crs(geo_crs)
     gdf_out.to_file(output_filepath_buildings, driver="GeoJSON")
 
-    # Save CSV (unchanged)
+    # Save CSV
     all_buildings_class.to_csv(output_path_csv, index=False)
 
 
