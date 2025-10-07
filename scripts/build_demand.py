@@ -180,7 +180,6 @@ def estimate_microgrid_population(raster_path, shapes_path, output_file):
     population_df = pd.DataFrame(
         list(population_data.items()), columns=["Microgrid_Name", "Population"]
     )
-    
 
     return population_df
 
