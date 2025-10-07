@@ -165,7 +165,7 @@ def create_microgrid_network(
             gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
             # Convert to a projected CRS (e.g., EPSG:3857 for meters)
             gdf_proj = gdf.to_crs(epsg=3857)
-            # Calculate distance (in meters)
+            # Calculate distance (in kilometers)
             distance_km = gdf_proj[0].distance(gdf_proj[1]) / 1000
             df_aux = pd.DataFrame(
                 {
@@ -227,7 +227,7 @@ def create_microgrid_network(
                 gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
                 # Convert to a projected CRS (e.g., EPSG:3857 for meters)
                 gdf_proj = gdf.to_crs(epsg=3857)
-                # Calculate distance (in meters)
+                # Calculate distance (in kilometers)
                 distance_km = gdf_proj[0].distance(gdf_proj[1]) / 1000
                 df_aux = pd.DataFrame(
                     {
