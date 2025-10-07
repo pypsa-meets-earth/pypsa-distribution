@@ -34,7 +34,7 @@ enable:
   build_cutout: false
   build_natura_raster: false  # If True, then build_natura_raster can be run
   interconnect_microgrids: true
-  
+
 year: "2019" #Year setting allows the choice of which data to download (es. Worldpop_data)
 
 snapshots:
