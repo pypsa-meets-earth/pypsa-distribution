@@ -67,7 +67,7 @@ def get_central_points_geojson_with_buildings(
     output_filepath_buildings,
     output_path_csv,
     microgrids_list,
-    geo_crs
+    geo_crs,
 ):
     """
     Divides buildings into a specified number of clusters using the KMeans algorithm and generates:
@@ -100,7 +100,7 @@ def get_central_points_geojson_with_buildings(
 
     # Prepare accumulators
     all_central_features = gpd.GeoDataFrame(
-    columns=["geometry", "cluster", "name_microgrid"], crs=geo_crs
+        columns=["geometry", "cluster", "name_microgrid"], crs=geo_crs
     )
     all_microgrid_buildings = gpd.GeoDataFrame(columns=microgrid_buildings.columns)
     all_buildings_class = pd.DataFrame()

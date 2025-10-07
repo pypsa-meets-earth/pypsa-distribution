@@ -66,7 +66,7 @@ def convert_iso_to_geofk(
         Dictionary used to apply the conversion iso to geofk
         The keys correspond to the countries iso codes that need a different region to be downloaded
     """
-        
+
     if iso_coding and iso_code in convert_dict:
         return convert_dict[iso_code]
     else:
@@ -83,7 +83,6 @@ def retrieve_osm_data_geojson(
     output_path_substations,
     output_path_poles,
 ):
-    
     """
     Download OpenStreetMap data via Overpass for a set of microgrid bounding boxes
     and export each requested feature as GeoJSON. For each feature within a given
