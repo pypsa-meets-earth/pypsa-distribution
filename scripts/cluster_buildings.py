@@ -67,6 +67,7 @@ def get_central_points_geojson_with_buildings(
     output_filepath_buildings,
     output_path_csv,
     microgrids_list,
+    geo_crs
 ):
     """
     Divides buildings into a specified number of clusters using the KMeans algorithm and generates:
@@ -99,7 +100,7 @@ def get_central_points_geojson_with_buildings(
 
     # Prepare accumulators
     all_central_features = gpd.GeoDataFrame(
-        columns=["geometry", "cluster", "name_microgrid"]
+    columns=["geometry", "cluster", "name_microgrid"], crs=geo_crs
     )
     all_microgrid_buildings = gpd.GeoDataFrame(columns=microgrid_buildings.columns)
     all_buildings_class = pd.DataFrame()
@@ -136,7 +137,7 @@ def get_central_points_geojson_with_buildings(
             central_point_idx = np.argmin(distances)
             central_points.append(cluster_points[central_point_idx])
 
-        # Centroids GeoDataFrame (force WGS84 for output)
+        # Centroids GeoDataFrame
         central_features = [
             {
                 "geometry": Point(central_point),
@@ -147,7 +148,7 @@ def get_central_points_geojson_with_buildings(
         ]
         central_features_gdf = gpd.GeoDataFrame(
             central_features, crs=filtered_buildings.crs
-        ).to_crs("EPSG:4326")
+        ).to_crs(geo_crs)
         all_central_features = pd.concat(
             [all_central_features, central_features_gdf], ignore_index=True
         )
@@ -179,13 +180,7 @@ def get_central_points_geojson_with_buildings(
             :, ~all_microgrid_buildings.columns.duplicated(keep="first")
         ].copy()
 
-    # Ensure WGS84 for GeoJSON output
-    gdf_out = (
-        all_microgrid_buildings.to_crs("EPSG:4326")
-        if all_microgrid_buildings.crs
-        and all_microgrid_buildings.crs.to_string().upper() != "EPSG:4326"
-        else all_microgrid_buildings
-    )
+    gdf_out = all_microgrid_buildings.to_crs(geo_crs)
     gdf_out.to_file(output_filepath_buildings, driver="GeoJSON")
 
     # Save CSV (unchanged)
@@ -204,6 +199,7 @@ if __name__ == "__main__":
 
     crs = snakemake.params.crs["area_crs"]
     house_area_limit = snakemake.params.house_area_limit["area_limit"]
+    geo_crs = snakemake.params.crs["geo_crs"]
 
     get_central_points_geojson_with_buildings(
         snakemake.input["buildings_geojson"],
@@ -214,4 +210,5 @@ if __name__ == "__main__":
         snakemake.output["clusters_with_buildings"],
         snakemake.output["buildings_type"],
         snakemake.config["microgrids_list"],
+        geo_crs,
     )

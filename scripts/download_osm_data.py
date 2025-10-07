@@ -22,6 +22,21 @@ logger = create_logger(__name__)
 def country_list_to_geofk(country_list):
     """
     Convert the requested country list into geofk norm.
+
+    Parameters
+    ----------
+    input : str
+        Any two-letter country name or aggregation of countries given in osm_config.yaml
+        Country name duplications won't distort the result.
+        Examples are:
+        ["NG","ZA"], downloading osm data for Nigeria and South Africa
+        ["SNGM"], downloading data for Senegal&Gambia shape
+        ["NG","ZA","NG"], won't distort result.
+
+    Returns
+    -------
+    full_codes_list : list
+        Example ["NG","ZA"]
     """
     full_codes_list = [convert_iso_to_geofk(c_code) for c_code in set(country_list)]
     return full_codes_list
@@ -31,8 +46,27 @@ def convert_iso_to_geofk(
     iso_code, iso_coding=True, convert_dict=read_osm_config("iso_to_geofk_dict")
 ):
     """
-    Convert ISO country code to the geofabrik region code when needed.
+    Function to convert the iso code name of a country into the corresponding
+    geofabrik In Geofabrik, some countries are aggregated, thus if a single
+    country is requested, then all the agglomeration shall be downloaded For
+    example, Senegal (SN) and Gambia (GM) cannot be found alone in geofabrik,
+    but they can be downloaded as a whole SNGM.
+
+    The conversion directory, initialized to iso_to_geofk_dict is used to perform such conversion
+    When a two-letter code country is found in convert_dict, and iso_coding is enabled,
+    then that two-letter code is converted into the corresponding value of the dictionary
+
+    Parameters
+    ----------
+    iso_code : str
+        Two-code country code to be converted
+    iso_coding : bool
+        When true, the iso to geofk is performed
+    convert_dict : dict
+        Dictionary used to apply the conversion iso to geofk
+        The keys correspond to the countries iso codes that need a different region to be downloaded
     """
+        
     if iso_coding and iso_code in convert_dict:
         return convert_dict[iso_code]
     else:
@@ -49,6 +83,39 @@ def retrieve_osm_data_geojson(
     output_path_substations,
     output_path_poles,
 ):
+    
+    """
+    Download OpenStreetMap data via Overpass for a set of microgrid bounding boxes
+    and export each requested feature as GeoJSON. For each feature within a given
+    bounding box, an Overpass query is built and executed. Geometries are rebuilt
+    from returned nodes, and tag columns are reduced to the subset of interest.
+    If no data are collected, an empty file is saved and a warning is logged.
+
+    Parameters
+    ----------
+    microgrids_list : dict
+        Dictionary with the bounding-box coordinates for each microgrid.
+    url : str
+        Overpass API endpoint.
+    output_path_buildings : str
+        Output path for buildings.
+    output_path_minor_lines : str
+        Output path for minor_line.
+    output_path_cables : str
+        Output path for cable.
+    output_path_generators : str
+        Output path for generator.
+    output_path_substations : str
+        Output path for substation.
+    output_path_poles : str
+        Output path for pole.
+
+    Notes
+    -----
+    Overpass is rate-limited; consider increasing the fixed delay or using mirror
+    endpoints if you frequently encounter 429/504 responses.
+    """
+
     def _run_feature(feature, geometry_type, outpath):
         DELAY_S = 2.0
         EMPTY_RETRY_SLEEP_S = 5.0
@@ -228,9 +295,8 @@ def retrieve_osm_data_geojson(
 
 def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output_path):
     """
-    Download and merge Microsoft Building Footprints with existing OSM buildings
+    Download and merge Microsoft Building data with existing OSM buildings
     for one or more microgrid bounding boxes.
-
     The function:
     • reads the Microsoft Buildings tile index CSV from `url` and, for each
         microgrid’s bounding box, determines the quadkeys (zoom level 9) covering it;
@@ -244,9 +310,27 @@ def download_and_merge_Microsoft_buildings(url, microgrid_list, osm_path, output
         unique OSM buildings;
     • outputs the merged building set as a single GeoJSON FeatureCollection
         written to `output_path`.
-
     This produces one unified building dataset combining Microsoft and OSM data
     within the given microgrid areas.
+
+    Parameters
+    ----------
+    url : str
+        HTTP(S) URL to the Microsoft Buildings tile index CSV
+    microgrids_list : dict
+        Dictionary with the bounding-box coordinates for each microgrid.
+    osm_path : str
+        Path to the existing OSM buildings GeoJSON.
+    output_path : str
+        Output path for the merged buildings GeoJSON.
+
+    Note
+    ----------------------
+    - Uses zoom level 9 quadkeys to fetch Microsoft tiles covering each box.
+    - Projects to a metric CRS for buffering and spatial join,
+    then outputs in EPSG:4326.
+    - Preserves a minimal set of attributes when available: ["name_microgrid",
+    "building", "type", "height_right"].
     """
     link = pd.read_csv(url, dtype=str)
     mML_gdf = gpd.GeoDataFrame()
