@@ -25,6 +25,7 @@ enable:
   # https://atlite.readthedocs.io/en/latest/introduction.html#datasets
   build_cutout: false
   build_natura_raster: false  # If True, then build_natura_raster can be run
+  interconnect_microgrids: false
 
 scenario:
   simpl: ['']
@@ -135,6 +136,11 @@ microgrids_list:  # MICROGRIDS IN NIGERIA
 #   lon_min: 7.5
 #   lat_min: 4.4
 #   lat_max: 4.5
+# microgrid_3:
+#   lon_max: 9.2
+#   lon_min: 8.6
+#   lat_min: 6.8
+#   lat_max: 7.3
 load:
   scaling_factor: 15000
 
