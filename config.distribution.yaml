@@ -4,6 +4,7 @@
 
 version: 0.0.1
 tutorial: true
+mode: brown_field  # brown_field or green_field
 
 logging:
   level: INFO
@@ -72,8 +73,34 @@ crs:
   distance_crs: EPSG:3857  # projection for distance measurements only. Possible recommended values are "EPSG:3857" (used by OSM and Google Maps)
   area_crs: ESRI:54009  # projection for area measurements only. Possible recommended values are Global Mollweide "ESRI:54009"
 
+clean_osm_data_options:  # osm = OpenStreetMap
+  names_by_shapes: true  # Set the country name based on the extended country shapes
+  threshold_voltage: 0  # [V] assets below that voltage threshold will not be used (cable, line, generator, etc.)
+  tag_substation: "distribution"  # Filters only substations with 'transmission' tag, ('distribution' also available)
+  add_line_endings: true  # When "True", then line endings are added to the dataset of the substations
+  generator_name_method: OSM  # Methodology to specify the name to the generator. Options: OSM (name as by OSM dataset), closest_city (name by the closest city)
+  use_custom_lines: "OSM_only"  # Use OSM (OSM_only), customized (custom_only), or both data sets (add_custom)
+  path_custom_lines: false  # If exists, provide the specific absolute path of the custom file e.g. (...\data\custom_lines.geojson)
+  use_custom_substations: "OSM_only"  # Use OSM (OSM_only), customized (custom_only), or both data sets (add_custom)
+  path_custom_substations: false  # If exists, provide the specific absolute path of the custom file e.g. (...\data\custom_substations.geojson)
+  use_custom_cables: "OSM_only"  # Use OSM (OSM_only), customized (custom_only), or both data sets (add_custom)
+  path_custom_cables: false  # If exists, provide the specific absolute path of the custom file e.g. (...\data\custom_cables.geojson)
+
+build_osm_network:  # Options of the build_osm_network script; osm = OpenStreetMap
+  group_close_buses: true  # When "True", close buses are merged and guarantee the voltage matching among line endings
+  group_tolerance_buses: 100  # [m] (default 5000) Tolerance in meters of the close buses to merge
+  split_overpassing_lines: true  # When True, lines overpassing buses are splitted and connected to the bueses
+  overpassing_lines_tolerance: 1  # [m] (default 1) Tolerance to identify lines overpassing buses
+  force_ac: false  # When true, it forces all components (lines and substation) to be AC-only. To be used if DC assets create problem.
+
+base_network:
+  min_voltage_substation_offshore: 1000000   # [V] minimum voltage of the offshore substations
+  min_voltage_rebase_voltage: 1000000 
+
 electricity:
+  voltages: [0.4, 15., 20., 30., 132., 150., 220., 380., 500., 750.]
   voltage: 0.22
+  hvdc_as_lines: false  # should HVDC lines be modeled as `Line` or as `Link` component?
   line_type: "24-AL1/4-ST1A 0.4"
 
   max_hours:
@@ -86,6 +113,34 @@ electricity:
   conventional_carriers: [diesel]
 
   renewable_carriers: [solar, onwind]
+
+lines:
+  ac_types:
+    0.4:  "24-AL1/4-ST1A 0.4"
+    15.:  "NA2XS2Y 1x185 RM/25 12/20 kV"
+    20.:  "NA2XS2Y 1x185 RM/25 12/20 kV"    # per dorsali cariche puoi passare a 1x240
+    30.:  "NA2XS2Y 1x240 RM/25 18/30 kV"
+    132.: "Al/St 240/40 2-bundle 220.0"     # HV: lascia i default di Earth
+    220.: "Al/St 240/40 2-bundle 220.0"
+    380.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 500.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
+  dc_types:
+    500.: "HVDC XLPE 1000"
+  s_max_pu: 0.7
+  s_nom_max: .inf
+  length_factor: 1.25
+  under_construction: "zero" # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+
+links:
+  p_max_pu: 1.0
+  p_nom_max: .inf
+  under_construction: "zero" # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+
+transformers:
+  x: 0.06      # TO DO : check value for distribution
+  s_nom: 0.63 
+  type: ""    
 
 # TODO: Needs to be adjusted for Africa
 costs:
