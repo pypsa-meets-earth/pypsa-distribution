@@ -44,15 +44,11 @@ import os
 import geopandas
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
 from _helpers_dist import configure_logging, sets_path_to_root
 from shapely.geometry import Polygon
-import logging
-from shapely.geometry import Point
-logger = logging.getLogger(__name__)
 
 idx = pd.IndexSlice
 
@@ -263,55 +259,9 @@ def attach_conventional_generators(
     extendable_carriers,
     conventional_config,
     conventional_inputs,
-    mode="green_field"
 ):
-    """
-    Attach conventional generators to the network.
-    
-    Parameters
-    ----------
-    mode : str, optional
-        'green_field' -> standard behavior (default)
-        'brown_field' -> adds virtual import generators on boundary buses
-    lines_path : str, optional
-        Path to OSM lines (required if mode='brown_field')
-    shape_path : str, optional
-        Path to the shape file (required if mode='brown_field')
-    """
-    # BROWN FIELD MODE 
-    if mode == "brown_field":
-        logger.info("Running in brown_field mode: adding virtual import generators...")
-
-        # Ensure 'outside' flag is available
-        if "outside" not in n.buses.columns:
-            raise ValueError("Network does not contain 'outside' flag. Please run mark_external_buses() first.")
-
-        # Select buses marked as external
-        bus_ids_outside = n.buses.index[n.buses["outside"]].tolist()
-        logger.info(f"Found {len(bus_ids_outside)} external connection buses (from 'outside' flag).")
-
-        # Define the marginal cost for grid import (same as OCGT reference)
-        marginal_cost = costs.at["OCGT", "marginal_cost"]
-
-        # Add virtual import generators representing external grid connection
-        n.madd(
-            "Generator",
-            [f"grid_import_{bus}" for bus in bus_ids_outside],
-            bus=bus_ids_outside,
-            carrier="grid_import",
-            p_nom_extendable=False,  # not extendable
-            p_nom=np.inf,            # effectively infinite capacity
-            marginal_cost=marginal_cost,
-            capital_cost=0.0,
-            efficiency=1.0,
-        )
-
-        logger.info(f"Added {len(bus_ids_outside)} virtual grid import generators on external buses.")
-        return  # stop here — skip conventional generator creation
-
-
-    # GREEN FIELD MODE (standard behavior)
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
+
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     ppl = (
@@ -340,16 +290,22 @@ def attach_conventional_generators(
     )
 
     for carrier in conventional_config:
+        # Generatori con tecnologia influenzata
         idx = n.generators.query("carrier == @carrier").index
+
         for attr in list(set(conventional_config[carrier]) & set(n.generators)):
             values = conventional_config[carrier][attr]
+
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
+                # Values affecting generators of technology k country-specific
+                # First map generator buses to countries; then map countries to p_max_pu
                 values = pd.read_csv(values, index_col=0).iloc[:, 0]
                 bus_values = n.buses.country.map(values)
                 n.generators[attr].update(
                     n.generators.loc[idx].bus.map(bus_values).dropna()
                 )
             else:
+                # Single value affecting all k technology generators regardless of country.
                 n.generators.loc[idx, attr] = values
 
 
@@ -413,7 +369,7 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     load_file = snakemake.input["load_file"]
-    mode = snakemake.params["mode"]
+
     ppl = load_powerplants(snakemake.input.powerplants)
 
     costs = load_costs(
@@ -437,14 +393,13 @@ if __name__ == "__main__":
     }
 
     attach_conventional_generators(
-    n,
-    costs,
-    ppl,
-    snakemake.config["electricity"]["conventional_carriers"],
-    snakemake.config["electricity"]["extendable_carriers"],
-    snakemake.config.get("conventional", {}),
-    conventional_inputs,
-    mode,
+        n,
+        costs,
+        ppl,
+        snakemake.config["electricity"]["conventional_carriers"],
+        snakemake.config["electricity"]["extendable_carriers"],
+        snakemake.config.get("conventional", {}),
+        conventional_inputs,
     )
 
     attach_storageunits(

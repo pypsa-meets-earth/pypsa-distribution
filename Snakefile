@@ -227,16 +227,9 @@ rule clean_osm_data:
         africa_shape=pypsaearth("resources/shapes/africa_shape.geojson"),
     output:
         generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
-        generators=os.path.abspath(
-            "resources/" + RDIR + "osm/clean/all_clean_generators.geojson"
-        ),
         generators_csv="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
         lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
         substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
-        lines=os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_lines.geojson"),
-        substations=os.path.abspath(
-            "resources/" + RDIR + "osm/clean/all_clean_substations.geojson"
-        ),
     log:
         "logs/" + RDIR + "clean_osm_data.log",
     benchmark:
