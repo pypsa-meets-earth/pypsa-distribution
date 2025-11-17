@@ -75,6 +75,9 @@ if config.get("disable_subworkflow", False):
 
     def pypsaearth(path):
         return PYPSAEARTH_FOLDER + "/" + path
+    
+def pypsaearth(path):
+    return PYPSAEARTH_FOLDER + "/" + path
 
 
 # rule clean:
@@ -214,10 +217,10 @@ rule clean_osm_data:
         offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
         africa_shape=pypsaearth("resources/shapes/africa_shape.geojson"),
     output:
-        generators=os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_generators.geojson"),
+        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
         generators_csv="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
-        lines=os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_lines.geojson"),
-        substations=os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_substations.geojson"),
+        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
+        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
     log:
         "logs/" + RDIR + "clean_osm_data.log",
     benchmark:
@@ -228,23 +231,20 @@ rule clean_osm_data:
 
 rule build_osm_network:
     params:
+        script = pypsaearth("scripts/build_osm_network.py"),
         build_osm_network = config.get("build_osm_network", {}),
         countries = config["countries"],
         crs = config["crs"],
     input:
-        generators   = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_generators.geojson"),
-        lines        = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_lines.geojson"),
-        substations  = os.path.abspath("resources/" + RDIR + "osm/clean/all_clean_substations.geojson"),
-        country_shapes=os.path.abspath("resources/"+ RDIR +"shapes/microgrid_shapes.geojson"),
+        generators = "resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
+        lines      = "resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
+        substations= "resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
+        country_shapes = "resources/shapes/microgrid_shapes.geojson",
     output:
-        lines        = os.path.abspath("resources/" + RDIR + "base_network/all_lines_build_network.csv"),
-        converters   = os.path.abspath("resources/" + RDIR + "base_network/all_converters_build_network.csv"),
-        transformers = os.path.abspath("resources/" + RDIR + "base_network/all_transformers_build_network.csv"),
-        substations  = os.path.abspath("resources/" + RDIR + "base_network/all_buses_build_network.csv"),
-    log:
-        "logs/" + RDIR + "build_osm_network.log",
-    benchmark:
-        "benchmarks/" + RDIR + "build_osm_network"
+        lines        = "resources/" + RDIR + "base_network/all_lines_build_network.csv",
+        converters   = "resources/" + RDIR + "base_network/all_converters_build_network.csv",
+        transformers = "resources/" + RDIR + "base_network/all_transformers_build_network.csv",
+        substations  = "resources/" + RDIR + "base_network/all_buses_build_network.csv",
     script:
         pypsaearth("scripts/build_osm_network.py")
 
@@ -290,7 +290,7 @@ rule cluster_buildings:
         house_area_limit=config["house_area_limit"],
     input:
         buildings_geojson="resources/buildings/microgrid_building.geojson",
-        all_nodes_brown_field=  os.path.abspath("resources/" + RDIR + "base_network/all_buses_build_network.csv")
+        all_nodes_brown_field=  "resources/" + RDIR + "base_network/all_buses_build_network.csv"
     output:
         clusters="resources/buildings/clustered_buildings.geojson",
         clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
@@ -340,13 +340,38 @@ rule build_renewable_profiles:
         pypsaearth("scripts/build_renewable_profiles.py")
 
 
+if config.get("scenario") != "green_field":
+    rule filter_data:
+        input:
+            base_network="networks/base.nc",
+            raw_lines = "resources/osm/clean/all_clean_lines.geojson",
+            shape = "resources/shapes/microgrid_shapes.geojson",
+        output:
+            base_update = "networks/" + RDIR + "base_update.nc",
+        log:
+            "logs/" + RDIR + "base_network.log",
+        benchmark:
+            "benchmarks/" + RDIR + "base_network"
+        threads: 1
+        resources:
+            mem_mb=500,
+        script:
+            "scripts/filter_data.py"
+
+
 rule add_electricity:
+    params:
+        mode=config["mode"],
     input:
         **{
             f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
             for tech in config["tech_modelling"]["general_vre"]
         },
-        create_network="networks/base.nc",
+        create_network = (
+            "networks/base_update.nc"
+            if config.get("scenario") != "green_field"
+            else "networks/base.nc"
+        ),
         tech_costs=COSTS,
         load_file="resources/demand/microgrid_load.csv",
         powerplants="resources/powerplants.csv",
