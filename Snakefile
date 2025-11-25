@@ -350,6 +350,7 @@ rule build_bus_regions:
     script:
         pypsaearth("scripts/build_bus_regions.py")
 
+
 rule build_renewable_profiles:
     params:
         crs=config["crs"],
@@ -367,16 +368,17 @@ rule build_renewable_profiles:
         hydro_capacities="pypsa-earth/data/hydro_capacities.csv",
         eia_hydro_generation="pypsa-earth/data/eia_hydro_annual_generation.csv",
         powerplants="resources/powerplants.csv",
-        regions = (
-            (lambda w:
-                ("resources/" + RDIR + "bus_regions/regions_onshore.geojson")
-                if w.technology in ("onwind", "solar", "hydro", "csp")
-                else ("resources/" + RDIR + "bus_regions/regions_offshore.geojson")
+        regions=(
+            (
+                lambda w: (
+                    ("resources/" + RDIR + "bus_regions/regions_onshore.geojson")
+                    if w.technology in ("onwind", "solar", "hydro", "csp")
+                    else ("resources/" + RDIR + "bus_regions/regions_offshore.geojson")
+                )
             )
             if config.get("scenario") != "green_field"
             else "resources/shapes/microgrid_bus_shapes.geojson"
         ),
-
         cutout=lambda w: pypsaearth(
             "cutouts/" + config["renewable"][w.technology]["cutout"] + ".nc"
         ),
