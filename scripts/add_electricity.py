@@ -358,7 +358,9 @@ def attach_conventional_generators(
                 n.generators.loc[idx, attr] = values
 
 
-def attach_storageunits(n, costs, number_microgrids, technologies, extendable_carriers, mode=None):
+def attach_storageunits(
+    n, costs, number_microgrids, technologies, extendable_carriers, mode=None
+):
     """
     Add different types of storage units to the power network.
     """
@@ -378,7 +380,7 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
         for tech in technologies:
             # accept any battery-related technology name
             if tech not in ["battery", "lithium", "lead acid"]:
-                continue  
+                continue
 
             n.madd(
                 "StorageUnit",
@@ -410,15 +412,20 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
                     capital_cost=costs.at[tech, "capital_cost"],
                     marginal_cost=costs.at[tech, "marginal_cost"],
                     efficiency_store=costs.at[lookup_store["battery"], "efficiency"],
-                    efficiency_dispatch=costs.at[lookup_dispatch["battery"], "efficiency"],
+                    efficiency_dispatch=costs.at[
+                        lookup_dispatch["battery"], "efficiency"
+                    ],
                     max_hours=max_hours["battery"],
                     cyclic_state_of_charge=True,
                 )
 
-        logger.info(f"Added {len(technologies) * len(microgrid_ids)} storage units for microgrids.")
+        logger.info(
+            f"Added {len(technologies) * len(microgrid_ids)} storage units for microgrids."
+        )
         logger.info(f"Total storage units: {len(n.storage_units)}")
 
     return n  # ✅ always return the modified network
+
 
 def attach_load(n, load_file, tech_modelling):
     # Upload the load csv file
