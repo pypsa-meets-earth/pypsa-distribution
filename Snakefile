@@ -157,7 +157,7 @@ if config.get("mode") != "brown_field":
             clusters="resources/buildings/clustered_buildings.geojson",
             load="resources/demand/microgrid_load.csv",
         output:
-            "networks/base.nc",
+            "networks/" + RDIR + "base.nc",
         log:
             "logs/create_network.log",
         benchmark:
@@ -323,6 +323,33 @@ rule cluster_buildings:
         "scripts/cluster_buildings.py"
 
 
+rule build_bus_regions:
+    params:
+        alternative_clustering=config["cluster_options"]["alternative_clustering"],
+        crs=config["crs"],
+        countries=config["countries"],
+    input:
+        country_shapes="resources/shapes/microgrid_shapes.geojson",
+        offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
+        base_network="networks/" + RDIR + "base.nc",
+        #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
+        #using this line instead of the following will test updated gadm shapes for MA.
+        #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
+        #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
+        gadm_shapes=pypsaearth("resources/" + RDIR + "shapes/gadm_shapes.geojson"),
+    output:
+        regions_onshore="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
+        regions_offshore="resources/" + RDIR + "bus_regions/regions_offshore.geojson",
+    log:
+        "logs/" + RDIR + "build_bus_regions.log",
+    benchmark:
+        "benchmarks/" + RDIR + "build_bus_regions"
+    threads: 1
+    resources:
+        mem_mb=1000,
+    script:
+        pypsaearth("scripts/build_bus_regions.py")
+
 rule build_renewable_profiles:
     params:
         crs=config["crs"],
@@ -340,7 +367,16 @@ rule build_renewable_profiles:
         hydro_capacities="pypsa-earth/data/hydro_capacities.csv",
         eia_hydro_generation="pypsa-earth/data/eia_hydro_annual_generation.csv",
         powerplants="resources/powerplants.csv",
-        regions="resources/shapes/microgrid_bus_shapes.geojson",
+        regions = (
+            (lambda w:
+                ("resources/" + RDIR + "bus_regions/regions_onshore.geojson")
+                if w.technology in ("onwind", "solar", "hydro", "csp")
+                else ("resources/" + RDIR + "bus_regions/regions_offshore.geojson")
+            )
+            if config.get("scenario") != "green_field"
+            else "resources/shapes/microgrid_bus_shapes.geojson"
+        ),
+
         cutout=lambda w: pypsaearth(
             "cutouts/" + config["renewable"][w.technology]["cutout"] + ".nc"
         ),
@@ -361,6 +397,10 @@ if config.get("scenario") != "green_field":
 
     rule filter_data:
         input:
+            **{
+                f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
+                for tech in config["tech_modelling"]["general_vre"]
+            },
             base_network="networks/base.nc",
             raw_lines="resources/osm/clean/all_clean_lines.geojson",
             shape="resources/shapes/microgrid_shapes.geojson",
