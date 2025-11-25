@@ -13,9 +13,10 @@ Inputs come from the Snakemake rule `filter_data`.
 
 import logging
 import os
-import xarray as xr
+
 import geopandas as gpd
 import pypsa
+import xarray as xr
 from _helpers_dist import configure_logging, sets_path_to_root
 from shapely.geometry import Point
 
@@ -70,7 +71,7 @@ def rename_microgrid_buses(n, microgrids_list):
 
 def rename_profile_buses(nc_path, microgrid_name):
     """
-    Rename the 'bus' dimension of a renewable profile NetCDF file and 
+    Rename the 'bus' dimension of a renewable profile NetCDF file and
     safely overwrite the original file using a temporary write + os.replace.
     """
 
@@ -95,11 +96,11 @@ def rename_profile_buses(nc_path, microgrid_name):
 
     # Replace original file (Windows accepts atomic replace)
     import os
+
     os.replace(tmp_path, nc_path)
 
     logger.info(f"Updated bus coordinates in {nc_path}.")
     return rename_map
-
 
 
 def find_external_connection_buses(n, lines_path, shape_path, crs="EPSG:4326"):
@@ -222,4 +223,3 @@ if __name__ == "__main__":
     # 4) Save final updated network
     n.export_to_netcdf(snakemake.output["base_update"])
     logger.info(f"Saved updated network to {snakemake.output['base_update']}")
-
