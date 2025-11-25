@@ -353,9 +353,9 @@ def attach_conventional_generators(
                 n.generators.loc[idx, attr] = values
 
 
-def attach_storageunits(n, costs, number_microgrids, technologies, extendable_carriers):
+def attach_storageunits(n, costs, number_microgrids, technologies, extendable_carriers, mode=None):
     """
-    This function adds different technologies of storage units to the power network
+    Add different types of storage units to the power network.
     """
 
     elec_opts = snakemake.config["electricity"]
@@ -366,30 +366,54 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
 
     microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
 
-    # Add the storage units to the power network
-    for tech in technologies:
-        for microgrid in microgrid_ids:
+    # --- BROWN FIELD MODE: add batteries to all buses ---
+    if mode == "brown_field":
+        logger.info("Running in brown_field mode: adding batteries to all buses")
+
+        for tech in technologies:
+            # accept any battery-related technology name
+            if tech not in ["battery", "lithium", "lead acid"]:
+                continue  
+
             n.madd(
                 "StorageUnit",
-                [microgrid],
-                " " + tech,
-                bus=[f"{microgrid}_gen_bus"],
-                carrier=tech,
+                [f"battery_{bus}" for bus in n.buses.index],
+                bus=n.buses.index,
+                carrier="battery",  # unify carrier name
                 p_nom_extendable=True,
-                capital_cost=costs.at[tech, "capital_cost"],
-                marginal_cost=costs.at[tech, "marginal_cost"],
-                efficiency_store=costs.at[
-                    lookup_store["battery"], "efficiency"
-                ],  # Lead_acid and lithium have the same value
-                efficiency_dispatch=costs.at[
-                    lookup_dispatch["battery"], "efficiency"
-                ],  # Lead_acid and lithium have the same value
-                max_hours=max_hours[
-                    "battery"
-                ],  # Lead_acid and lithium have the same value
+                capital_cost=costs.at["battery", "capital_cost"],
+                marginal_cost=costs.at["battery", "marginal_cost"],
+                efficiency_store=costs.at[lookup_store["battery"], "efficiency"],
+                efficiency_dispatch=costs.at[lookup_dispatch["battery"], "efficiency"],
+                max_hours=max_hours["battery"],
                 cyclic_state_of_charge=True,
             )
 
+        logger.info(f"Added {len(n.buses.index)} battery storage units (one per bus).")
+        logger.info(f"Total storage units: {len(n.storage_units)}")
+
+    # --- GREEN FIELD MODE (default behavior) ---
+    else:
+        for tech in technologies:
+            for microgrid in microgrid_ids:
+                n.madd(
+                    "StorageUnit",
+                    [microgrid + "_" + tech],
+                    bus=[f"{microgrid}_gen_bus"],
+                    carrier=tech,
+                    p_nom_extendable=True,
+                    capital_cost=costs.at[tech, "capital_cost"],
+                    marginal_cost=costs.at[tech, "marginal_cost"],
+                    efficiency_store=costs.at[lookup_store["battery"], "efficiency"],
+                    efficiency_dispatch=costs.at[lookup_dispatch["battery"], "efficiency"],
+                    max_hours=max_hours["battery"],
+                    cyclic_state_of_charge=True,
+                )
+
+        logger.info(f"Added {len(technologies) * len(microgrid_ids)} storage units for microgrids.")
+        logger.info(f"Total storage units: {len(n.storage_units)}")
+
+    return n  # ✅ always return the modified network
 
 def attach_load(n, load_file, tech_modelling):
     # Upload the load csv file
@@ -453,6 +477,7 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"],
         snakemake.config["tech_modelling"]["storage_techs"],
         snakemake.config["electricity"]["extendable_carriers"],
+        mode,
     )
     a = 12
 

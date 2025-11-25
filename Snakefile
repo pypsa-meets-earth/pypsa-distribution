@@ -10,7 +10,7 @@ from _helpers import create_country_list
 from os.path import normpath, exists, isdir
 from shutil import copyfile
 from pathlib import Path
-from _helpers import create_country_list
+from _helpers_dist import create_country_list
 import os
 
 import sys
@@ -260,7 +260,7 @@ rule build_osm_network:
     benchmark:
         "benchmarks/" + RDIR + "build_osm_network"
     script:
-        pypsaearth("scripts/build_osm_network.py")
+        "scripts/build_osm_network.py"
 
 
 if config.get("scenario") != "green_field":
