@@ -384,7 +384,7 @@ def attach_storageunits(
 
             n.madd(
                 "StorageUnit",
-                [f"battery_{bus}" for bus in n.buses.index],
+                [f"{tech}_{bus}" for bus in n.buses.index],
                 bus=n.buses.index,
                 carrier="battery",  # unify carrier name
                 p_nom_extendable=True,
