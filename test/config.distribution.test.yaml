@@ -27,6 +27,8 @@ enable:
   download_osm_data: true
   download_osm_buildings: true
   download_osm_method: overpass # or earth_osm
+  download_and_merge_microsoft_ML_building: true # Select true only if download osm_method is overpass, if True, then retrieve_and_merge_microsoft_ML_building can be run
+
   # If "build_cutout" : true # requires cds API key
   # https://cds.climate.copernicus.eu/api-how-to
   # More information
@@ -123,18 +125,17 @@ tech_modelling:
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
 
-microgrids_list:
-  microgrid_1:     #WORKING
+microgrids_list:  # MICROGRIDS IN NIGERIA
+  microgrid_1:     # WORKING
     lon_max: 7.3914
     lon_min: 7.2616
     lat_min: 4.6151
     lat_max: 4.7208
-
-  microgrid_2:     # WORKING
-    lon_max: 7.18935
-    lon_min: 7.01048
-    lat_min: 6.17059
-    lat_max: 6.29329
+# microgrid_2:     # WORKING
+#   lon_max: 7.6
+#   lon_min: 7.5
+#   lat_min: 4.4
+#   lat_max: 4.5
 
 load:
   scaling_factor: 15000

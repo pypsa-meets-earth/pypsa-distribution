@@ -158,7 +158,7 @@ def estimate_microgrid_population(raster_path, shapes_path, output_file):
     shapes = gpd.read_file(shapes_path)
     # Iterate through each microgrid geometry
     for i, shape in shapes.iterrows():
-        name = shape["name"]  # Extract the name of the microgrid
+        name = shape["name_microgrid"]  # Extract the name of the microgrid
         # Open the raster file and mask it using the microgrid geometry
         with rasterio.open(raster_path) as src:
             # Mask the raster data to only include the area within the microgrid
@@ -180,8 +180,6 @@ def estimate_microgrid_population(raster_path, shapes_path, output_file):
     population_df = pd.DataFrame(
         list(population_data.items()), columns=["Microgrid_Name", "Population"]
     )
-    # Save the population estimates to a CSV file
-    # population_df.to_csv(output_file, index=False)
 
     return population_df
 
@@ -438,7 +436,6 @@ def calculate_load_ramp(
 
         all_microgrid_loads = pd.concat([all_microgrid_loads, tot_loads_df], axis=1)
 
-    # Esportazione del DataFrame finale
     all_microgrid_loads.to_csv(output_path_csv)
 
 

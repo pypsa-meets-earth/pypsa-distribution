@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from collections import Counter
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
@@ -66,6 +67,7 @@ def get_central_points_geojson_with_buildings(
     output_filepath_buildings,
     output_path_csv,
     microgrids_list,
+    geo_crs,
 ):
     """
     Divides buildings into a specified number of clusters using the KMeans algorithm and generates:
@@ -95,25 +97,28 @@ def get_central_points_geojson_with_buildings(
     """
     # Classify and process the buildings
     microgrid_buildings = buildings_classification(input_filepath, crs)
-    # Prepare GeoDataFrames and DataFrames to accumulate results
+
+    # Prepare accumulators
     all_central_features = gpd.GeoDataFrame(
-        columns=["geometry", "cluster", "name_microgrid"]
+        columns=["geometry", "cluster", "name_microgrid"], crs=geo_crs
     )
     all_microgrid_buildings = gpd.GeoDataFrame(columns=microgrid_buildings.columns)
     all_buildings_class = pd.DataFrame()
-    # Process each microgrid individually
+
+    # Process each microgrid
     for grid_name, grid_data in microgrids_list.items():
-        # Filter buildings belonging to the current microgrid
         filtered_buildings = microgrid_buildings[
             microgrid_buildings["name_microgrid"] == grid_name
         ]
-        # Extract centroids of each building as coordinates
+
+        # Extract building centroids
         centroids_building = [
             (row.geometry.centroid.x, row.geometry.centroid.y)
             for row in filtered_buildings.itertuples()
         ]
         centroids_building = np.array(centroids_building)
-        # Apply KMeans clustering to group the buildings
+
+        # KMeans
         if isinstance(n_clusters, dict):
             kmeans = KMeans(n_clusters=n_clusters[grid_name], random_state=0).fit(
                 centroids_building
@@ -122,40 +127,40 @@ def get_central_points_geojson_with_buildings(
             kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(
                 centroids_building
             )
-        # Get the coordinates of cluster centroids
+
+        # Central points of clusters
         centroids = kmeans.cluster_centers_
-        # Identify the central point for each cluster
         central_points = []
         for i in range(kmeans.n_clusters):
             cluster_points = centroids_building[kmeans.labels_ == i]
             distances = np.linalg.norm(cluster_points - centroids[i], axis=1)
             central_point_idx = np.argmin(distances)
             central_points.append(cluster_points[central_point_idx])
-        # Create GeoDataFrame for cluster centroids
-        central_features = []
-        for i, central_point in enumerate(central_points):
-            central_features.append(
-                {
-                    "geometry": Point(central_point),
-                    "cluster": i,
-                    "name_microgrid": grid_name,
-                }
-            )
+
+        # Centroids GeoDataFrame
+        central_features = [
+            {
+                "geometry": Point(central_point),
+                "cluster": i,
+                "name_microgrid": grid_name,
+            }
+            for i, central_point in enumerate(central_points)
+        ]
         central_features_gdf = gpd.GeoDataFrame(
             central_features, crs=filtered_buildings.crs
-        ).to_crs("EPSG:4326")
+        ).to_crs(geo_crs)
         all_central_features = pd.concat(
             [all_central_features, central_features_gdf], ignore_index=True
         )
 
-        # Assign cluster IDs to buildings and append to the results
-        clusters = kmeans.labels_
-        filtered_buildings["cluster_id"] = clusters.astype(int)
+        # Assign clusters to buildings
+        filtered_buildings = filtered_buildings.copy()
+        filtered_buildings["cluster_id"] = kmeans.labels_.astype(int)
         all_microgrid_buildings = pd.concat(
             [all_microgrid_buildings, filtered_buildings], ignore_index=True
         )
 
-        # Count building types within each cluster and append to the summary
+        # Counts per cluster
         buildings_class = (
             filtered_buildings.groupby("cluster_id")
             .tags_building.value_counts()
@@ -166,16 +171,20 @@ def get_central_points_geojson_with_buildings(
             [all_buildings_class, buildings_class], ignore_index=True
         )
 
-    # Save all the results to their respective output files
-    all_central_features.to_file(
-        output_filepath_centroids, driver="GeoJSON"
-    )  # Save cluster centroids as GeoJSON
-    all_microgrid_buildings.to_file(
-        output_filepath_buildings, driver="GeoJSON"
-    )  # Save clustered buildings as GeoJSON
-    all_buildings_class.to_csv(
-        output_path_csv, index=False
-    )  # Save building type counts as CSV
+    # Save centroids (unchanged)
+    all_central_features.to_file(output_filepath_centroids, driver="GeoJSON")
+
+    # Ensure unique columns, save buildings with GeoPandas (no manual JSON)
+    if all_microgrid_buildings.columns.duplicated().any():
+        all_microgrid_buildings = all_microgrid_buildings.loc[
+            :, ~all_microgrid_buildings.columns.duplicated(keep="first")
+        ].copy()
+
+    gdf_out = all_microgrid_buildings.to_crs(geo_crs)
+    gdf_out.to_file(output_filepath_buildings, driver="GeoJSON")
+
+    # Save CSV
+    all_buildings_class.to_csv(output_path_csv, index=False)
 
 
 if __name__ == "__main__":
@@ -190,6 +199,7 @@ if __name__ == "__main__":
 
     crs = snakemake.params.crs["area_crs"]
     house_area_limit = snakemake.params.house_area_limit["area_limit"]
+    geo_crs = snakemake.params.crs["geo_crs"]
 
     get_central_points_geojson_with_buildings(
         snakemake.input["buildings_geojson"],
@@ -200,4 +210,5 @@ if __name__ == "__main__":
         snakemake.output["clusters_with_buildings"],
         snakemake.output["buildings_type"],
         snakemake.config["microgrids_list"],
+        geo_crs,
     )

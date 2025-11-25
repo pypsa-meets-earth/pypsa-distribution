@@ -4,6 +4,7 @@
 
 import json
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -33,16 +34,14 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
         A GeoDataFrame containing the filtered buildings with an added field "name_microgrid"
         that associates each building to its corresponding microgrid.
     """
-
-    # Load the GeoJSON files
     microgrid = gpd.read_file(microgrid_shape_path)
     buildings = gpd.read_file(buildings_path)
     # Create a GeoDataFrame to accumulate the results
-    result = gpd.GeoDataFrame(columns=buildings.columns)
+    result = gpd.GeoDataFrame(columns=buildings.columns, crs=buildings.crs)
     # Iterate over each microgrid geometry
-    for idx, microgrid_shape in microgrid.iterrows():
+    for _, microgrid_shape in microgrid.iterrows():
         # Extract the name of the microgrid
-        microgrid_name = microgrid_shape["name"]
+        microgrid_name = microgrid_shape["name_microgrid"]
         # Filter buildings located within the microgrid geometry
         buildings_in_microgrid = buildings[
             buildings.geometry.within(microgrid_shape.geometry)
@@ -52,11 +51,12 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
         buildings_in_microgrid["name_microgrid"] = microgrid_name
         # Append the filtered buildings to the final result
         result = gpd.GeoDataFrame(
-            pd.concat([result, buildings_in_microgrid], ignore_index=True)
+            pd.concat([result, buildings_in_microgrid], ignore_index=True),
+            crs=buildings.crs,
         )
-    # Save the final result as a GeoJSON file
-    result.to_file(output_path, driver="GeoJSON")
 
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    result.to_file(output_path, driver="GeoJSON")
     return result
 
 
