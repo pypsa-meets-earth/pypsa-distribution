@@ -906,7 +906,7 @@ if __name__ == "__main__":
     build_osm_network = snakemake.params.build_osm_network
     countries = snakemake.params.countries
 
-    #sets_path_to_root("pypsa-earth")
+    # sets_path_to_root("pypsa-earth")
 
     built_network(
         snakemake.input,

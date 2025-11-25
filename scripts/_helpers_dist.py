@@ -571,7 +571,8 @@ def read_geojson(fn):
     else:
         # else return an empty GeoDataFrame
         return gpd.GeoDataFrame(geometry=[])
-    
+
+
 def read_geojson_earth(fn, cols=[], dtype=None, crs="EPSG:4326"):
     """
     Function to read a geojson file fn. When the file is empty, then an empty
