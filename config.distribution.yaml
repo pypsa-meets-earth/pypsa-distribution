@@ -40,6 +40,7 @@ countries: ["NG"]
 # https://pypsa-earth.readthedocs.io/en/latest/configuration.html#top-level-configuration
 
 year: "2019"  # Year setting allows the choice of which data to download (es. Worldpop_data)
+grid_import_marginal_cost: 50.0  # [EUR/MWh] Marginal cost of importing electricity from the main grid in brownfield mode
 
 snapshots:
   start: "2013-03-01"
@@ -75,7 +76,7 @@ crs:
 
 clean_osm_data_options:  # osm = OpenStreetMap
   names_by_shapes: true  # Set the country name based on the extended country shapes
-  threshold_voltage: 0  # [V] assets below that voltage threshold will not be used (cable, line, generator, etc.)
+  threshold_voltage: 500  # [V] assets below that voltage threshold will not be used (cable, line, generator, etc.)
   tag_substation: "distribution"  # Filters only substations with 'transmission' tag, ('distribution' also available)
   add_line_endings: true  # When "True", then line endings are added to the dataset of the substations
   generator_name_method: OSM  # Methodology to specify the name to the generator. Options: OSM (name as by OSM dataset), closest_city (name by the closest city)
@@ -88,14 +89,14 @@ clean_osm_data_options:  # osm = OpenStreetMap
 
 build_osm_network:  # Options of the build_osm_network script; osm = OpenStreetMap
   group_close_buses: true  # When "True", close buses are merged and guarantee the voltage matching among line endings
-  group_tolerance_buses: 100  # [m] (default 5000) Tolerance in meters of the close buses to merge
+  group_tolerance_buses: 500  # [m] (default 5000) Tolerance in meters of the close buses to merge
   split_overpassing_lines: true  # When True, lines overpassing buses are splitted and connected to the bueses
   overpassing_lines_tolerance: 1  # [m] (default 1) Tolerance to identify lines overpassing buses
   force_ac: false  # When true, it forces all components (lines and substation) to be AC-only. To be used if DC assets create problem.
 
 base_network:
   min_voltage_substation_offshore: 1000000   # [V] minimum voltage of the offshore substations
-  min_voltage_rebase_voltage: 1000000
+  min_voltage_rebase_voltage: 1000000 
 
 electricity:
   voltages: [0.4, 15., 20., 30., 132., 150., 220., 380., 500., 750.]
@@ -116,11 +117,12 @@ electricity:
 
 lines:
   ac_types:
-    0.4: "24-AL1/4-ST1A 0.4"
-    15.: "NA2XS2Y 1x185 RM/25 12/20 kV"
-    20.: "NA2XS2Y 1x185 RM/25 12/20 kV"     # per dorsali cariche puoi passare a 1x240
-    30.: "NA2XS2Y 1x240 RM/25 18/30 kV"
-    132.: "Al/St 240/40 2-bundle 220.0"     # HV: lascia i default di Earth
+    0.4:  "24-AL1/4-ST1A 0.4"
+    15.:  "NA2XS2Y 1x185 RM/25 12/20 kV"
+    20.:  "NA2XS2Y 1x185 RM/25 12/20 kV"    
+    30.:  "NA2XS2Y 1x240 RM/25 18/30 kV"
+    132.: "Al/St 240/40 2-bundle 220.0"
+    150.: "Al/St 240/40 2-bundle 220.0"     
     220.: "Al/St 240/40 2-bundle 220.0"
     380.: "Al/St 240/40 4-bundle 380.0"
     500.: "Al/St 240/40 4-bundle 500.0"
@@ -139,8 +141,9 @@ links:
 
 transformers:
   x: 0.06      # TO DO : check value for distribution
-  s_nom: 0.63
-  type: ""
+  s_nom: 0.63 
+  type: ""    
+
 
 # TODO: Needs to be adjusted for Africa
 costs:
