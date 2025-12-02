@@ -50,7 +50,13 @@ def calculate_power_node_position(load_file, cluster_bus):
 
 
 def create_microgrid_network(
-    n, input_file, voltage_level, line_type, microgrid_list, input_path
+    n,
+    input_file,
+    voltage_level,
+    line_type,
+    interconnect_microgrids,
+    microgrid_list,
+    input_path,
 ):
     """
     Creates local microgrid networks within the PyPSA network. The local microgrid networks are distribution networks created based on
@@ -71,6 +77,8 @@ def create_microgrid_network(
     microgrid_list : dict
         A dictionary containing the list of microgrids. Keys are microgrid names,
         and values are metadata about each microgrid.
+    interconnect_microgrids: bool
+        An option to interconnect microgrids. True interconnects all the microgrids via Delaunay triangulation.
     Output
     ------
     The PyPSA network (`n`) is updated with:
@@ -143,33 +151,99 @@ def create_microgrid_network(
                 edges.add(edge)
 
         # Add lines to the network based on the triangulation edges
+        df = pd.DataFrame()
         for i, j in edges:
             bus0 = microgrid_buses[i]
             bus1 = microgrid_buses[j]
             line_name = f"{grid_name}_line_{bus0}_{bus1}"
-
-            # Skip if the line already exists
-            if line_name in n.lines.index:
-                continue
-
             # Retrieve the coordinates of the buses
             x1, y1 = n.buses.loc[bus0].x, n.buses.loc[bus0].y
             x2, y2 = n.buses.loc[bus1].x, n.buses.loc[bus1].y
-
-            # Calculate the distance between buses (in km)
-            length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 1000
-
-            # Add the line to the network
-            n.add(
-                "Line",
-                line_name,
-                bus0=bus0,
-                bus1=bus1,
-                type=line_type,
-                length=length,
-                s_nom=0.1,
-                s_nom_extendable=True,
+            bus0_coord = Point(x1, y1)
+            bus1_coord = Point(x2, y2)
+            # Create a GeoSeries with a defined CRS (WGS84 - EPSG:4326)
+            gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
+            # Convert to a projected CRS (e.g., EPSG:3857 for meters)
+            gdf_proj = gdf.to_crs(epsg=3857)
+            # Calculate distance (in kilometers)
+            distance_km = gdf_proj[0].distance(gdf_proj[1]) / 1000
+            df_aux = pd.DataFrame(
+                {
+                    "line_name": [line_name],
+                    "bus0": [bus0],
+                    "bus1": [bus1],
+                    "type": line_type,
+                    "s_nom": [0.1],
+                    "s_nom_extendable": True,
+                    "length": [distance_km],
+                }
             )
+            df = pd.concat([df, df_aux])
+
+        df.index = df["line_name"]
+        df.drop("line_name", axis=1, inplace=True)
+        n.import_components_from_dataframe(df, "Line")
+
+    df = pd.DataFrame()
+    if interconnect_microgrids == True:
+        if len(microgrid_list.keys()) >= 2:
+            bus_positions = []
+            microgrids = []
+            inter_cons = []
+            for each in microgrid_list.keys():
+                x = n.buses.loc[f"{each}_gen_bus"].x
+                y = n.buses.loc[f"{each}_gen_bus"].y
+                bus_positions.append((x, y))
+                gen_bus_name = f"{each}_gen_bus"
+                microgrids.append(gen_bus_name)
+
+            if len(microgrid_list.keys()) == 2:
+                bus0 = microgrids[0]
+                bus1 = microgrids[1]
+                inter_cons.extend([[bus0, bus1]])
+
+            if len(microgrid_list.keys()) > 2:
+                coords = np.array(bus_positions)
+                tri = Delaunay(coords)
+                # Collect unique edges from the Delaunay triangulation
+                edges = set()
+                for simplex in tri.simplices:
+                    for i in range(3):
+                        edge = tuple(sorted([simplex[i], simplex[(i + 1) % 3]]))
+                        edges.add(edge)
+                # Add lines to the network based on the triangulation edges
+                for i, j in edges:
+                    bus0 = microgrids[i]
+                    bus1 = microgrids[j]
+                    inter_cons.extend([[bus0, bus1]])
+
+            for bus in inter_cons:
+                x1, y1 = n.buses.loc[bus[0]].x, n.buses.loc[bus[0]].y
+                x2, y2 = n.buses.loc[bus[1]].x, n.buses.loc[bus[1]].y
+                line_name = f"interconnection_line_between_{bus[0]}_and_{bus[1]}"
+                bus0_coord = Point(x1, y1)
+                bus1_coord = Point(x2, y2)
+                # Create a GeoSeries with a defined CRS (WGS84 - EPSG:4326)
+                gdf = gpd.GeoSeries([bus0_coord, bus1_coord], crs="EPSG:4326")
+                # Convert to a projected CRS (e.g., EPSG:3857 for meters)
+                gdf_proj = gdf.to_crs(epsg=3857)
+                # Calculate distance (in kilometers)
+                distance_km = gdf_proj[0].distance(gdf_proj[1]) / 1000
+                df_aux = pd.DataFrame(
+                    {
+                        "line_name": [line_name],
+                        "bus0": [bus[0]],
+                        "bus1": [bus[1]],
+                        "type": line_type,
+                        "s_nom": [0.1],
+                        "s_nom_extendable": True,
+                        "length": [distance_km],
+                    }
+                )
+                df = pd.concat([df, df_aux])
+            df.index = df["line_name"]
+            df.drop("line_name", axis=1, inplace=True)
+            n.import_components_from_dataframe(df, "Line")
 
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
@@ -273,6 +347,7 @@ if __name__ == "__main__":
         snakemake.input["clusters"],
         snakemake.config["electricity"]["voltage"],
         snakemake.config["electricity"]["line_type"],
+        snakemake.config["enable"]["interconnect_microgrids"],
         microgrids_list,
         snakemake.input["load"],
     )
