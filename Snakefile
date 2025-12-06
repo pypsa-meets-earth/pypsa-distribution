@@ -271,7 +271,9 @@ if config.get("mode") == "brown_field":
             country_shapes="resources/" + RDIR + "shapes/microgrid_shapes.geojson",
         output:
             lines="resources/" + RDIR + "base_network/all_lines_build_network.csv",
-            converters="resources/" + RDIR + "base_network/all_converters_build_network.csv",
+            converters="resources/"
+            + RDIR
+            + "base_network/all_converters_build_network.csv",
             transformers="resources/"
             + RDIR
             + "base_network/all_transformers_build_network.csv",
