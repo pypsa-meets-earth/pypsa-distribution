@@ -214,6 +214,7 @@ rule clean_earth_osm_data:
 
 
 if config.get("mode") == "brown_field":
+
     rule clean_osm_data:
         params:
             crs=config["crs"],
