@@ -27,6 +27,7 @@ enable:
   # https://atlite.readthedocs.io/en/latest/introduction.html#datasets
   build_cutout: false
   build_natura_raster: false  # If True, then build_natura_raster can be run
+  interconnect_microgrids: true
 
 scenario:
   simpl: ['']
@@ -96,7 +97,7 @@ build_osm_network:  # Options of the build_osm_network script; osm = OpenStreetM
 
 base_network:
   min_voltage_substation_offshore: 1000000   # [V] minimum voltage of the offshore substations
-  min_voltage_rebase_voltage: 1000000 
+  min_voltage_rebase_voltage: 1000000
 
 electricity:
   voltages: [0.4, 15., 20., 30., 132., 150., 220., 380., 500., 750.]
@@ -117,12 +118,12 @@ electricity:
 
 lines:
   ac_types:
-    0.4:  "24-AL1/4-ST1A 0.4"
-    15.:  "NA2XS2Y 1x185 RM/25 12/20 kV"
-    20.:  "NA2XS2Y 1x185 RM/25 12/20 kV"    
-    30.:  "NA2XS2Y 1x240 RM/25 18/30 kV"
+    0.4: "24-AL1/4-ST1A 0.4"
+    15.: "NA2XS2Y 1x185 RM/25 12/20 kV"
+    20.: "NA2XS2Y 1x185 RM/25 12/20 kV"
+    30.: "NA2XS2Y 1x240 RM/25 18/30 kV"
     132.: "Al/St 240/40 2-bundle 220.0"
-    150.: "Al/St 240/40 2-bundle 220.0"     
+    150.: "Al/St 240/40 2-bundle 220.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     380.: "Al/St 240/40 4-bundle 380.0"
     500.: "Al/St 240/40 4-bundle 500.0"
@@ -141,8 +142,8 @@ links:
 
 transformers:
   x: 0.06      # TO DO : check value for distribution
-  s_nom: 0.63 
-  type: ""    
+  s_nom: 0.63
+  type: ""
 
 
 # TODO: Needs to be adjusted for Africa
@@ -201,4 +202,3 @@ buildings:
   n_clusters: 10 # either specify a number (n_clusters: 10) or specify the number of clusters by microgrid as in the following
 #   microgrid_1: 3
 #   microgrid_2: 13
-
