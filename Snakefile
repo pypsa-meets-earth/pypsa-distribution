@@ -152,6 +152,26 @@ rule build_shapes:
 
 if config.get("mode") != "brown_field":
 
+    rule cluster_buildings:
+        params:
+            crs=config["crs"],
+            house_area_limit=config["house_area_limit"],
+        input:
+            buildings_geojson="resources/buildings/microgrid_building.geojson",
+        output:
+            clusters="resources/buildings/clustered_buildings.geojson",
+            clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
+            buildings_type="resources/buildings/buildings_type.csv",
+        log:
+            "logs/cluster_buildings.log",
+        benchmark:
+            "benchmarks/cluster_buildings"
+        threads: 1
+        resources:
+            mem_mb=3000,
+        script:
+            "scripts/cluster_buildings.py"
+
     rule create_network:
         input:
             clusters="resources/buildings/clustered_buildings.geojson",
@@ -239,30 +259,52 @@ if config.get("mode") == "brown_field":
         script:
             pypsaearth("scripts/clean_osm_data.py")
 
+    rule build_osm_network:
+        params:
+            build_osm_network=config.get("build_osm_network", {}),
+            countries=config["countries"],
+            crs=config["crs"],
+        input:
+            generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
+            lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
+            substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
+            country_shapes="resources/" + RDIR + "shapes/microgrid_shapes.geojson",
+        output:
+            lines="resources/" + RDIR + "base_network/all_lines_build_network.csv",
+            converters="resources/" + RDIR + "base_network/all_converters_build_network.csv",
+            transformers="resources/"
+            + RDIR
+            + "base_network/all_transformers_build_network.csv",
+            substations="resources/" + RDIR + "base_network/all_buses_build_network.csv",
+        log:
+            "logs/" + RDIR + "build_osm_network.log",
+        benchmark:
+            "benchmarks/" + RDIR + "build_osm_network"
+        script:
+            "scripts/build_osm_network.py"
 
-rule build_osm_network:
-    params:
-        build_osm_network=config.get("build_osm_network", {}),
-        countries=config["countries"],
-        crs=config["crs"],
-    input:
-        generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
-        lines="resources/" + RDIR + "osm/clean/all_clean_lines.geojson",
-        substations="resources/" + RDIR + "osm/clean/all_clean_substations.geojson",
-        country_shapes="resources/" + RDIR + "shapes/microgrid_shapes.geojson",
-    output:
-        lines="resources/" + RDIR + "base_network/all_lines_build_network.csv",
-        converters="resources/" + RDIR + "base_network/all_converters_build_network.csv",
-        transformers="resources/"
-        + RDIR
-        + "base_network/all_transformers_build_network.csv",
-        substations="resources/" + RDIR + "base_network/all_buses_build_network.csv",
-    log:
-        "logs/" + RDIR + "build_osm_network.log",
-    benchmark:
-        "benchmarks/" + RDIR + "build_osm_network"
-    script:
-        "scripts/build_osm_network.py"
+    rule cluster_buildings:
+        params:
+            crs=config["crs"],
+            house_area_limit=config["house_area_limit"],
+        input:
+            buildings_geojson="resources/buildings/microgrid_building.geojson",
+            all_nodes_brown_field="resources/"
+            + RDIR
+            + "base_network/all_buses_build_network.csv",
+        output:
+            clusters="resources/buildings/clustered_buildings.geojson",
+            clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
+            buildings_type="resources/buildings/buildings_type.csv",
+        log:
+            "logs/cluster_buildings.log",
+        benchmark:
+            "benchmarks/cluster_buildings"
+        threads: 1
+        resources:
+            mem_mb=3000,
+        script:
+            "scripts/cluster_buildings.py"
 
 
 if config.get("scenario") != "green_field":
@@ -299,30 +341,6 @@ if config.get("scenario") != "green_field":
             mem_mb=500,
         script:
             pypsaearth("scripts/base_network.py")
-
-
-rule cluster_buildings:
-    params:
-        crs=config["crs"],
-        house_area_limit=config["house_area_limit"],
-    input:
-        buildings_geojson="resources/buildings/microgrid_building.geojson",
-        all_nodes_brown_field="resources/"
-        + RDIR
-        + "base_network/all_buses_build_network.csv",
-    output:
-        clusters="resources/buildings/clustered_buildings.geojson",
-        clusters_with_buildings="resources/buildings/cluster_with_buildings.geojson",
-        buildings_type="resources/buildings/buildings_type.csv",
-    log:
-        "logs/cluster_buildings.log",
-    benchmark:
-        "benchmarks/cluster_buildings"
-    threads: 1
-    resources:
-        mem_mb=3000,
-    script:
-        "scripts/cluster_buildings.py"
 
 
 rule build_bus_regions:
