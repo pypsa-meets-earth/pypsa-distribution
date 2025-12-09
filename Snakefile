@@ -77,10 +77,6 @@ if config.get("disable_subworkflow", False):
         return PYPSAEARTH_FOLDER + "/" + path
 
 
-def pypsaearth(path):
-    return PYPSAEARTH_FOLDER + "/" + path
-
-
 # rule clean:
 #     run:
 #         shell("snakemake -j 1 solve_network --delete-all-output")
@@ -289,6 +285,7 @@ if config.get("mode") == "brown_field":
         params:
             crs=config["crs"],
             house_area_limit=config["house_area_limit"],
+            voltage_node_cluster=config["electricity"]["voltage_node_cluster"],
         input:
             buildings_geojson="resources/buildings/microgrid_building.geojson",
             all_nodes_brown_field="resources/"

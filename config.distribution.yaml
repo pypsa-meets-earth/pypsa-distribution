@@ -102,6 +102,7 @@ base_network:
 electricity:
   voltages: [0.4, 15., 20., 30., 132., 150., 220., 380., 500., 750.]
   voltage: 0.22
+  voltage_node_cluster: [15., 20., 30.]  # [kV] Voltage levels to use for building clustering in brown_field mode (greater than 0.4 and less than 132)
   hvdc_as_lines: false  # should HVDC lines be modeled as `Line` or as `Link` component?
   line_type: "24-AL1/4-ST1A 0.4"
 

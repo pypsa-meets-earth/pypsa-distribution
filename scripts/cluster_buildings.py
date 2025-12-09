@@ -225,15 +225,21 @@ def process_buildings_network(
     output_nodes_geojson: str,
     output_buildings_type_csv: str | None = None,
     *,
-    target_voltage: int = 15000,
+    target_voltages: list = None,
     node_id_col: str = "bus_id",
     metric_crs: str = "EPSG:32632",
     building_type_col: str = "building",
 ):
+    if target_voltages is None:
+        target_voltages = [15000]  # Default to 15 kV for backward compatibility
+
+    # Convert kV to V if needed (values < 1000 are assumed to be in kV)
+    target_voltages_V = [v * 1000 if v < 1000 else v for v in target_voltages]
+
     nodes = read_nodes_csv(input_nodes_csv, geom_col="geometry", crs="EPSG:4326")
     buildings = gpd.read_file(input_buildings_geojson)
     nodes["voltage"] = pd.to_numeric(nodes.get("voltage"), errors="coerce")
-    nodes_sel = nodes.loc[nodes["voltage"] == target_voltage].copy()
+    nodes_sel = nodes.loc[nodes["voltage"].isin(target_voltages_V)].copy()
     buildings_clustered = assign_nearest(
         buildings, nodes_sel, node_id_col=node_id_col, metric_crs=metric_crs
     )
@@ -305,10 +311,16 @@ if __name__ == "__main__":
         )
 
     elif snakemake.config["mode"] == "brown_field":
+        # Get voltage_node_cluster from params if available, otherwise use default
+        voltage_node_cluster = snakemake.params.get(
+            "voltage_node_cluster", [15.0]
+        )  # Default to [15.0] kV
+
         process_buildings_network(
             snakemake.input["all_nodes_brown_field"],
             snakemake.input["buildings_geojson"],
             snakemake.output["clusters_with_buildings"],
             snakemake.output["clusters"],
             snakemake.output["buildings_type"],
+            target_voltages=voltage_node_cluster,
         )

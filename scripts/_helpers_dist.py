@@ -542,12 +542,8 @@ def read_csv_nafix(file, **kwargs):
 def to_csv_nafix(df, path, **kwargs):
     if "na_rep" in kwargs:
         del kwargs["na_rep"]
-    # if len(df) > 0:
-    if not df.empty:
-        return df.to_csv(path, **kwargs, na_rep=NA_VALUES[0])
-    else:
-        with open(path, "w") as fp:
-            pass
+    # Always save CSV with header, even if DataFrame is empty
+    return df.to_csv(path, **kwargs, na_rep=NA_VALUES[0])
 
 
 def save_to_geojson(df, fn):
