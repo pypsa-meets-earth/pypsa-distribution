@@ -360,7 +360,9 @@ if config.get("scenario") != "green_field":
             gadm_shapes=pypsaearth("resources/" + RDIR + "shapes/gadm_shapes.geojson"),
         output:
             regions_onshore="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
-            regions_offshore="resources/" + RDIR + "bus_regions/regions_offshore.geojson",
+            regions_offshore="resources/"
+            + RDIR
+            + "bus_regions/regions_offshore.geojson",
         log:
             "logs/" + RDIR + "build_bus_regions.log",
         benchmark:
