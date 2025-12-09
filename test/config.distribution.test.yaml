@@ -5,15 +5,12 @@
 
 version: 0.0.1
 tutorial: true
-mode: green_field
-  # brown_field or green_field
+mode: green_field  # brown_field or green_field
 
 logging:
   level: INFO
   format: "%(levelname)s:%(name)s:%(message)s"
 
-# option to disable the subworkflow to ease the analyses
-disable_subworkflow: false
 
 enable:
   # prepare_links_p_nom: false
@@ -184,7 +181,7 @@ solving:
     name: glpk
 
 tech_modelling:
-  general_vre: ["solar"]  # Only solar for CI test (simpler than onwind)
+  general_vre: []  # Disabled for green_field CI test (requires pypsa-earth databundle)
   storage_techs: ["lithium", "lead acid"]
   conv_techs: ["diesel"]
   load_carriers: ["AC load"]
