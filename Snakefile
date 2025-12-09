@@ -344,33 +344,32 @@ if config.get("scenario") != "green_field":
         script:
             pypsaearth("scripts/base_network.py")
 
-
-rule build_bus_regions:
-    params:
-        alternative_clustering=config["cluster_options"]["alternative_clustering"],
-        crs=config["crs"],
-        countries=config["countries"],
-    input:
-        country_shapes="resources/shapes/microgrid_shapes.geojson",
-        offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
-        base_network="networks/" + RDIR + "base.nc",
-        #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
-        #using this line instead of the following will test updated gadm shapes for MA.
-        #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
-        #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
-        gadm_shapes=pypsaearth("resources/" + RDIR + "shapes/gadm_shapes.geojson"),
-    output:
-        regions_onshore="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
-        regions_offshore="resources/" + RDIR + "bus_regions/regions_offshore.geojson",
-    log:
-        "logs/" + RDIR + "build_bus_regions.log",
-    benchmark:
-        "benchmarks/" + RDIR + "build_bus_regions"
-    threads: 1
-    resources:
-        mem_mb=1000,
-    script:
-        pypsaearth("scripts/build_bus_regions.py")
+    rule build_bus_regions:
+        params:
+            alternative_clustering=config["cluster_options"]["alternative_clustering"],
+            crs=config["crs"],
+            countries=config["countries"],
+        input:
+            country_shapes="resources/shapes/microgrid_shapes.geojson",
+            offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
+            base_network="networks/" + RDIR + "base.nc",
+            #gadm_shapes="resources/" + RDIR + "shapes/MAR2.geojson",
+            #using this line instead of the following will test updated gadm shapes for MA.
+            #To use: downlaod file from the google drive and place it in resources/" + RDIR + "shapes/
+            #Link: https://drive.google.com/drive/u/1/folders/1dkW1wKBWvSY4i-XEuQFFBj242p0VdUlM
+            gadm_shapes=pypsaearth("resources/" + RDIR + "shapes/gadm_shapes.geojson"),
+        output:
+            regions_onshore="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
+            regions_offshore="resources/" + RDIR + "bus_regions/regions_offshore.geojson",
+        log:
+            "logs/" + RDIR + "build_bus_regions.log",
+        benchmark:
+            "benchmarks/" + RDIR + "build_bus_regions"
+        threads: 1
+        resources:
+            mem_mb=1000,
+        script:
+            pypsaearth("scripts/build_bus_regions.py")
 
 
 rule build_renewable_profiles:
