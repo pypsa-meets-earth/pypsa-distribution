@@ -308,9 +308,6 @@ if config.get("mode") == "brown_field":
         script:
             "scripts/cluster_buildings.py"
 
-
-if config.get("mode") == "brown_field":
-
     rule base_network:
         params:
             voltages=config["electricity"]["voltages"],
@@ -373,6 +370,27 @@ if config.get("mode") == "brown_field":
         script:
             pypsaearth("scripts/build_bus_regions.py")
 
+    rule filter_data:
+        input:
+            **{
+                f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
+                for tech in config["tech_modelling"]["general_vre"]
+            },
+            base_network="networks/base.nc",
+            raw_lines="resources/osm/clean/all_clean_lines.geojson",
+            shape="resources/shapes/microgrid_shapes.geojson",
+        output:
+            base_update="networks/" + RDIR + "base_update.nc",
+        log:
+            "logs/" + RDIR + "base_network.log",
+        benchmark:
+            "benchmarks/" + RDIR + "base_network"
+        threads: 1
+        resources:
+            mem_mb=500,
+        script:
+            "scripts/filter_data.py"
+
 
 rule build_renewable_profiles:
     params:
@@ -399,7 +417,7 @@ rule build_renewable_profiles:
                     else ("resources/" + RDIR + "bus_regions/regions_offshore.geojson")
                 )
             )
-            if config.get("scenario") != "green_field"
+            if config.get("mode") == "brown_field"
             else "resources/shapes/microgrid_bus_shapes.geojson"
         ),
         cutout=lambda w: pypsaearth(
@@ -416,30 +434,6 @@ rule build_renewable_profiles:
         mem_mb=ATLITE_NPROCESSES * 5000,
     script:
         pypsaearth("scripts/build_renewable_profiles.py")
-
-
-if config.get("scenario") != "green_field":
-
-    rule filter_data:
-        input:
-            **{
-                f"profile_{tech}": f"resources/renewable_profiles/profile_{tech}.nc"
-                for tech in config["tech_modelling"]["general_vre"]
-            },
-            base_network="networks/base.nc",
-            raw_lines="resources/osm/clean/all_clean_lines.geojson",
-            shape="resources/shapes/microgrid_shapes.geojson",
-        output:
-            base_update="networks/" + RDIR + "base_update.nc",
-        log:
-            "logs/" + RDIR + "base_network.log",
-        benchmark:
-            "benchmarks/" + RDIR + "base_network"
-        threads: 1
-        resources:
-            mem_mb=500,
-        script:
-            "scripts/filter_data.py"
 
 
 rule add_electricity:
