@@ -446,7 +446,7 @@ rule add_electricity:
         },
         create_network=(
             "networks/base_update.nc"
-            if config.get("scenario") != "green_field"
+            if config.get("mode") == "brown_field"
             else "networks/base.nc"
         ),
         tech_costs=COSTS,
