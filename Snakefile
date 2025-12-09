@@ -309,7 +309,7 @@ if config.get("mode") == "brown_field":
             "scripts/cluster_buildings.py"
 
 
-if config.get("scenario") != "green_field":
+if config.get("mode") == "brown_field":
 
     rule base_network:
         params:
