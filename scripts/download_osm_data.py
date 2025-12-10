@@ -498,27 +498,51 @@ if __name__ == "__main__":
 
     elif snakemake.config["enable"]["download_osm_method"] == "overpass":
         microgrids_list = snakemake.config["microgrids_list"]
-        features = [
-            "building",
-            "minor_line",
-            "cable",
-            "generator",
-            "substation",
-            "pole",
-        ]
+        mode = snakemake.config.get("mode", "green_field")
         overpass_url = "https://overpass-api.de/api/interpreter"
         output_dir = Path.cwd() / "resources" / RDIR / "osm" / "raw"
 
-        retrieve_osm_data_geojson(
-            microgrids_list,
-            overpass_url,
-            output_path_buildings=snakemake.output["buildings_resources"],
-            output_path_minor_lines=snakemake.output["lines_resources"],
-            output_path_cables=snakemake.output["cables_resources"],
-            output_path_generators=snakemake.output["generators_resources"],
-            output_path_substations=snakemake.output["substations_resources"],
-            output_path_poles=snakemake.output["poles_resources"],
-        )
+        # Buildings are always downloaded
+        # Other features (lines, cables, generators, substations, poles) are only downloaded in brown_field mode
+        is_brown_field = mode == "brown_field"
+
+        if is_brown_field:
+            # Download all features in brown_field mode
+            retrieve_osm_data_geojson(
+                microgrids_list,
+                overpass_url,
+                output_path_buildings=snakemake.output["buildings_resources"],
+                output_path_minor_lines=snakemake.output["lines_resources"],
+                output_path_cables=snakemake.output["cables_resources"],
+                output_path_generators=snakemake.output["generators_resources"],
+                output_path_substations=snakemake.output["substations_resources"],
+                output_path_poles=snakemake.output["poles_resources"],
+            )
+        else:
+            # In green_field mode, only download buildings
+            retrieve_osm_data_geojson(
+                microgrids_list,
+                overpass_url,
+                output_path_buildings=snakemake.output["buildings_resources"],
+                output_path_minor_lines=None,
+                output_path_cables=None,
+                output_path_generators=None,
+                output_path_substations=None,
+                output_path_poles=None,
+            )
+            # Create empty GeoJSON files for the other features
+            for output_path in [
+                snakemake.output["lines_resources"],
+                snakemake.output["cables_resources"],
+                snakemake.output["generators_resources"],
+                snakemake.output["substations_resources"],
+                snakemake.output["poles_resources"],
+            ]:
+                outpath = Path(output_path)
+                outpath.parent.mkdir(parents=True, exist_ok=True)
+                with outpath.open("w", encoding="utf-8") as f:
+                    json.dump({"type": "FeatureCollection", "features": []}, f)
+                logger.info(f"Empty GeoJSON created (green_field mode): {outpath}")
 
         if snakemake.config["enable"]["download_and_merge_microsoft_ML_building"]:
             osm_path = output_dir / "all_raw_buildings.geojson"

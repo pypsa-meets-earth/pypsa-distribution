@@ -4,6 +4,7 @@
 
 version: 0.3.0
 tutorial: true
+mode: brown_field
 
 logging:
   level: INFO
@@ -141,6 +142,7 @@ load_options:
 electricity:
   base_voltage: 380.
   voltages: [220., 300., 380.]
+  voltage_node_cluster: [15., 20., 30.]  # [kV] Voltage levels to use for building clustering in brown_field mode
   co2limit: 1.487e+9
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
