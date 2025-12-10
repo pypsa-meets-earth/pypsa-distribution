@@ -75,7 +75,6 @@ jobs:
         cp -rf test/config.distribution.test.yaml config.distribution.yaml
         cp -rf pypsa-earth/config.tutorial.yaml config.pypsa-earth.yaml
         snakemake --cores all solve_network
-        
 
         # - name: Test plotting and summaries
         #   run: |
