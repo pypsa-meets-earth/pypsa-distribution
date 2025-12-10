@@ -5,7 +5,7 @@
 
 version: 0.0.1
 tutorial: true
-mode: brown_field  # brown_field or green_field
+mode: brown_field  # choose the mode you want to run (brown_field or green_field)
 
 logging:
   level: INFO
