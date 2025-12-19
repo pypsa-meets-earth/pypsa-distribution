@@ -313,7 +313,7 @@ def attach_conventional_generators(
         logger.info(
             f"Added {len(bus_ids_outside)} virtual grid import generators on external buses."
         )
-        return  # stop here — skip conventional generator creation
+        return  # skip conventional generator creation
 
     # GREEN FIELD MODE (standard behavior)
     carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
@@ -373,20 +373,18 @@ def attach_storageunits(
 
     microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
 
-    # --- BROWN FIELD MODE: add batteries to all buses ---
+    # BROWN FIELD MODE: add batteries to all buses
     if mode == "brown_field":
         logger.info("Running in brown_field mode: adding batteries to all buses")
 
         for tech in technologies:
-            # accept any battery-related technology name
             if tech not in ["battery", "lithium", "lead acid"]:
                 continue
-
             n.madd(
                 "StorageUnit",
                 [f"{tech}_{bus}" for bus in n.buses.index],
                 bus=n.buses.index,
-                carrier="battery",  # unify carrier name
+                carrier="battery",
                 p_nom_extendable=True,
                 capital_cost=costs.at["battery", "capital_cost"],
                 marginal_cost=costs.at["battery", "marginal_cost"],
@@ -399,7 +397,7 @@ def attach_storageunits(
         logger.info(f"Added {len(n.buses.index)} battery storage units (one per bus).")
         logger.info(f"Total storage units: {len(n.storage_units)}")
 
-    # --- GREEN FIELD MODE (default behavior) ---
+    # GREEN FIELD MODE (default behavior)
     else:
         for tech in technologies:
             for microgrid in microgrid_ids:
@@ -424,7 +422,7 @@ def attach_storageunits(
         )
         logger.info(f"Total storage units: {len(n.storage_units)}")
 
-    return n  # ✅ always return the modified network
+    return n  # return the modified network
 
 
 def attach_load(n, load_file, tech_modelling):

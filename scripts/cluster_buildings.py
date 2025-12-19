@@ -233,8 +233,8 @@ def process_buildings_network(
     if target_voltages is None:
         target_voltages = [15000]  # Default to 15 kV for backward compatibility
 
-    # Convert kV to V if needed (values < 1000 are assumed to be in kV)
-    target_voltages_V = [v * 1000 if v < 1000 else v for v in target_voltages]
+    # Convert kV to V if needed (values < 400 are assumed to be in kV)
+    target_voltages_V = [v * 1000 if v < 400 else v for v in target_voltages]
 
     nodes = read_nodes_csv(input_nodes_csv, geom_col="geometry", crs="EPSG:4326")
     buildings = gpd.read_file(input_buildings_geojson)

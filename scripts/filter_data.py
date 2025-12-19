@@ -209,17 +209,14 @@ if __name__ == "__main__":
     # Extract microgrid name
     microgrid_name = list(snakemake.config["microgrids_list"].keys())[0]
 
-    # 1) Rename buses in the PyPSA network
+    # Rename buses in the PyPSA network
     n = rename_microgrid_buses(n_base, snakemake.config["microgrids_list"])
-
-    # 2) Rename buses inside all renewable profile .nc files
+    #  Rename buses inside all renewable profile .nc files
     for key, path in snakemake.input.items():
         if key.startswith("profile_"):
             rename_profile_buses(path, microgrid_name)
-
-    # 3) Mark external buses
+    # Mark external buses
     n = mark_external_buses(n, snakemake.input["raw_lines"], snakemake.input["shape"])
-
-    # 4) Save final updated network
+    # Save final updated network
     n.export_to_netcdf(snakemake.output["base_update"])
     logger.info(f"Saved updated network to {snakemake.output['base_update']}")

@@ -118,7 +118,7 @@ electricity:
   renewable_carriers: [solar, onwind]
 
 lines:
-  ac_types:
+  ac_types: # TO DO : check value for distribution
     0.4: "24-AL1/4-ST1A 0.4"
     15.: "NA2XS2Y 1x185 RM/25 12/20 kV"
     20.: "NA2XS2Y 1x185 RM/25 12/20 kV"
