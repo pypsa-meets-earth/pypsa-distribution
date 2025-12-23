@@ -75,6 +75,13 @@ jobs:
         cp -rf test/config.distribution.test.yaml config.distribution.yaml
         cp -rf pypsa-earth/config.tutorial.yaml config.pypsa-earth.yaml
         snakemake --cores all solve_network
+        
+    - name: Test workflow brown field
+      run: |
+        rm -rf config.yaml
+        cp -rf test/config.distribution.test_MA.yaml config.distribution.yaml
+        cp -rf test/config.pypsa-earth_MA.yaml config.pypsa-earth.yaml
+        snakemake --cores all solve_network
 
         # - name: Test plotting and summaries
         #   run: |

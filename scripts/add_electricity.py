@@ -39,16 +39,20 @@ Description
 The rule :mod:`add_electricity` takes as input the network generated in the rule "create_network" and adds to it both renewable and conventional generation, storage units and load, resulting in a network that is stored in ``networks/elec.nc``. 
 """
 
+import logging
 import os
 
 import geopandas
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
 from _helpers_dist import configure_logging, sets_path_to_root
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
+
+logger = logging.getLogger(__name__)
 
 idx = pd.IndexSlice
 
@@ -259,9 +263,60 @@ def attach_conventional_generators(
     extendable_carriers,
     conventional_config,
     conventional_inputs,
+    mode="green_field",
 ):
-    carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
+    """
+    Attach conventional generators to the network.
 
+    Parameters
+    ----------
+    mode : str, optional
+        'green_field' -> standard behavior (default)
+        'brown_field' -> adds virtual import generators on boundary buses
+    lines_path : str, optional
+        Path to OSM lines (required if mode='brown_field')
+    shape_path : str, optional
+        Path to the shape file (required if mode='brown_field')
+    """
+    # BROWN FIELD MODE
+    if mode == "brown_field":
+        logger.info("Running in brown_field mode: adding virtual import generators...")
+
+        # Ensure 'outside' flag is available
+        if "outside" not in n.buses.columns:
+            raise ValueError(
+                "Network does not contain 'outside' flag. Please run mark_external_buses() first."
+            )
+
+        # Select buses marked as external
+        bus_ids_outside = n.buses.index[n.buses["outside"]].tolist()
+        logger.info(
+            f"Found {len(bus_ids_outside)} external connection buses (from 'outside' flag)."
+        )
+
+        # Define the marginal cost for grid import (same as OCGT reference)
+        marginal_cost = costs.at["OCGT", "marginal_cost"]
+
+        # Add virtual import generators representing external grid connection
+        n.madd(
+            "Generator",
+            [f"grid_import_{bus}" for bus in bus_ids_outside],
+            bus=bus_ids_outside,
+            carrier="grid_import",
+            p_nom_extendable=False,  # not extendable
+            p_nom=np.inf,  # effectively infinite capacity
+            marginal_cost=marginal_cost,
+            capital_cost=0.0,
+            efficiency=1.0,
+        )
+
+        logger.info(
+            f"Added {len(bus_ids_outside)} virtual grid import generators on external buses."
+        )
+        return  # skip conventional generator creation
+
+    # GREEN FIELD MODE (standard behavior)
+    carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
     _add_missing_carriers_from_costs(n, costs, carriers)
 
     ppl = (
@@ -290,28 +345,24 @@ def attach_conventional_generators(
     )
 
     for carrier in conventional_config:
-        # Generatori con tecnologia influenzata
         idx = n.generators.query("carrier == @carrier").index
-
         for attr in list(set(conventional_config[carrier]) & set(n.generators)):
             values = conventional_config[carrier][attr]
-
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
-                # Values affecting generators of technology k country-specific
-                # First map generator buses to countries; then map countries to p_max_pu
                 values = pd.read_csv(values, index_col=0).iloc[:, 0]
                 bus_values = n.buses.country.map(values)
                 n.generators[attr].update(
                     n.generators.loc[idx].bus.map(bus_values).dropna()
                 )
             else:
-                # Single value affecting all k technology generators regardless of country.
                 n.generators.loc[idx, attr] = values
 
 
-def attach_storageunits(n, costs, number_microgrids, technologies, extendable_carriers):
+def attach_storageunits(
+    n, costs, number_microgrids, technologies, extendable_carriers, mode=None
+):
     """
-    This function adds different technologies of storage units to the power network
+    Add different types of storage units to the power network.
     """
 
     elec_opts = snakemake.config["electricity"]
@@ -322,29 +373,56 @@ def attach_storageunits(n, costs, number_microgrids, technologies, extendable_ca
 
     microgrid_ids = [f"microgrid_{i+1}" for i in range(len(number_microgrids))]
 
-    # Add the storage units to the power network
-    for tech in technologies:
-        for microgrid in microgrid_ids:
+    # BROWN FIELD MODE: add batteries to all buses
+    if mode == "brown_field":
+        logger.info("Running in brown_field mode: adding batteries to all buses")
+
+        for tech in technologies:
+            if tech not in ["battery", "lithium", "lead acid"]:
+                continue
             n.madd(
                 "StorageUnit",
-                [microgrid],
-                " " + tech,
-                bus=[f"{microgrid}_gen_bus"],
-                carrier=tech,
+                [f"{tech}_{bus}" for bus in n.buses.index],
+                bus=n.buses.index,
+                carrier="battery",
                 p_nom_extendable=True,
-                capital_cost=costs.at[tech, "capital_cost"],
-                marginal_cost=costs.at[tech, "marginal_cost"],
-                efficiency_store=costs.at[
-                    lookup_store["battery"], "efficiency"
-                ],  # Lead_acid and lithium have the same value
-                efficiency_dispatch=costs.at[
-                    lookup_dispatch["battery"], "efficiency"
-                ],  # Lead_acid and lithium have the same value
-                max_hours=max_hours[
-                    "battery"
-                ],  # Lead_acid and lithium have the same value
+                capital_cost=costs.at["battery", "capital_cost"],
+                marginal_cost=costs.at["battery", "marginal_cost"],
+                efficiency_store=costs.at[lookup_store["battery"], "efficiency"],
+                efficiency_dispatch=costs.at[lookup_dispatch["battery"], "efficiency"],
+                max_hours=max_hours["battery"],
                 cyclic_state_of_charge=True,
             )
+
+        logger.info(f"Added {len(n.buses.index)} battery storage units (one per bus).")
+        logger.info(f"Total storage units: {len(n.storage_units)}")
+
+    # GREEN FIELD MODE (default behavior)
+    else:
+        for tech in technologies:
+            for microgrid in microgrid_ids:
+                n.madd(
+                    "StorageUnit",
+                    [microgrid + "_" + tech],
+                    bus=[f"{microgrid}_gen_bus"],
+                    carrier=tech,
+                    p_nom_extendable=True,
+                    capital_cost=costs.at[tech, "capital_cost"],
+                    marginal_cost=costs.at[tech, "marginal_cost"],
+                    efficiency_store=costs.at[lookup_store["battery"], "efficiency"],
+                    efficiency_dispatch=costs.at[
+                        lookup_dispatch["battery"], "efficiency"
+                    ],
+                    max_hours=max_hours["battery"],
+                    cyclic_state_of_charge=True,
+                )
+
+        logger.info(
+            f"Added {len(technologies) * len(microgrid_ids)} storage units for microgrids."
+        )
+        logger.info(f"Total storage units: {len(n.storage_units)}")
+
+    return n  # return the modified network
 
 
 def attach_load(n, load_file, tech_modelling):
@@ -369,7 +447,7 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     load_file = snakemake.input["load_file"]
-
+    mode = snakemake.params["mode"]
     ppl = load_powerplants(snakemake.input.powerplants)
 
     costs = load_costs(
@@ -400,6 +478,7 @@ if __name__ == "__main__":
         snakemake.config["electricity"]["extendable_carriers"],
         snakemake.config.get("conventional", {}),
         conventional_inputs,
+        mode,
     )
 
     attach_storageunits(
@@ -408,6 +487,7 @@ if __name__ == "__main__":
         snakemake.config["microgrids_list"],
         snakemake.config["tech_modelling"]["storage_techs"],
         snakemake.config["electricity"]["extendable_carriers"],
+        mode,
     )
     a = 12
 
