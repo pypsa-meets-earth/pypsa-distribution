@@ -253,11 +253,18 @@ def process_buildings_network(
         nodes_sel = nodes_sel.to_crs("EPSG:4326")
 
     if output_buildings_type_csv:
-        type_col = (
-            building_type_col
-            if building_type_col in buildings_clustered.columns
-            else "building"
-        )
+        print(f"{building_type_col }")
+        # Check for building type column with fallback priority
+        if building_type_col in buildings_clustered.columns:
+            type_col = building_type_col
+        elif "tags_building" in buildings_clustered.columns:
+            type_col = "tags_building"
+        elif "building" in buildings_clustered.columns:
+            type_col = "building"
+        else:
+            raise ValueError(
+                f"Building type column not found. Tried: {building_type_col}, tags_building, building"
+            )
         group_cols = ["cluster_id"]
         if "name_microgrid" in buildings_clustered.columns:
             group_cols.append("name_microgrid")
