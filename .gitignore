@@ -29,15 +29,12 @@ test/tmp/
 # track resources/powerplants.csv
 !resources/powerplants.csv
 
-# track resources/osm/raw/all_raw_buildings.geojson
-!resources/osm/
-!resources/osm/raw/
-!resources/osm/raw/all_raw_buildings.geojson
-# Re-ignore everything else in resources/osm/
-resources/osm/**
-!resources/osm/raw/
-resources/osm/raw/*
-!resources/osm/raw/all_raw_buildings.geojson
+# track resources/buildings/microgrid_building.geojson
+!resources/buildings/
+!resources/buildings/microgrid_building.geojson
+# Re-ignore everything else in resources/buildings/
+resources/buildings/*
+!resources/buildings/microgrid_building.geojson
 
 # track data/ramp/
 !data/ramp/
