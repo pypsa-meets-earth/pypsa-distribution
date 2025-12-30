@@ -36,6 +36,20 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
     """
     microgrid = gpd.read_file(microgrid_shape_path)
     buildings = gpd.read_file(buildings_path)
+
+    # Check if buildings file is empty or missing required data
+    if buildings.empty:
+        print(f"WARNING: The file '{buildings_path}' is EMPTY!")
+        print("This likely means the OSM building download failed.")
+        print(
+            "Please check the download_osm_data step and ensure buildings were downloaded correctly."
+        )
+        raise ValueError(
+            f"Building file '{buildings_path}' is empty. Cannot proceed with clustering."
+        )
+
+    print(f"Buildings file loaded successfully: {len(buildings)} buildings found")
+    print(f"Buildings columns: {list(buildings.columns)}")
     # Create a GeoDataFrame to accumulate the results
     result = gpd.GeoDataFrame(columns=buildings.columns, crs=buildings.crs)
     # Iterate over each microgrid geometry
