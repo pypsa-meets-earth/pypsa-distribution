@@ -205,16 +205,33 @@ def assign_nearest(
 ) -> gpd.GeoDataFrame:
     if buildings.crs is None or nodes.crs is None:
         raise ValueError("One or both GeoDataFrames have no CRS defined.")
+
+    # Store original building columns to preserve them
+    original_cols = list(buildings.columns)
+
     building_m = buildings.to_crs(metric_crs).copy()
     node_m = nodes.to_crs(metric_crs).copy()
     building_m["centroid_geom"] = building_m.geometry.centroid
     left = building_m.set_geometry("centroid_geom")
     right = node_m[[node_id_col, "geometry"]].copy()
-    out = gpd.sjoin_nearest(left, right, how="left", distance_col="dist")
+    out = gpd.sjoin_nearest(
+        left, right, how="left", distance_col="dist", lsuffix="", rsuffix="_node"
+    )
     out = out.set_geometry("geometry").to_crs(buildings.crs)
-    col_id = node_id_col if node_id_col in out.columns else f"{node_id_col}_right"
+    col_id = node_id_col if node_id_col in out.columns else f"{node_id_col}_node"
     out = out.rename(columns={col_id: "cluster"})
-    out = out.drop(columns=["centroid_geom", "index_right"], errors="ignore")
+    out = out.drop(
+        columns=["centroid_geom", "index_right", "geometry_node"], errors="ignore"
+    )
+
+    # Ensure all original columns are preserved
+    for col in original_cols:
+        if col not in out.columns and col in buildings.columns:
+            _logger.warning(
+                f"Column '{col}' was lost during sjoin_nearest, restoring from original"
+            )
+            out[col] = buildings[col].values
+
     return out
 
 
@@ -238,10 +255,14 @@ def process_buildings_network(
 
     nodes = read_nodes_csv(input_nodes_csv, geom_col="geometry", crs="EPSG:4326")
     buildings = gpd.read_file(input_buildings_geojson)
+    _logger.info(f"Buildings columns before assign_nearest: {list(buildings.columns)}")
     nodes["voltage"] = pd.to_numeric(nodes.get("voltage"), errors="coerce")
     nodes_sel = nodes.loc[nodes["voltage"].isin(target_voltages_V)].copy()
     buildings_clustered = assign_nearest(
         buildings, nodes_sel, node_id_col=node_id_col, metric_crs=metric_crs
+    )
+    _logger.info(
+        f"Buildings columns after assign_nearest: {list(buildings_clustered.columns)}"
     )
     buildings_clustered = buildings_clustered.rename(columns={"cluster": "cluster_id"})
     if (
