@@ -84,7 +84,6 @@ jobs:
         rm -rf pypsa-earth/results
         rm -rf results
         rm -rf networks
-        rm -rf resources
         cp -rf test/config.distribution.test_MA.yaml config.distribution.yaml
         cp -rf test/config.pypsa-earth_MA.yaml config.pypsa-earth.yaml
         snakemake --cores all solve_network
