@@ -69,8 +69,20 @@ def extract_points(microgrid_shape_path, buildings_path, output_path):
             crs=buildings.crs,
         )
 
+    print(f"BEFORE SAVE - Result has {len(result)} buildings")
+    print(f"BEFORE SAVE - Result columns: {list(result.columns)}")
+    print(f"BEFORE SAVE - Result dtypes: {result.dtypes.to_dict()}")
+
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     result.to_file(output_path, driver="GeoJSON")
+
+    print(f"AFTER SAVE - File saved to: {output_path}")
+
+    # Verify what was actually saved
+    saved_file = gpd.read_file(output_path)
+    print(f"VERIFICATION - Saved file has {len(saved_file)} buildings")
+    print(f"VERIFICATION - Saved file columns: {list(saved_file.columns)}")
+
     return result
 
 
