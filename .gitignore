@@ -23,16 +23,19 @@ cutouts/
 data/
 results/
 networks/
-resources/
 test/tmp/
 
-# track resources/powerplants.csv
+!resources/
 !resources/powerplants.csv
-
-# track resources/buildings/microgrid_building.geojson
 !resources/buildings/
 !resources/buildings/microgrid_building.geojson
-# Re-ignore everything else in resources/buildings/
+
+# Ignore everything else in resources/
+resources/*
+!resources/powerplants.csv
+!resources/buildings/
+
+# Ignore everything in resources/buildings/ except microgrid_building.geojson
 resources/buildings/*
 !resources/buildings/microgrid_building.geojson
 
