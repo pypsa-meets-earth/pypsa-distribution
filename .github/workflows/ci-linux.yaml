@@ -78,6 +78,7 @@ jobs:
         
     - name: Test workflow brown field
       run: |
+        sleep 120
         rm -rf config.yaml
         rm -rf pypsa-earth/resources
         rm -rf pypsa-earth/networks
