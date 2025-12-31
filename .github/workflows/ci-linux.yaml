@@ -75,7 +75,7 @@ jobs:
         cp -rf test/config.distribution.test.yaml config.distribution.yaml
         cp -rf pypsa-earth/config.tutorial.yaml config.pypsa-earth.yaml
         snakemake --cores all solve_network --forceall
-        
+
     - name: Test workflow brown field
       run: |
         sleep 120
