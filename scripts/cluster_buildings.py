@@ -187,6 +187,130 @@ def get_central_points_geojson_with_buildings(
     all_buildings_class.to_csv(output_path_csv, index=False)
 
 
+def read_nodes_csv(
+    path_csv: str, geom_col: str = "geometry", crs: str = "EPSG:4326"
+) -> gpd.GeoDataFrame:
+    df = pd.read_csv(path_csv)
+    if geom_col not in df.columns:
+        raise ValueError(f"In the CSV '{path_csv}' the column '{geom_col}' is missing.")
+    geom = gpd.GeoSeries.from_wkt(df[geom_col], crs=crs)
+    return gpd.GeoDataFrame(df.drop(columns=[geom_col]), geometry=geom, crs=crs)
+
+
+def assign_nearest(
+    buildings: gpd.GeoDataFrame,
+    nodes: gpd.GeoDataFrame,
+    node_id_col: str = "bus_id",
+    metric_crs: str = "EPSG:32632",
+) -> gpd.GeoDataFrame:
+    if buildings.crs is None or nodes.crs is None:
+        raise ValueError("One or both GeoDataFrames have no CRS defined.")
+
+    # Store original building columns to preserve them
+    original_cols = list(buildings.columns)
+
+    building_m = buildings.to_crs(metric_crs).copy()
+    node_m = nodes.to_crs(metric_crs).copy()
+    building_m["centroid_geom"] = building_m.geometry.centroid
+    left = building_m.set_geometry("centroid_geom")
+    right = node_m[[node_id_col, "geometry"]].copy()
+    out = gpd.sjoin_nearest(
+        left, right, how="left", distance_col="dist", lsuffix="", rsuffix="_node"
+    )
+    out = out.set_geometry("geometry").to_crs(buildings.crs)
+    col_id = node_id_col if node_id_col in out.columns else f"{node_id_col}_node"
+    out = out.rename(columns={col_id: "cluster"})
+    out = out.drop(
+        columns=["centroid_geom", "index_right", "geometry_node"], errors="ignore"
+    )
+
+    # Ensure all original columns are preserved
+    for col in original_cols:
+        if col not in out.columns and col in buildings.columns:
+            _logger.warning(
+                f"Column '{col}' was lost during sjoin_nearest, restoring from original"
+            )
+            out[col] = buildings[col].values
+
+    return out
+
+
+def process_buildings_network(
+    input_nodes_csv: str,
+    input_buildings_geojson: str,
+    output_buildings_geojson: str,
+    output_nodes_geojson: str,
+    output_buildings_type_csv: str | None = None,
+    *,
+    target_voltages: list = None,
+    node_id_col: str = "bus_id",
+    metric_crs: str = "EPSG:32632",
+    building_type_col: str = "building",
+):
+    if target_voltages is None:
+        target_voltages = [15000]  # Default to 15 kV for backward compatibility
+
+    # Convert kV to V if needed (values < 400 are assumed to be in kV)
+    target_voltages_V = [v * 1000 if v < 400 else v for v in target_voltages]
+
+    nodes = read_nodes_csv(input_nodes_csv, geom_col="geometry", crs="EPSG:4326")
+    buildings = gpd.read_file(input_buildings_geojson)
+    _logger.info(f"Buildings columns before assign_nearest: {list(buildings.columns)}")
+    nodes["voltage"] = pd.to_numeric(nodes.get("voltage"), errors="coerce")
+    nodes_sel = nodes.loc[nodes["voltage"].isin(target_voltages_V)].copy()
+    buildings_clustered = assign_nearest(
+        buildings, nodes_sel, node_id_col=node_id_col, metric_crs=metric_crs
+    )
+    _logger.info(
+        f"Buildings columns after assign_nearest: {list(buildings_clustered.columns)}"
+    )
+    buildings_clustered = buildings_clustered.rename(columns={"cluster": "cluster_id"})
+    if (
+        buildings_clustered.crs
+        and buildings_clustered.crs.to_string().upper() != "EPSG:4326"
+    ):
+        buildings_clustered = buildings_clustered.to_crs("EPSG:4326")
+    if nodes_sel.crs and nodes_sel.crs.to_string().upper() != "EPSG:4326":
+        nodes_sel = nodes_sel.to_crs("EPSG:4326")
+
+    if output_buildings_type_csv:
+        print(f"{building_type_col }")
+        # Check for building type column with fallback priority
+        if building_type_col in buildings_clustered.columns:
+            type_col = building_type_col
+        elif "tags_building" in buildings_clustered.columns:
+            type_col = "tags_building"
+        elif "building" in buildings_clustered.columns:
+            type_col = "building"
+        else:
+            raise ValueError(
+                f"Building type column not found. Tried: {building_type_col}, tags_building, building"
+            )
+        group_cols = ["cluster_id"]
+        if "name_microgrid" in buildings_clustered.columns:
+            group_cols.append("name_microgrid")
+        counts = (
+            buildings_clustered.assign(
+                **{type_col: buildings_clustered[type_col].astype("string")}
+            )
+            .groupby(group_cols + [type_col], dropna=False)
+            .size()
+            .reset_index(name="count")
+            .rename(columns={type_col: "building_type"})
+        )
+        Path(output_buildings_type_csv).parent.mkdir(parents=True, exist_ok=True)
+        counts.to_csv(output_buildings_type_csv, index=False)
+
+    Path(output_buildings_geojson).parent.mkdir(parents=True, exist_ok=True)
+    buildings_clustered.to_file(
+        output_buildings_geojson, driver="GeoJSON", RFC7946=True
+    )
+    Path(output_nodes_geojson).parent.mkdir(parents=True, exist_ok=True)
+    nodes_sel.to_file(output_nodes_geojson, driver="GeoJSON", RFC7946=True)
+
+    return buildings_clustered, nodes_sel
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers_dist import mock_snakemake
@@ -201,14 +325,30 @@ if __name__ == "__main__":
     house_area_limit = snakemake.params.house_area_limit["area_limit"]
     geo_crs = snakemake.params.crs["geo_crs"]
 
-    get_central_points_geojson_with_buildings(
-        snakemake.input["buildings_geojson"],
-        snakemake.output["clusters"],
-        snakemake.config["buildings"]["n_clusters"],
-        crs,
-        house_area_limit,
-        snakemake.output["clusters_with_buildings"],
-        snakemake.output["buildings_type"],
-        snakemake.config["microgrids_list"],
-        geo_crs,
-    )
+    if snakemake.config["mode"] == "green_field":
+        get_central_points_geojson_with_buildings(
+            snakemake.input["buildings_geojson"],
+            snakemake.output["clusters"],
+            snakemake.config["buildings"]["n_clusters"],
+            crs,
+            house_area_limit,
+            snakemake.output["clusters_with_buildings"],
+            snakemake.output["buildings_type"],
+            snakemake.config["microgrids_list"],
+            geo_crs,
+        )
+
+    elif snakemake.config["mode"] == "brown_field":
+        # Get voltage_node_cluster from params if available, otherwise use default
+        voltage_node_cluster = snakemake.params.get(
+            "voltage_node_cluster", [15.0]
+        )  # Default to [15.0] kV
+
+        process_buildings_network(
+            snakemake.input["all_nodes_brown_field"],
+            snakemake.input["buildings_geojson"],
+            snakemake.output["clusters_with_buildings"],
+            snakemake.output["clusters"],
+            snakemake.output["buildings_type"],
+            target_voltages=voltage_node_cluster,
+        )

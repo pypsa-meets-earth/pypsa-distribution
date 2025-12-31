@@ -11,10 +11,23 @@ Release Notes
 Upcoming Release
 ================
 
+**New Features and Major Changes**
+
+* Procedure to create brownfield network using OSM data. `PR #75 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/75>`__
+
+* Download network data for distribution systems using OSM. `PR #73 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/73>`__
+
+* Enable interconnection of multiple microgrids. `PR #69 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/69>`__ and `PR #70 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/70>`__
+
+* Implementation of documentation `PR #61 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/61>`__
+
 * The energy demand time series can now be determined using a new methodology based on social inputs that integrates with the RAMP tool. `PR #55 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/55>`__
 
 * Automated downloading of buildings within the microgrid is now supported through the new download_osm_data rule. `PR #52 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/52>`__ and `PR #56 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/56>`__
 
+**Minor Changes and bug-fixing**
+
+* Improve README `PR #65 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/65>`__
 
 
 Release Process

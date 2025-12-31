@@ -4,12 +4,13 @@
 
 version: 0.3.0
 tutorial: true
+mode: green_field
 
 logging:
   level: INFO
   format: "%(levelname)s:%(name)s:%(message)s"
 
-countries: ["NG"]
+countries: ["NG"] # List of ISO3 country codes to model
 
   # ['DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CM', 'CF', 'TD', 'CG', 'CD',
   # 'DJ', 'EG', 'GQ', 'ER', 'ET', 'GA', 'GH', 'GN', 'CI', 'KE', 'LS', 'LR', 'LY',
@@ -141,6 +142,7 @@ load_options:
 electricity:
   base_voltage: 380.
   voltages: [220., 300., 380.]
+  voltage_node_cluster: [15., 20., 30.]  # [kV] Voltage levels to use for building clustering in brown_field mode
   co2limit: 1.487e+9
   co2base: 1.487e+9
   agg_p_nom_limits: data/agg_p_nom_minmax.csv
