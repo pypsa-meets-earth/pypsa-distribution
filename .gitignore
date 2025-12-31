@@ -26,6 +26,9 @@ results/
 networks/
 test/tmp/
 
+# track resources/powerplants.csv
+!resources/powerplants.csv
+
 # track data/ramp/
 !data/ramp/
 !data/ramp/**
