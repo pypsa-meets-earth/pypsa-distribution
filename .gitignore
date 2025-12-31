@@ -21,23 +21,10 @@ img/
 benchmarks/
 cutouts/
 data/
+resources/
 results/
 networks/
 test/tmp/
-
-!resources/
-!resources/powerplants.csv
-!resources/buildings/
-!resources/buildings/microgrid_building.geojson
-
-# Ignore everything else in resources/
-resources/*
-!resources/powerplants.csv
-!resources/buildings/
-
-# Ignore everything in resources/buildings/ except microgrid_building.geojson
-resources/buildings/*
-!resources/buildings/microgrid_building.geojson
 
 # track data/ramp/
 !data/ramp/
