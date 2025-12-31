@@ -13,21 +13,66 @@ Upcoming Release
 
 **New Features and Major Changes**
 
+* 
+
+**Minor Changes and bug-fixing**
+
+* 
+
+Version 0.0.2
+=================
+
+**New Features and Major Changes**
+
 * Procedure to create brownfield network using OSM data. `PR #75 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/75>`__
 
 * Download network data for distribution systems using OSM. `PR #73 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/73>`__
 
-* Enable interconnection of multiple microgrids. `PR #69 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/69>`__ and `PR #70 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/70>`__
+* Enable interconnection of multiple microgrids with kmeans. `PR #69 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/69>`__
 
-* Implementation of documentation `PR #61 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/61>`__
+* Enable interconnection of multiple microgrids. `PR #70 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/70>`__
+
+* Implementation of documentation `PR #61 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/61>`__ and `PR #62 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/62>`__
+
+* Introduce generation bus `PR #59 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/59>`__
+
+**Minor Changes and bug-fixing**
+
+* Improve README `PR #65 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/65>`__
+
+* Bug-fixing build demand `PR #63 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/63>`__
+
+* Prepare v0.0.2. `PR #77 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/77>`__
+
+
+Version 0.0.1
+=================
+
+**New Features and Major Changes**
 
 * The energy demand time series can now be determined using a new methodology based on social inputs that integrates with the RAMP tool. `PR #55 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/55>`__
 
 * Automated downloading of buildings within the microgrid is now supported through the new download_osm_data rule. `PR #52 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/52>`__ and `PR #56 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/56>`__
 
+* Introduce demand estimation by ramp `PR #45 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/45>`__
+
+* First draft to download OSM buildings using eart-osm `PR #41 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/41>`__
+
+* Introduce gadm shape `PR #4 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/4>`__
+
+* Automatize build renewable production `PR #2 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/2>`__
+
+* Workflow execution `PR #1 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/1>`__
+
 **Minor Changes and bug-fixing**
 
-* Improve README `PR #65 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/65>`__
+* Bug-fix multi-microgrid `PR #58 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/58>`__
+
+* Add rampdemand installation guide `PR #49 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/49>`__
+
+* Add README and PR template `PR #38 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/38>`__ and `PR #37 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/37>`__
+
+* Add option to disable subworkflow `PR #36 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/36>`__
 
 
 Release Process
