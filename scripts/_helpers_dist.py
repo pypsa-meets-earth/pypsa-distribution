@@ -542,12 +542,8 @@ def read_csv_nafix(file, **kwargs):
 def to_csv_nafix(df, path, **kwargs):
     if "na_rep" in kwargs:
         del kwargs["na_rep"]
-    # if len(df) > 0:
-    if not df.empty:
-        return df.to_csv(path, **kwargs, na_rep=NA_VALUES[0])
-    else:
-        with open(path, "w") as fp:
-            pass
+    # Always save CSV with header, even if DataFrame is empty
+    return df.to_csv(path, **kwargs, na_rep=NA_VALUES[0])
 
 
 def save_to_geojson(df, fn):
@@ -571,6 +567,35 @@ def read_geojson(fn):
     else:
         # else return an empty GeoDataFrame
         return gpd.GeoDataFrame(geometry=[])
+
+
+def read_geojson_earth(fn, cols=[], dtype=None, crs="EPSG:4326"):
+    """
+    Function to read a geojson file fn. When the file is empty, then an empty
+    GeoDataFrame is returned having columns cols, the specified crs and the
+    columns specified by the dtype dictionary it not none.
+
+    Parameters:
+    ------------
+    fn : str
+        Path to the file to read
+    cols : list
+        List of columns of the GeoDataFrame
+    dtype : dict
+        Dictionary of the type of the object by column
+    crs : str
+        CRS of the GeoDataFrame
+    """
+    # if the file is non-zero, read the geodataframe and return it
+    if os.path.getsize(fn) > 0:
+        return gpd.read_file(fn)
+    else:
+        # else return an empty GeoDataFrame
+        df = gpd.GeoDataFrame(columns=cols, geometry=[], crs=crs)
+        if isinstance(dtype, dict):
+            for k, v in dtype.items():
+                df[k] = df[k].astype(v)
+        return df
 
 
 def merge_yamls(path_base, path_changes, path_output):

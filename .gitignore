@@ -21,9 +21,9 @@ img/
 benchmarks/
 cutouts/
 data/
+resources/
 results/
 networks/
-resources/
 test/tmp/
 
 # track resources/powerplants.csv
