@@ -62,6 +62,7 @@ wildcard_constraints:
 
 if not config.get("disable_subworkflow", False):
     print("run subworkflow")
+
     subworkflow pypsaearth:
         workdir:
             PYPSAEARTH_FOLDER
@@ -73,6 +74,7 @@ if not config.get("disable_subworkflow", False):
 
 if config.get("disable_subworkflow", False):
     print("subworkflow disabled")
+
     def pypsaearth(path):
         return PYPSAEARTH_FOLDER + "/" + path
 
