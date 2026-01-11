@@ -61,7 +61,7 @@ wildcard_constraints:
 
 
 if not config.get("disable_subworkflow", False):
-
+    print("run subworkflow")
     subworkflow pypsaearth:
         workdir:
             PYPSAEARTH_FOLDER
@@ -72,7 +72,7 @@ if not config.get("disable_subworkflow", False):
 
 
 if config.get("disable_subworkflow", False):
-
+    print("subworkflow disabled")
     def pypsaearth(path):
         return PYPSAEARTH_FOLDER + "/" + path
 
@@ -400,7 +400,7 @@ rule build_renewable_profiles:
         copernicus=pypsaearth(
             "data/copernicus/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif"
         ),
-        gebco=pypsaearth("data/gebco/GEBCO_2021_TID.nc"),
+        gebco=pypsaearth("data/gebco/GEBCO_2025_sub_ice.nc"),
         country_shapes="resources/shapes/microgrid_shapes.geojson",
         offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
         hydro_capacities="pypsa-earth/data/hydro_capacities.csv",
