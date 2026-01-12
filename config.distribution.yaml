@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 version: 0.0.2
-tutorial: true
+tutorial: false
 mode: green_field  # brown_field or green_field
 
 logging:
@@ -15,7 +15,7 @@ disable_subworkflow: false
 
 enable:
   # prepare_links_p_nom: false
-  retrieve_databundle: true
+  retrieve_databundle: false
   retrieve_cost_data: true
   download_osm_data: true
   download_osm_buildings: true

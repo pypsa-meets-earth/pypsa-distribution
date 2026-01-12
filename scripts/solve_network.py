@@ -40,7 +40,6 @@ import os
 import numpy as np
 import pypsa
 from _helpers_dist import configure_logging, sets_path_to_root
-from pypsa.linopf import ilopf, network_lopf
 
 
 def prepare_network(n, solve_opts):
@@ -92,8 +91,8 @@ def prepare_network(n, solve_opts):
     return n
 
 
-def solve_network(n, solver_name):
-    network_lopf(n, solver_name=solver_name)
+def solve_network(n):
+    n.optimize()
 
     return n
 
@@ -114,6 +113,6 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input[0])
     n = prepare_network(n, snakemake.config["solving"]["options"])
 
-    n = solve_network(n, solver_name, **solver_options)
+    n = solve_network(n, **solver_options)
 
     n.export_to_netcdf(snakemake.output[0])
