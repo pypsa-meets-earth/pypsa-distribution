@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.3.0
+version: 0.8.0
 tutorial: true
 mode: green_field
 
@@ -31,7 +31,8 @@ enable:
   # If "build_cutout" : true # requires cds API key https://cds.climate.copernicus.eu/api-how-to
   # More information https://atlite.readthedocs.io/en/latest/introduction.html#datasets
   build_cutout: false
-  build_natura_raster: true  # If True, then build_natura_raster can be run
+  build_natura_raster: false  # If True, then build_natura_raster can be run
+  progress_bar: true # show progress bar during downloading routines and other long-running tasks
 
 custom_rules: []  # Default empty [] or link to custom rule file e.g. ["my_folder/my_rules.smk"] that add rules to Snakefile
 
@@ -145,7 +146,9 @@ electricity:
   voltage_node_cluster: [15., 20., 30.]  # [kV] Voltage levels to use for building clustering in brown_field mode
   co2limit: 1.487e+9
   co2base: 1.487e+9
-  agg_p_nom_limits: data/agg_p_nom_minmax.csv
+  agg_p_nom_limits: # enables to set country-wise maximum and minimum generation capacities for generators (e.g. renewables, nuclear, and geothermal)
+    file: data/agg_p_nom_minmax.csv # path to csv file containing country-wise generation capacity limits
+    include_existing: false # false: only new built capacities are constrained; true: existing capacities are accounted in the constraints
   hvdc_as_lines: false  # should HVDC lines be modeled as `Line` or as `Link` component?
   automatic_emission: true
   automatic_emission_base_year: 1990 # 1990 is taken as default. Any year from 1970 to 2018 can be selected.
