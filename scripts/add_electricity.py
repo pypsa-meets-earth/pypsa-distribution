@@ -304,7 +304,7 @@ def attach_conventional_generators(
             bus=bus_ids_outside,
             carrier="grid_import",
             p_nom_extendable=False,  # not extendable
-            p_nom=np.inf,  # effectively infinite capacity
+            p_nom=1e6,  # effectively infinite capacity
             marginal_cost=marginal_cost,
             capital_cost=0.0,
             efficiency=1.0,
