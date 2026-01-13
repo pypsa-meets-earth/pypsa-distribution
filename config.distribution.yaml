@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-version: 0.0.1
+version: 0.0.2
 tutorial: true
-mode: brown_field  # brown_field or green_field
+mode: green_field  # brown_field or green_field
+
 
 logging:
   level: INFO
