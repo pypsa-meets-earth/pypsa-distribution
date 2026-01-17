@@ -4,6 +4,7 @@
 
 version: 0.8.0
 tutorial: true
+mode: green_field
 
 logging:
   level: INFO
@@ -57,7 +58,7 @@ scenario:
 
 snapshots:
   start: "2013-01-01"
-  end: "2014-01-01"
+  end: "2013-03-7"
   inclusive: "left" # end is not inclusive
 
 # definition of the Coordinate Reference Systems
