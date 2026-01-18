@@ -57,7 +57,7 @@ scenario:
   - "AB"
 
 snapshots:
-  start: "2013-01-01"
+  start: "2013-03-1"
   end: "2013-03-7"
   inclusive: "left" # end is not inclusive
 
