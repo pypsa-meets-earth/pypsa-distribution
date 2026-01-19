@@ -4,7 +4,6 @@
 
 version: 0.8.0
 tutorial: true
-mode: brown_field
 
 logging:
   level: INFO
@@ -25,12 +24,12 @@ enable:
   retrieve_cost_data: true # true: retrieves cost data from technology data and saves in resources/costs.csv, false: uses cost data in data/costs.csv
   download_osm_data: true # If 'true', OpenStreetMap data will be downloaded for the above given countries
   download_global_buildings: false # If 'true', GlobalMLBuildingFootprints data will be downloaded for the above given countries
-  build_natura_raster: true # If 'true', then an exclusion raster will be build. Otherwise use pregenerated raster.
+  build_natura_raster: false # If 'true', then an exclusion raster will be build. Otherwise use pregenerated raster.
   build_cutout: false
   # If "build_cutout" : true, then environmental data is extracted according to `snapshots` date range and `countries`
   # requires cds API key https://cds.climate.copernicus.eu/api-how-to
   # More information https://atlite.readthedocs.io/en/latest/introduction.html#datasets
-  progress_bar: true # show progress bar during downloading routines and other long-running tasks
+  progress_bar: false # show progress bar during downloading routines and other long-running tasks
   custom_busmap: false # if true, use "data/custom_busmap_elec_s{simpl}_{clusters}.csv" for the clustering instead of the clustering algorithms
 
 
@@ -47,8 +46,8 @@ run:
 scenario:
   simpl: [""]
   ll: ["copt"]
-  clusters: [10]
-  opts: [Co2L-3h]
+  clusters: [6]
+  opts: [Co2L-4h]
   planning_horizons: # investment years for myopic and perfect; or costs year for overnight
   - 2030
   sopts:
@@ -140,7 +139,7 @@ subregion:
 
 clean_osm_data_options: # osm = OpenStreetMap
   names_by_shapes: true # Set the country name based on the extended country shapes
-  threshold_voltage: 51000 # [V] minimum voltage threshold to keep the asset (cable, line, generator, etc.) [V]
+  threshold_voltage: 35000 # [V] minimum voltage threshold to keep the asset (cable, line, generator, etc.) [V]
   tag_substation: "transmission" # Filters only substations with 'transmission' tag, ('distribution' also available)
   add_line_endings: true # When "True", then line endings are added to the dataset of the substations
   generator_name_method: OSM # Methodology to specify the name to the generator. Options: OSM (name as by OSM dataset), closest_city (name by the closest city)
@@ -159,8 +158,8 @@ build_osm_network: # Options of the build_osm_network script; osm = OpenStreetMa
   force_ac: false # When true, it forces all components (lines and substation) to be AC-only. To be used if DC assets create problem.
 
 base_network:
-  min_voltage_substation_offshore: 51000 # [V] minimum voltage of the offshore substations
-  min_voltage_rebase_voltage: 51000 # [V] minimum voltage in base network
+  min_voltage_substation_offshore: 35000 # [V] minimum voltage of the offshore substations
+  min_voltage_rebase_voltage: 35000 # [V] minimum voltage in base network
 
 load_options:
   ssp: "ssp2-2.6" # shared socio-economic pathway (GDP and population growth) scenario to consider
@@ -184,7 +183,7 @@ co2_budget:
 electricity:
   base_voltage: 380.
   voltages: [132., 220., 300., 380., 500., 750.]
-  co2limit: 7.75e+7 # European default, 0.05 * 3.1e9*0.5, needs to be adjusted for Africa
+  co2limit: 1.487e+9 # European default, 0.05 * 3.1e9*0.5, needs to be adjusted for Africa
   co2base: 1.487e+9 # European default, adjustment to Africa necessary
   agg_p_nom_limits: # enables to set country-wise maximum and minimum generation capacities for generators (e.g. renewables, nuclear, and geothermal)
     file: data/agg_p_nom_minmax.csv # path to csv file containing country-wise generation capacity limits
@@ -258,7 +257,7 @@ transformers:
 atlite:
   nprocesses: 4
   cutouts:
-    cutout-2013-era5-tutorial:
+    cutout-2013-era5-tutorial-tutorial:
       module: era5
       dx: 0.3 # cutout resolution
       dy: 0.3 # cutout resolution
@@ -356,7 +355,7 @@ renewable:
     extendable: true
   hydro:
     cutout: cutout-2013-era5-tutorial
-    hydrobasins_level: 6
+    hydrobasins_level: 4
     resource:
       method: hydro
       hydrobasins: data/hydrobasins/hybas_world.shp
@@ -790,8 +789,8 @@ solving:
     # nhours: 10
 
   solver:
-    name: gurobi
-    options: gurobi-default
+    name: glpk
+    options: glpk-default
 
   solver_options:
     highs-default:
