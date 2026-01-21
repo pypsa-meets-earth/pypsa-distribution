@@ -15,7 +15,7 @@ on:
   - cron: "0 5 * * TUE"
 
 env:
-  CACHE_NUMBER: 3  # Change this value to manually reset the environment cache
+  BASE_ENV: envs/environment.yaml
 
 jobs:
   build:
@@ -36,44 +36,44 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+    
+    - name: Use base env file if it was changed
+      run: |
+          echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
 
-    - name: Setup micromamba
-      uses: mamba-org/setup-micromamba@v2
+    - uses: conda-incubator/setup-miniconda@v3
       with:
-        micromamba-version: '1.5.9-1'
-        environment-file: "envs/environment.yaml"
-        log-level: debug
-        init-shell: bash
-        cache-environment: true
-        cache-downloads: true
+        miniforge-version: latest
+        activate-environment: pypsa-earth
+        channel-priority: strict
+        conda-remove-defaults: true
+
+    - name: Cache Conda env
+      uses: actions/cache@v5
+      with:
+        path: ${{ env.CONDA }}/envs
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}', env.env_file)) }}
+      id: cache-env
+
+    - name: Update environment
+      if: steps.cache-env.outputs.cache-hit != 'true'
+      run: conda env update -n pypsa-earth -f ${{ env.env_file }}
+
+    - name: Conda list
+      run: |
+        conda list
 
     - name: Fill submodule
       run: |
         git submodule init
         git submodule update
 
-    - name: Create environment cache
-      uses: actions/cache@v4
-      id: cache
-      with:
-        path: ${{ matrix.prefix }}
-        key: ${{ matrix.label }}-conda-${{ hashFiles('envs/environment.yaml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
-
-    - name: Update environment due to outdated or unavailable cache
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        mamba env update -n pypsa-earth -f envs/environment.yaml
-
-    - name: Conda list
-      run: |
-        conda list
-
     - name: Test workflow
       run: |
         rm -rf config.yaml
         cp -rf test/config.distribution.test.yaml config.distribution.yaml
-        cp -rf pypsa-earth/config.tutorial.yaml config.pypsa-earth.yaml
+        cp -rf test/config.tutorial_full.yaml config.pypsa-earth.yaml
         snakemake --cores all solve_network --forceall
 
     - name: Test workflow brown field
