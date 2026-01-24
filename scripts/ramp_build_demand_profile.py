@@ -63,7 +63,7 @@ def create_demand_profile(
 
     profile = pd.DataFrame(
         data=data,
-        index=pd.date_range(start=date_start, periods=1440 * n_days, freq="T"),
+        index=pd.date_range(start=date_start, periods=1440 * n_days, freq="min"),
     )
 
     # Reshape to obtain hourly average values:
