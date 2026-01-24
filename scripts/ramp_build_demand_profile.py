@@ -79,7 +79,7 @@ def create_demand_profile(
     daily_profile = pd.DataFrame(
         daily_profile, columns=[f"Day_{i+1}" for i in range(num_groups)]
     )
-    date_index = pd.date_range(start="00:00", periods=24, freq="1H").time
+    date_index = pd.date_range(start="00:00", periods=24, freq="h").time
     daily_profile.index = date_index
 
     # Calculation of the mean value and standard deviation to represent a typical day
