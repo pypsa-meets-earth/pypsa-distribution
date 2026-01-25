@@ -5,6 +5,7 @@ import logging
 import os
 from itertools import combinations
 
+import xarray as xr
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -353,4 +354,8 @@ if __name__ == "__main__":
     )
     a = 12
     print("PyPSA version:", pypsa.__version__)
+    print("python :", __import__("sys").version)
+    print("pandas :", pd.__version__)
+    print("numpy  :", np.__version__)
+    print("xarray :", xr.__version__)
     n.export_to_netcdf(snakemake.output[0])
