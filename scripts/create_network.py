@@ -352,4 +352,5 @@ if __name__ == "__main__":
         snakemake.input["load"],
     )
     a = 12
+    print("PyPSA version:", pypsa.__version__)
     n.export_to_netcdf(snakemake.output[0])
