@@ -5,6 +5,7 @@ import logging
 import os
 from itertools import combinations
 
+import xarray as xr
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -244,6 +245,13 @@ def create_microgrid_network(
             df.index = df["line_name"]
             df.drop("line_name", axis=1, inplace=True)
             n.import_components_from_dataframe(df, "Line")
+    for c in n.iterate_components():
+        # Cast all column data
+        c.df[:] = c.df.apply(lambda s: s.astype(object) if str(s.dtype) == "string" else s)
+        # Cast index
+        c.df.index = c.df.index.astype(object)
+        # Cast column names
+        c.df.columns = c.df.columns.astype(object)
 
 
 # def add_bus_at_center(n, number_microgrids, voltage_level, line_type):
@@ -352,4 +360,9 @@ if __name__ == "__main__":
         snakemake.input["load"],
     )
     a = 12
+    print("PyPSA version:", pypsa.__version__)
+    print("python :", __import__("sys").version)
+    print("pandas :", pd.__version__)
+    print("numpy  :", np.__version__)
+    print("xarray :", xr.__version__)
     n.export_to_netcdf(snakemake.output[0])
