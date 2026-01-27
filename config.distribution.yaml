@@ -6,6 +6,7 @@ version: 0.0.2
 tutorial: true
 mode: green_field  # brown_field or green_field
 
+
 logging:
   level: INFO
   format: "%(levelname)s:%(name)s:%(message)s"
@@ -100,7 +101,7 @@ base_network:
   min_voltage_rebase_voltage: 1000000
 
 electricity:
-  voltages: [0.4, 15., 20., 30., 132., 150., 220., 380., 500., 750.]
+  voltages: [0.4, 15., 20., 22., 30., 132., 150., 220., 380., 500., 750.]
   voltage: 0.22
   voltage_node_cluster: [15., 20., 30.]  # [kV] Voltage levels to use for building clustering in brown_field mode (greater than 0.4 and less than 132)
   hvdc_as_lines: false  # should HVDC lines be modeled as `Line` or as `Link` component?
@@ -119,11 +120,12 @@ electricity:
 
 lines:
   ac_types: # TO DO : check value for distribution
-    0.4: "24-AL1/4-ST1A 0.4"
-    15.: "NA2XS2Y 1x185 RM/25 12/20 kV"
-    20.: "NA2XS2Y 1x185 RM/25 12/20 kV"
-    30.: "NA2XS2Y 1x240 RM/25 18/30 kV"
-    132.: "Al/St 240/40 2-bundle 220.0"
+    0.4: "NAYY 4x150 SE"
+    15.: "48-AL1/8-ST1A 10.0"
+    20.: "94-AL1/15-ST1A 20.0"
+    22.: "94-AL1/15-ST1A 20.0"
+    30.: "94-AL1/15-ST1A 20.0"
+    132.: "N2XS(FL)2Y 1x240 RM/35 64/110 kV"
     150.: "Al/St 240/40 2-bundle 220.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     380.: "Al/St 240/40 4-bundle 380.0"
