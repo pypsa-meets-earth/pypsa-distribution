@@ -28,6 +28,7 @@ test/tmp/
 
 # track resources/powerplants.csv
 !resources/powerplants.csv
+!resources/demand/microgrid_load.csv
 
 # track data/ramp/
 !data/ramp/
