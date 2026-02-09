@@ -37,10 +37,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    
+
     - name: Use base env file if it was changed
       run: |
-          echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
+        echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
 
     - uses: conda-incubator/setup-miniconda@v3
       with:
