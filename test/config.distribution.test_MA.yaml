@@ -122,12 +122,12 @@ electricity:
 
 lines:
   ac_types:
-    0.4: "24-AL1/4-ST1A 0.4"
-    15.: "NA2XS2Y 1x185 RM/25 12/20 kV"
-    20.: "NA2XS2Y 1x185 RM/25 12/20 kV"
-    22.: "NA2XS2Y 1x185 RM/25 12/20 kV"
-    30.: "NA2XS2Y 1x240 RM/25 18/30 kV"
-    132.: "Al/St 240/40 2-bundle 220.0"
+    0.4: "NAYY 4x150 SE"
+    15.: "48-AL1/8-ST1A 10.0"
+    20.: "94-AL1/15-ST1A 20.0"
+    22.: "94-AL1/15-ST1A 20.0"
+    30.: "94-AL1/15-ST1A 20.0"
+    132.: "N2XS(FL)2Y 1x240 RM/35 64/110 kV"
     150.: "Al/St 240/40 2-bundle 220.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     380.: "Al/St 240/40 4-bundle 380.0"
@@ -146,8 +146,8 @@ links:
   under_construction: "zero" # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 transformers:
-  x: 0.06      # TO DO : check value for distribution
-  s_nom: 0.63
+  x: 0.12       # TO DO : check value for distribution
+  s_nom: 40
   type: ""
 
 
