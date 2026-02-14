@@ -38,10 +38,10 @@ def create_microgrid_shapes(microgrids_list, output_path, country_code):
         # Extract the bounds of the rectangle for the current microgrid
         values = microgrids_list_df.iloc[:, col]
         # Define the vertices of the rectangle
-        Top_left = (values[0], values[3])
-        Top_right = (values[1], values[3])
-        Bottom_right = (values[1], values[2])
-        Bottom_left = (values[0], values[2])
+        Top_left = (values.iloc[0], values.iloc[3])
+        Top_right = (values.iloc[1], values.iloc[3])
+        Bottom_right = (values.iloc[1], values.iloc[2])
+        Bottom_left = (values.iloc[0], values.iloc[2])
         # Create a Polygon shape from the rectangle's vertices
         microgrid_shape = Polygon(
             [Top_left, Top_right, Bottom_right, Bottom_left, Top_left]
@@ -93,10 +93,10 @@ def create_bus_regions(microgrids_list, output_path, country_code):
         microgrid_name = microgrids_list_df.columns[col] + "_gen_bus"
 
         # Define the vertices of the rectangle
-        Top_left = (values[0], values[3])
-        Top_right = (values[1], values[3])
-        Bottom_right = (values[1], values[2])
-        Bottom_left = (values[0], values[2])
+        Top_left = (values.iloc[0], values.iloc[3])
+        Top_right = (values.iloc[1], values.iloc[3])
+        Bottom_right = (values.iloc[1], values.iloc[2])
+        Bottom_left = (values.iloc[0], values.iloc[2])
 
         # Create a Polygon shape from the rectangle's vertices
         microgrid_shape = Polygon(
@@ -108,8 +108,8 @@ def create_bus_regions(microgrids_list, output_path, country_code):
         microgrid_names.append(microgrid_name)
 
         # Calculate the center of the rectangle
-        x = (values[0] + values[1]) / 2
-        y = (values[2] + values[3]) / 2
+        x = (values.iloc[0] + values.iloc[1]) / 2
+        y = (values.iloc[2] + values.iloc[3]) / 2
         microgrid_x.append(x)  # Append the x-coordinate of the center
         microgrid_y.append(y)  # Append the y-coordinate of the center
 
