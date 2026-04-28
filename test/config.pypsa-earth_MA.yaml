@@ -30,7 +30,7 @@ enable:
   # If "build_cutout" : true, then environmental data is extracted according to `snapshots` date range and `countries`
   # requires cds API key https://cds.climate.copernicus.eu/api-how-to
   # More information https://atlite.readthedocs.io/en/latest/introduction.html#datasets
-  progress_bar: true # show progress bar during downloading routines and other long-running tasks
+  progress_bar: false # show progress bar during downloading routines and other long-running tasks
   custom_busmap: false # if true, use "data/custom_busmap_elec_s{simpl}_{clusters}.csv" for the clustering instead of the clustering algorithms
 
 
@@ -47,8 +47,8 @@ run:
 scenario:
   simpl: [""]
   ll: ["copt"]
-  clusters: [10]
-  opts: [Co2L-3h]
+  clusters: [6]
+  opts: [Co2L-4h]
   planning_horizons: # investment years for myopic and perfect; or costs year for overnight
   - 2030
   sopts:
@@ -159,8 +159,8 @@ build_osm_network: # Options of the build_osm_network script; osm = OpenStreetMa
   force_ac: false # When true, it forces all components (lines and substation) to be AC-only. To be used if DC assets create problem.
 
 base_network:
-  min_voltage_substation_offshore: 51000 # [V] minimum voltage of the offshore substations
-  min_voltage_rebase_voltage: 51000 # [V] minimum voltage in base network
+  min_voltage_substation_offshore: 35000 # [V] minimum voltage of the offshore substations
+  min_voltage_rebase_voltage: 35000 # [V] minimum voltage in base network
 
 load_options:
   ssp: "ssp2-2.6" # shared socio-economic pathway (GDP and population growth) scenario to consider
@@ -790,8 +790,8 @@ solving:
     # nhours: 10
 
   solver:
-    name: gurobi
-    options: gurobi-default
+    name: glpk
+    options: glpk-default
 
   solver_options:
     highs-default:
