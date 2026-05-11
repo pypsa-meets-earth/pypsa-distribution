@@ -119,6 +119,7 @@ def retrieve_osm_data_geojson(
         DELAY_S = 2.0
         EMPTY_RETRY_SLEEP_S = 5.0
         last_err: Exception | None = None
+        HEADERS = {"User-Agent": "pypsa-distribution/0.0.2", "Accept": "*/*"}
 
         def _collect_records() -> list[dict]:
             records: list[dict] = []
@@ -173,14 +174,14 @@ def retrieve_osm_data_geojson(
 
                 try:
                     logger.info(f"Overpass query: {grid_name} / {feature}")
-                    r = requests.get(
-                        url, params={"data": overpass_query}, timeout=240
-                    )  # ↑ timeout locale
-                    if r.status_code in (429, 502, 503, 504):  # retry minimale
+                    r = requests.post(
+                        url, data={"data": overpass_query}, headers=HEADERS, timeout=240
+                    )
+                    if r.status_code in (406, 429, 502, 503, 504):  # retry minimale
                         time.sleep(5)
-                        r = requests.get(
-                            url, params={"data": overpass_query}, timeout=240
-                        )
+                    r = requests.post(
+                        url, data={"data": overpass_query}, headers=HEADERS, timeout=240
+                    )
                     r.raise_for_status()
                     data = r.json()
 
