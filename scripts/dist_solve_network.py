@@ -90,24 +90,25 @@ def prepare_network(n, solve_opts):
 
     return n
 
+
 def fixing_missing_carriers(n):
     """
-    Fixing missing carriers for each component in the network 
+    Fixing missing carriers for each component in the network
     to prevent pypsa.consistency warning.
     """
-    
+
     components = ["lines", "generators", "buses", "storage_units"]
     all_carriers = set()
-    
+
     for comp in components:
         df = getattr(n, comp)
         if "carrier" in df.columns:
             carriers = df["carrier"].dropna().unique()
             all_carriers.update(carriers)
-    
+
     existing_carriers = set(n.carriers.index)
     missing_carriers = all_carriers - existing_carriers
-    
+
     for carrier in missing_carriers:
         n.add("Carrier", carrier)
 
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input[0])
     n = prepare_network(n, snakemake.config["solving"]["options"])
     n = fixing_missing_carriers(n)
-    
+
     n = solve_network(n, solver_name, **solver_options)
 
     n.export_to_netcdf(snakemake.output[0])

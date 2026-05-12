@@ -13,12 +13,12 @@ import pandas as pd
 from _helpers_dist import (
     configure_logging,
     create_logger,
+    read_geojson,
     read_geojson_earth,
     read_osm_config,
+    save_to_geojson,
     sets_path_to_root,
     to_csv_nafix,
-    read_geojson,
-    save_to_geojson,
 )
 from scipy.spatial import cKDTree
 from shapely.geometry import LineString, MultiLineString, Point
@@ -810,18 +810,18 @@ def built_network(
     transformers = transformers[TRANSFORMERS_COLUMNS]
 
     to_csv_nafix(lines, outputs["lines"])
-    #save_to_geojson(lines, outputs["lines_geo"])
+    # save_to_geojson(lines, outputs["lines_geo"])
     to_csv_nafix(converters, outputs["converters"])
-    #save_to_geojson(converters, outputs["converters_geo"])
+    # save_to_geojson(converters, outputs["converters_geo"])
     to_csv_nafix(transformers, outputs["transformers"])
-    #save_to_geojson(transformers, outputs["transformers_geo"])
+    # save_to_geojson(transformers, outputs["transformers_geo"])
 
     # create clean directory if not already exist
     if not os.path.exists(outputs["substations"]):
         os.makedirs(os.path.dirname(outputs["substations"]), exist_ok=True)
 
     to_csv_nafix(buses, outputs["substations"])
-    #save_to_geojson(buses, outputs["substations_geo"])
+    # save_to_geojson(buses, outputs["substations_geo"])
 
     return None
 

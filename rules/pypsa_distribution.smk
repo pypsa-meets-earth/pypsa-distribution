@@ -24,8 +24,13 @@ if config.get("disable_subworkflow", False):
 
 COSTS = "data/costs.csv"
 PROFILE = "data/sample_profile.csv"
+
+
 configfile: "config.pypsa-earth.yaml"
+
+
 configfile: "pypsa-earth/configs/bundle_config.yaml"
+
 
 rule dist_ramp_build_demand_profile:
     params:
@@ -424,6 +429,7 @@ rule dist_add_electricity:
 #     script:
 #         "scripts/solve_network.py"
 
+
 rule dist_solve_network:
     input:
         "networks/elec.nc",
@@ -439,7 +445,8 @@ rule dist_solve_network:
     script:
         "../scripts/dist_solve_network.py"
 
-#if config["enable"].get("retrieve_databundle", True):
+
+# if config["enable"].get("retrieve_databundle", True):
 
 #    bundles_to_download = get_best_bundles_in_snakemake(config)
 
@@ -459,7 +466,7 @@ rule dist_solve_network:
 #        script:
 #            "../pypsa-earth/scripts/retrieve_databundle_light.py"
 
-#rule build_shapes:
+# rule build_shapes:
 #    params:
 #        build_shape_options=config["build_shape_options"],
 #        crs=config["crs"],
@@ -488,8 +495,7 @@ rule dist_solve_network:
 #    script:
 #        "scripts/build_shapes.py"
 
-#if config["enable"].get("build_natura_raster", False):
-
+# if config["enable"].get("build_natura_raster", False):
 #    rule build_natura_raster:
 #        params:
 #            area_crs=config["crs"]["area_crs"],

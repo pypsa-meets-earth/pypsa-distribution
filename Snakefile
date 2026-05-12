@@ -76,10 +76,12 @@ if config.get("disable_subworkflow", False):
     def pypsaearth(path):
         return PYPSAEARTH_FOLDER + "/" + path
 
+
 if not config["enable"].get("disable_distribution_workflow"):
+
     include: "rules/pypsa_distribution.smk"
+
 
 # rule clean:
 #     run:
 #         shell("snakemake -j 1 solve_network --delete-all-output")
-
