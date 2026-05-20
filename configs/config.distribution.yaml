@@ -29,6 +29,7 @@ enable:
   progress_bar: true # show progress bar during downloading routines and other long-running tasks
   build_natura_raster: true  # If True, then build_natura_raster can be run
   interconnect_microgrids: false
+  run_distribution: true
 
 scenario:
   simpl: ['']
