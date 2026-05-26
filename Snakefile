@@ -27,6 +27,23 @@ PROFILE = "data/sample_profile.csv"
 
 PYPSAEARTH_FOLDER = "pypsa-earth"
 
+if not config.get("disable_subworkflow", False):
+
+    subworkflow pypsaearth:
+        workdir:
+            PYPSAEARTH_FOLDER
+        snakefile:
+            PYPSAEARTH_FOLDER + "/Snakefile"
+        configfile:
+            "config.pypsa-earth.yaml"
+
+
+if config.get("disable_subworkflow", False):
+
+    def pypsaearth(path):
+        return PYPSAEARTH_FOLDER + "/" + path
+
+
 if "config" not in globals() or not config:  # skip when used as sub-workflow
     if not exists("config.yaml"):
         # # prepare pypsa-earth config

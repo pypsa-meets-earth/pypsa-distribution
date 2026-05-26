@@ -1,37 +1,3 @@
-from retrieve_databundle_light import (
-    datafiles_retrivedatabundle,
-    get_best_bundles_in_snakemake,
-)
-
-PYPSAEARTH_FOLDER = "../pypsa-distribution/pypsa-earth"
-
-if not config.get("disable_subworkflow", False):
-
-    subworkflow pypsaearth:
-        workdir:
-            PYPSAEARTH_FOLDER
-        snakefile:
-            PYPSAEARTH_FOLDER + "/Snakefile"
-        configfile:
-            "config.pypsa-earth.yaml"
-
-
-if config.get("disable_subworkflow", False):
-
-    def pypsaearth(path):
-        return PYPSAEARTH_FOLDER + "/" + path
-
-
-COSTS = "data/costs.csv"
-PROFILE = "data/sample_profile.csv"
-
-
-configfile: "config.pypsa-earth.yaml"
-
-
-configfile: "pypsa-earth/configs/bundle_config.yaml"
-
-
 rule dist_ramp_build_demand_profile:
     params:
         ramp=config["ramp"],
@@ -412,24 +378,6 @@ rule dist_add_electricity:
         "../scripts/dist_add_electricity.py"
 
 
-# if config["monte_carlo"]["options"].get("add_to_snakefile", False) == False:
-
-# rule solve_network:
-#     input:
-#         "networks/elec.nc",
-#     output:
-#         "networks/results/elec.nc",
-#     log:
-#         "logs/solve_network.log",
-#     benchmark:
-#         "benchmarks/solve_network"
-#     threads: 1
-#     resources:
-#         mem_mb=3000,
-#     script:
-#         "scripts/solve_network.py"
-
-
 rule dist_solve_network:
     input:
         "networks/elec.nc",
@@ -444,76 +392,3 @@ rule dist_solve_network:
         mem_mb=3000,
     script:
         "../scripts/dist_solve_network.py"
-
-
-# if config["enable"].get("retrieve_databundle", True):
-
-#    bundles_to_download = get_best_bundles_in_snakemake(config)
-
-#    rule retrieve_databundle_light:
-#        params:
-#            bundles_to_download=bundles_to_download,
-#            hydrobasins_level=config["renewable"]["hydro"]["hydrobasins_level"],
-#        output:  #expand(directory('{file}') if isdir('{file}') else '{file}', file=datafiles)
-#            expand(
-#                "{file}", file=datafiles_retrivedatabundle(config, bundles_to_download)
-#            ),
-#            directory("data/landcover"),
-#        log:
-#            "logs/" + RDIR + "retrieve_databundle.log",
-#        benchmark:
-#            "benchmarks/" + RDIR + "retrieve_databundle_light"
-#        script:
-#            "../pypsa-earth/scripts/retrieve_databundle_light.py"
-
-# rule build_shapes:
-#    params:
-#        build_shape_options=config["build_shape_options"],
-#        crs=config["crs"],
-#        countries=config["countries"],
-#        subregion=config["subregion"],
-#    input:
-#        # naturalearth='data/bundle/naturalearth/ne_10m_admin_0_countries.shp',
-#        # eez='data/bundle/eez/World_EEZ_v8_2014.shp',
-#        # nuts3='data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp',
-#        # nuts3pop='data/bundle/nama_10r_3popgdp.tsv.gz',
-#        # nuts3gdp='data/bundle/nama_10r_3gdp.tsv.gz',
-#        eez="data/eez/eez_v11.gpkg",
-#    output:
-#        country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-#        offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
-#        africa_shape="resources/" + RDIR + "shapes/africa_shape.geojson",
-#        gadm_shapes="resources/" + RDIR + "shapes/gadm_shapes.geojson",
-#        subregion_shapes="resources/" + RDIR + "shapes/subregion_shapes.geojson",
-#    log:
-#        "logs/" + RDIR + "build_shapes.log",
-#    benchmark:
-#        "benchmarks/" + RDIR + "build_shapes"
-#    threads: 1
-#    resources:
-#        mem_mb=3096,
-#    script:
-#        "scripts/build_shapes.py"
-
-# if config["enable"].get("build_natura_raster", False):
-#    rule build_natura_raster:
-#        params:
-#            area_crs=config["crs"]["area_crs"],
-#            natura=config["natura"],
-#            disable_progress=not config["enable"]["progress_bar"],
-#        input:
-#            shapefiles_land="data/landcover",
-#            cutouts=expand(
-#                "cutouts/" + "{cutout}.nc",
-#                cutout=[c["cutout"] for _, c in config["renewable"].items()],
-#            ),
-#            country_shapes="resources/" + RDIR + "shapes/country_shapes.geojson",
-#            offshore_shapes="resources/" + RDIR + "shapes/offshore_shapes.geojson",
-#        output:
-#            "resources/" + RDIR + "natura.tiff",
-#        log:
-#            "logs/" + RDIR + "build_natura_raster.log",
-#        benchmark:
-#            "benchmarks/" + RDIR + "build_natura_raster"
-#        script:
-#            "scripts/build_natura_raster.py"
