@@ -44,19 +44,12 @@ if config.get("disable_subworkflow", False):
         return PYPSAEARTH_FOLDER + "/" + path
 
 
-if "config" not in globals() or not config:  # skip when used as sub-workflow
-    if not exists("config.yaml"):
-        # # prepare pypsa-earth config
-        # create_test_config(
-        #     "./config.pypsa-earth.yaml", "./config.distribution.yaml", "./config.yaml"
-        # )
-        copyfile("config.distribution.yaml", "config.yaml")
+configfile: "config.pypsa-earth.yaml"
 
-    configfile: "config.pypsa-earth.yaml"
+
+if exists("config.yaml"):
+
     configfile: "config.yaml"
-
-
-config["countries"] = create_country_list(config["countries"])
 
 
 config["countries"] = create_country_list(config["countries"])
