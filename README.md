@@ -104,4 +104,3 @@ The recurrent meeting on PyPSA-Distribution is every second Tuesday at 17:00 AM 
 The documentation is available here: [documentation](https://pypsa-earth.readthedocs.io/en/latest/index.html). -->
 
 ## Collaborators
-
