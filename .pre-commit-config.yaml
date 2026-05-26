@@ -4,7 +4,7 @@
 
 # Copied from https://github.com/PyPSA/pypsa-eur/pull/302/files
 
-exclude: ^(LICENSES|README.md|config.pypsa-earth.yaml|test/config.tutorial_full.yaml|test/config.pypsa-earth_MA.yaml)
+exclude: ^(LICENSES|README.md|configs/config.pypsa-earth.yaml|test/config.tutorial_full.yaml|test/config.pypsa-earth_MA.yaml)
 
 
 repos:
