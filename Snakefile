@@ -35,7 +35,7 @@ if not config.get("disable_subworkflow", False):
         snakefile:
             PYPSAEARTH_FOLDER + "/Snakefile"
         configfile:
-            "config.pypsa-earth.yaml"
+            "configs/config.pypsa-earth.yaml"
 
 
 if config.get("disable_subworkflow", False):
@@ -44,7 +44,10 @@ if config.get("disable_subworkflow", False):
         return PYPSAEARTH_FOLDER + "/" + path
 
 
-configfile: "config.pypsa-earth.yaml"
+configfile: "configs/config.pypsa-earth.yaml"
+
+
+configfile: "configs/config.distribution.yaml"
 
 
 if exists("config.yaml"):
@@ -78,7 +81,7 @@ if not config.get("disable_subworkflow", False):
         snakefile:
             PYPSAEARTH_FOLDER + "/Snakefile"
         configfile:
-            "./config.pypsa-earth.yaml"
+            "./configs/config.pypsa-earth.yaml"
 
 
 if config.get("disable_subworkflow", False):
