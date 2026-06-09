@@ -37,10 +37,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    
+
     - name: Use base env file if it was changed
       run: |
-          echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
+        echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
 
     - uses: conda-incubator/setup-miniconda@v3
       with:
@@ -72,9 +72,7 @@ jobs:
     - name: Test workflow
       run: |
         rm -rf config.yaml
-        cp -rf test/config.distribution.test.yaml config.distribution.yaml
-        cp -rf test/config.tutorial_full.yaml config.pypsa-earth.yaml
-        snakemake --cores all solve_network --forceall
+        snakemake --cores all dist_solve_network --configfile configs/config.distribution.yaml --forceall
 
     - name: Test workflow brown field
       run: |
@@ -85,9 +83,9 @@ jobs:
         rm -rf pypsa-earth/results
         rm -rf results
         rm -rf networks
-        cp -rf test/config.distribution.test_MA.yaml config.distribution.yaml
+        cp -rf test/config.distribution.test_MA.yaml configs/config.distribution.yaml
         cp -rf test/config.pypsa-earth_MA.yaml config.pypsa-earth.yaml
-        snakemake --cores all add_electricity --forceall
+        snakemake --cores all dist_solve_network --configfile configs/config.distribution.yaml --forceall
 
         # - name: Test plotting and summaries
         #   run: |
