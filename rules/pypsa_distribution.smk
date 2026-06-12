@@ -158,7 +158,7 @@ if config.get("mode") == "brown_field":
             substations="resources/" + RDIR + "osm/raw/all_raw_substations.geojson",
             country_shapes="resources/shapes/microgrid_shapes.geojson",
             offshore_shapes=pypsaearth("resources/shapes/offshore_shapes.geojson"),
-            africa_shape=pypsaearth("resources/shapes/africa_shape.geojson"),
+            africa_shape="resources/" + RDIR + "shapes/microgrid_shapes.geojson",
         output:
             generators="resources/" + RDIR + "osm/clean/all_clean_generators.geojson",
             generators_csv="resources/" + RDIR + "osm/clean/all_clean_generators.csv",
