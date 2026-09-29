@@ -13,17 +13,6 @@ Upcoming Release
 
 **New Features and Major Changes**
 
-* 
-
-**Minor Changes and bug-fixing**
-
-* 
-
-Version 0.0.3
-================
-
-**New Features and Major Changes**
-
 * Merging pypsa-earth and pypsa-distribution, solving workflow issues and bug-fixing in general to be fork of pypsa-earth is completed in '<https://github.com/Emre-Yorat89/pypsa-earth/tree/merged_distribution_v2>'__ 
 * Workflow changes to be fork of pypsa-earth `PR #83 <https://github.com/pypsa-meets-earth/pypsa-distribution/pull/83>`__
 
