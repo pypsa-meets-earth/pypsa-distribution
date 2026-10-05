@@ -16,7 +16,7 @@ Solves linear optimal power flow for a network iteratively.
             max_iterations:
             skip_iterations:
             track_iterations:
-        
+
 Inputs
 ------
 - ``networks/elec.nc``
@@ -24,7 +24,7 @@ Inputs
 Outputs
 -------
 - ``networks/results/networks/elec.nc``: Solved PyPSA network including optimisation results
-  
+
 Description
 -----------
 Total annual system costs are minimised with PyPSA. The full formulation of the
