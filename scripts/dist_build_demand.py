@@ -8,11 +8,11 @@ Relevant Settings
 .. code:: yaml
 
     microgrids_list:
-        microgridX: 
+        microgridX:
           lon_min:
-          lon_max: 
-          lat_min: 
-          lat_max: 
+          lon_max:
+          lat_min:
+          lat_max:
     load:
         scaling_factor:
 
@@ -28,7 +28,7 @@ Outputs
 
 Description
 -----------
-The rule :mod:`build_demand` contains functions that are used to create a shape file of the microgrid, to mask a raster with the shape file and to estimate 
+The rule :mod:`build_demand` contains functions that are used to create a shape file of the microgrid, to mask a raster with the shape file and to estimate
 the population. Then the population is multiplied for the per person load and the microgrid load is then obtained. The process applies to all the microgrids specified in config.yaml.
 """
 
