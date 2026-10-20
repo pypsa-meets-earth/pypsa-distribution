@@ -39,7 +39,7 @@ The following image represents the workflow performed by snakemake.
   :alt: Workflow Diagram
   :align: center
 
-The blocks represent the individual rules which are required to create the file networks/elec_s_128.nc. Each rule requires scripts (e.g. Python) 
+The blocks represent the individual rules which are required to create the file networks/elec_s_128.nc. Each rule requires scripts (e.g. Python)
 to convert inputs to outputs. The arrows indicate the outputs from preceding rules which a particular rule takes as input data.
 
 Folder structure

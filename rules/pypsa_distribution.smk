@@ -1,5 +1,6 @@
 COSTS = "data/costs.csv"
 
+
 rule dist_ramp_build_demand_profile:
     params:
         ramp=config["ramp"],
@@ -8,7 +9,9 @@ rule dist_ramp_build_demand_profile:
         user_description="data/ramp/{user_type}.xlsx",
     output:
         daily_demand_profiles="resources/" + RDIR + "ramp/daily_demand_{user_type}.xlsx",
-        daily_type_demand_profile="resources/" + RDIR + "ramp/daily_type_demand_{user_type}.xlsx",
+        daily_type_demand_profile="resources/"
+        + RDIR
+        + "ramp/daily_type_demand_{user_type}.xlsx",
     log:
         "logs/ramp_build_demand_profile_{user_type}.log",
     benchmark:
@@ -27,13 +30,17 @@ rule dist_build_demand:
         build_demand_model=config["build_demand_type"],
     input:
         **{
-            f"profile_{user_file.stem}": "resources/" + RDIR + f"ramp/daily_type_demand_{user_file.stem}.xlsx"
+            f"profile_{user_file.stem}": "resources/"
+            + RDIR
+            + f"ramp/daily_type_demand_{user_file.stem}.xlsx"
             for user_file in Path("data/ramp/").glob("[a-zA-Z0-9]*.xlsx")
         },
         sample_profile=PROFILE,
         building_csv="resources/" + RDIR + "buildings/buildings_type.csv",
         microgrid_shapes="resources/" + RDIR + "shapes/microgrid_shapes.geojson",
-        clusters_with_buildings="resources/" + RDIR + "buildings/cluster_with_buildings.geojson",
+        clusters_with_buildings="resources/"
+        + RDIR
+        + "buildings/cluster_with_buildings.geojson",
     output:
         electric_load="resources/" + RDIR + "demand/microgrid_load.csv",
     log:
@@ -67,7 +74,8 @@ rule dist_build_shapes:
 if config.get("mode") != "brown_field":
 
     rule copy_bus_regions:
-        input: "resources/" + RDIR + "shapes/microgrid_bus_shapes.geojson"
+        input:
+            "resources/" + RDIR + "shapes/microgrid_bus_shapes.geojson",
         output:
             regions_onshore="resources/" + RDIR + "bus_regions/regions_onshore.geojson",
             regions_offshore="resources/"
@@ -75,6 +83,7 @@ if config.get("mode") != "brown_field":
             + "bus_regions/regions_offshore.geojson",
         run:
             import shutil
+
             shutil.copyfile(input[0], output["regions_onshore"])
             shutil.copyfile(input[0], output["regions_offshore"])
 
@@ -83,10 +92,14 @@ if config.get("mode") != "brown_field":
             crs=config["crs"],
             house_area_limit=config["house_area_limit"],
         input:
-            buildings_geojson="resources/" + RDIR + "buildings/microgrid_building.geojson",
+            buildings_geojson="resources/"
+            + RDIR
+            + "buildings/microgrid_building.geojson",
         output:
             clusters="resources/" + RDIR + "buildings/clustered_buildings.geojson",
-            clusters_with_buildings="resources/" + RDIR + "buildings/cluster_with_buildings.geojson",
+            clusters_with_buildings="resources/"
+            + RDIR
+            + "buildings/cluster_with_buildings.geojson",
             buildings_type="resources/" + RDIR + "buildings/buildings_type.csv",
         log:
             "logs/dist_cluster_buildings.log",
@@ -160,9 +173,10 @@ rule dist_clean_earth_osm_data:
 
 
 if config.get("mode") != "brown_field":
+
     rule empty_osm_generators:
         output:
-            touch("resources/" + RDIR + "osm/clean/all_clean_generators.csv")
+            touch("resources/" + RDIR + "osm/clean/all_clean_generators.csv"),
 
 
 if config.get("mode") == "brown_field":
@@ -231,7 +245,9 @@ if config.get("mode") == "brown_field":
             + "base_network/all_buses_build_network.csv",
         output:
             clusters="resources/" + RDIR + "buildings/clustered_buildings.geojson",
-            clusters_with_buildings="resources/" + RDIR + "buildings/cluster_with_buildings.geojson",
+            clusters_with_buildings="resources/"
+            + RDIR
+            + "buildings/cluster_with_buildings.geojson",
             buildings_type="resources/" + RDIR + "buildings/buildings_type.csv",
         log:
             "logs/dist_cluster_buildings.log",
@@ -308,7 +324,9 @@ if config.get("mode") == "brown_field":
     rule dist_filter_data:
         input:
             **{
-                f"profile_{tech}": "resources/" + RDIR + f"renewable_profiles/profile_{tech}.nc"
+                f"profile_{tech}": "resources/"
+                + RDIR
+                + f"renewable_profiles/profile_{tech}.nc"
                 for tech in config["tech_modelling"]["general_vre"]
             },
             base_network="networks/" + RDIR + "base.nc",
@@ -353,9 +371,9 @@ rule dist_build_renewable_profiles:
             if config.get("mode") == "brown_field"
             else "resources/" + RDIR + "shapes/microgrid_bus_shapes.geojson"
         ),
-        cutout=lambda w: 
-            "cutouts/" + config["renewable"][w.technology]["cutout"] + ".nc"
-        ,
+        cutout=lambda w: "cutouts/"
+        + config["renewable"][w.technology]["cutout"]
+        + ".nc",
     output:
         profile="resources/" + RDIR + "renewable_profiles/profile_{technology}.nc",
     log:
@@ -374,7 +392,9 @@ rule dist_add_electricity:
         mode=config["mode"],
     input:
         **{
-            f"profile_{tech}": "resources/" + RDIR + f"renewable_profiles/profile_{tech}.nc"
+            f"profile_{tech}": "resources/"
+            + RDIR
+            + f"renewable_profiles/profile_{tech}.nc"
             for tech in config["tech_modelling"]["general_vre"]
         },
         create_network=(
