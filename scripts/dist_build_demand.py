@@ -104,7 +104,6 @@ def get_WorldPop_data(
 
     WorldPop_inputfile = os.path.join(
         os.getcwd(),
-        "pypsa-earth",
         "data",
         "WorldPop",
         WorldPop_filename,

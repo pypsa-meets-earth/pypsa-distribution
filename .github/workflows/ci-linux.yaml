@@ -72,7 +72,7 @@ jobs:
     - name: Test workflow
       run: |
         rm -rf config.yaml
-        snakemake --cores all dist_solve_network --configfile configs/config.distribution.yaml --forceall
+        snakemake --cores all dist_solve_network --configfile test/config.distribution.test.yaml --forceall
 
     - name: Test workflow brown field
       run: |
@@ -83,9 +83,7 @@ jobs:
         rm -rf pypsa-earth/results
         rm -rf results
         rm -rf networks
-        cp -rf test/config.distribution.test_MA.yaml configs/config.distribution.yaml
-        cp -rf test/config.pypsa-earth_MA.yaml configs/config.pypsa-earth.yaml
-        snakemake --cores all dist_solve_network --configfile configs/config.distribution.yaml --forceall
+        snakemake --cores all dist_solve_network --configfile test/config.distribution.test_MA.yaml --forceall
 
         # - name: Test plotting and summaries
         #   run: |

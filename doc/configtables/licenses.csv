@@ -1,0 +1,17 @@
+"Files","Licence","BY","NC","SA","Mark Changes",Detail
+"data/raw/copernicus/*","Custom","x",,,"x",https://cds.climate.copernicus.eu/cdsapp/#!/terms/licence-to-use-copernicus-products
+"data/raw/eez/*","CC4.0","x","x","x",,http://www.marineregions.org/disclaimer.php
+"data/raw/landcover/*","Custom","x","x",,,https://www.protectedplanet.net/en/legal
+"data/raw/gadm/*","CC4.0","x","x",,"x",https://gadm.org/data.html
+"data/raw/gebco/*",,"x",,,,https://www.gebco.net/data_and_products/gridded_bathymetry_data/arctic_ocean/#terms
+"data/hydro_capacities.csv",,"x",,,,
+"data/raw/hydrobasins/*","Custom","x","x",,,https://www.hydrosheds.org/page/license
+"data/raw/WorldPop/*","CC","x",,,,https://www.worldpop.org/
+"data/raw/GDP/*","CC1.0",,,,,https://datadryad.org/stash/dataset/doi:10.5061/dryad.dk1j0
+"data/osm/*","ODbL",,,,,https://www.openstreetmap.org/copyright
+"data/demand/unsd/*","Custom","x",,,,"https://unstats.un.org/unsd/energystats/data/"
+"data/industrial_database.csv","CC","x",,,,https://globalenergymonitor.org/projects/global-steel-plant-tracker/download-data/
+"data/industrial_database.csv","CC4.0","x",,,,https://www.cgfi.ac.uk/spatial-finance-initiative/geoasset-project/cement/
+"data/industrial_database.csv","CC4.0","x",,,,https://www.cgfi.ac.uk/spatial-finance-initiative/geoasset-project/pulp-and-paper-mill-database-for-latin-america/
+"data/airports.csv","Public Domain",,,,,https://ourairports.com/data/
+"data/potash_gis/*", "Public Domain",,,,,https://doi.org/10.3133/sir20105090S

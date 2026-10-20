@@ -1,0 +1,22 @@
+Parameter,Unit,Values,Description
+year,--,"YYYY (e.g. 2030)",Year for which to retrieve cost assumptions for resources/costs.csv
+technology_data_version,--,"vX.X.X (e.g. v0.1.0)",Version of technology-data repository to use
+discountrate,--,float,Rate of return used to discount future cash flows back to their present value
+country_specific_data,bool,"{True, False}",Reference to the desired technology-data directory for techno-economic input data
+cost_scenario,--,"{moderate, advanced, conservative}",Only used if country_specific_data is set to select the desired NREL financial case
+financial_case,--,"{market, r&d}",Only used if country_specific_data is set to select the desired NREL financial case
+output_currency,--,"{EUR, USD, JPY, CAD, CNY}",Reference currency for all costs (EUR is the base unit for conversion)
+default_exchange_rate,--,float,Default US Dollar-Euro exchange rate
+future_exchange_rate_strategy,--,"{reference, latest, custom}",Strategy for currency conversion
+custom_future_exchange_rate,--,"{None, float}",Customized exchange rate if future_exchange_rate_strategy is custom
+rooftop_share,--,float,Share of rooftop PV when calculating capital cost of solar
+fill_values,--,dict,Default values if not specified for a technology in resources/costs.csv
+marginal_cost,EUR/MWh,dict,Marginal operating costs for specified technologies
+-- FOM,%/year,dict,Fixed Operations and Maintenance assumptions
+-- VOM,EUR/MWh,dict,Variable Operations and Maintenance assumptions
+-- efficiency,--,dict,Efficiency assumptions per technology
+-- fuel,EUR/MWh,dict,Fuel price assumptions
+-- investment,EUR/MW,dict,Investment cost assumptions
+-- lifetime,years,dict,Technology lifetime assumptions
+-- CO2 intensity,t_CO2/MWh,dict,CO2 intensity per technology
+-- discount rate,--,dict,Discount rate per technology

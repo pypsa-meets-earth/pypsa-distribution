@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText:  PyPSA-Earth and PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+version: 0.8.0
+tutorial: true
+
+
+countries: ["NG", "BJ"]
+
+enable:
+  retrieve_databundle: true
+  retrieve_databundle_sector: true
+  retrieve_cutout: true
+  build_natura_raster: true
+  progress_bar: false
+
+scenario:
+  clusters: [6]
+  opts: [Co2L-4H]
+
+snapshots:
+  start: "2013-03-1"
+  end: "2013-03-7"
+
+
+osm:
+  clean_osm_data:
+    threshold_voltage: 35000
+
+base_network:
+  min_voltage_substation_offshore: 35000
+  min_voltage_rebase_voltage: 35000
+
+
+co2:
+  limit: 1.487e+9
+  base: 1.487e+9
+  automatic_emission:
+    enable: true
+
+
+atlite:
+  default: cutout-2013-era5-tutorial
+
+renewable:
+  hydro:
+    hydrobasins_level: 4
+    hydro_max_hours: "energy_capacity_totals_by_country"
+    resource:
+      method: hydro
+      hydrobasins: data/hydrobasins_hydroshare/africa-geoglows-atlite.shp
+
+
+solving:
+  solver:
+    name: glpk
+    options: glpk-default

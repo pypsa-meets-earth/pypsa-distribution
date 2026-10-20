@@ -41,6 +41,7 @@ LINES_COLUMNS = [
     "length",
     "dc",
     "geometry",
+    "under_construction",
 ]
 CONVERTERS_COLUMNS = [
     "converter_id",

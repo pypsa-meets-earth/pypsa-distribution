@@ -1,30 +1,68 @@
+# SPDX-FileCopyrightText:  PyPSA-Earth and PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
 
 # Byte-compiled / optimized / DLL files
 **/__pycache__
 *.py[cod]
 *$py.class
+
+# Jupyter-related files
 .ipynb_checkpoints
 
 # General untracked file formats
+*.idea
 *.log
 **/pbf
 *.pbf
 *.zip
+*.png
+*.done
+*.tif
+*.csv
+*.geojson
+*.nc
+*.xls
+*.xlsx
+*.org
+*~
 
-# Untracked files
+# Specific untracked files
 config.yaml
 dag.svg
+gurobi.log
+gadm_shapes.geojson
+doc/*.vscode/settings.json
 
 # Untracked folders (and files within)
-img/
-.snakemake/
+bak
 benchmarks/
+backup*
 cutouts/
-data/
+data/*
+dask-worker-space/
+img/
+logs/
+networks/
+notebooks
+notebooks/
+pypsa/
 resources/
 results/
-networks/
+.snakemake/
+slurm
+scripts/old
+.tmp
+doc/_build
+sample_pypsa_eur
 test/tmp/
+playground/
+!data/nuclear_p_max_pu.csv
+
+# Specific configuration files
+configs/scenarios/config.*.yaml
+!configs/scenarios/config.test.yaml
+!configs/scenarios/config.GH.yaml
 
 # track resources/powerplants.csv
 !resources/powerplants.csv
@@ -35,15 +73,16 @@ test/tmp/
 !data/ramp/**
 !data/ramp/*.xlsx
 
-# Untrack test doc builds
-doc/_build
-
-# VS code related
-*.vscode
-doc/*.vscode/settings.json
-*.vscode/settings.json
+# VS Code-related files
+.vscode
 *.code-workspace
+*.vscode/settings.json
 
 # Additional debugging folders
 backup*
 screenlog*
+
+# Exclude specific file paths
+!data/demand/unsd/paths/Energy_Statistics_Database.xlsx
+site/
+!data/industry/ammonia_plants.csv
