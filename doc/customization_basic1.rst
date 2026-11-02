@@ -11,7 +11,7 @@ Basic customization
 The goal of this section is to show you how to make basic settings to customize the configuration file and consequently the execution of the tool.
 First, it is worth spending a few words on the configuration file.
 Within the work folder there is always a configuration file ( typically the file that is read by snakemake is the "config.yaml).
-This type of file is used to define and customize the settings and parameters for the execution of the workflow or process, so any customization of the tool will be performed on that file. 
+This type of file is used to define and customize the settings and parameters for the execution of the workflow or process, so any customization of the tool will be performed on that file.
 In the next steps we will see the basic settings in order to customize the configuration file, in case you are interested in more in-depth customization, you can refer to the configuration section in the Pypsa-Earth documentation.
 
 Choose the type of simulation:
@@ -21,7 +21,7 @@ It is possible to run simulations with the Pypsa Distribution tool in two modes:
 - tutorial mode: this is a faster simulation in which less data is used. It was created to allow users to become familiar with the tool, without necessarily having to run heavy simulations.For realistic case studies it will be necessary to run the tool in full configuration and not in tutorial one.
 - full ( non-tutorial) mode: in this case a full simulation is performed and the use of committed resources is greater.
 
-Since the tutorial mode is designed only to become familiar with the tool, and not to perform analysis in a broad sense, it is possible to run the simulation in tutorial mode for microgrids located in these nations: 
+Since the tutorial mode is designed only to become familiar with the tool, and not to perform analysis in a broad sense, it is possible to run the simulation in tutorial mode for microgrids located in these nations:
 
 - Nigeria [NG]
 - Benin [BJ]
@@ -57,7 +57,7 @@ Please remember,before proceeding, that as has already been mentioned, in case y
 Configure `coordinates`
 --------------------------
 Currently, the tool allows us to select the microgrid coverage area by going to enter the coordinates of the vertices of the rectangular surface we want to be covered by the microgrid.
-At the end of the config.yaml file you will find the microgrid list section where you can go to enter the coordinates. 
+At the end of the config.yaml file you will find the microgrid list section where you can go to enter the coordinates.
 You can take advantage of the webb OpenStreetMap application to generate the coordinates.
 
 .. code:: yaml
@@ -72,7 +72,7 @@ You can take advantage of the webb OpenStreetMap application to generate the coo
 
 Configure ``enable`` section to download/build data
 ---------------------------------------------------------
-The tool bases its operation on specific data obtained from open-source platforms. 
+The tool bases its operation on specific data obtained from open-source platforms.
 For a successful model run, ensure the download of essential open-source data, including databundle and cost data, is activated in the ``enable`` section:
 
 .. code:: yaml
@@ -84,7 +84,7 @@ For a successful model run, ensure the download of essential open-source data, i
         download_osm_buildings: true  # If true, OpenStreetMap buildings will be downloaded for the selected countries
         build_cutout: false
         build_natura_raster: false  # If True, than an exclusion raster will be build
-        
+
         # If "build_cutout" : true, then environmental data is extracted according to `snapshots` date range and `countries`
 
 Regarding topics in the enable section:
@@ -116,7 +116,7 @@ Likewise, the example's temporal scope can be restricted (e.g. to 7 days):
 Specify the demand year
 -----------------------
 
-This section specifies some parameters needed to generate demand profiles. 
+This section specifies some parameters needed to generate demand profiles.
 
 .. code:: yaml
 
@@ -147,6 +147,6 @@ To accurately model both temporally and spatially renewable availabilities such 
                 dy: 0.3  # cutout resolution
                 # The cutout time is automatically set by the snapshot range.
 
-When you use precompiled cutouts, no editing of this section is required. 
+When you use precompiled cutouts, no editing of this section is required.
 However, when using precompiled cutouts, you must replace all "cutout-2013-era5" entries with the name of the custom cutout.
 E.g.: if you simulate Kazakhstan with cutout: asia-2013-era5, each occurrence of cutout-2013-era5 should be updated to asia-2013-era5, which refers to the asia-2013-era5.nc file generated in the cutout folder.

@@ -58,7 +58,7 @@ Example of desired studies are: microgrids planning, distribution system plannin
 **Are we missing something?** Please let us know if you have any other ideas for applications of the model!
 
 *PyPSA meets Earth initiative* members are maintaining the *PyPSA-Distribution* repository.
-The `website <https://pypsa-meets-earth.github.io/>`_ provides more context of the initiative and the associated projects. 
+The `website <https://pypsa-meets-earth.github.io/>`_ provides more context of the initiative and the associated projects.
 
 ==============
 Get Involved
@@ -92,7 +92,7 @@ Documentation
 
 * :doc:`customization_basic`
 * :doc:`Run_your_personal_case`
-  
+
 
 .. toctree::
    :hidden:
@@ -135,4 +135,4 @@ Documentation
 
    release_notes
    how_to_contribute
-   
+
