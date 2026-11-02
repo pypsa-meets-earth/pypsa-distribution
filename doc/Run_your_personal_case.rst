@@ -8,22 +8,22 @@
 Run_your_personal_case
 #######################
 
-After reading the previous sections, you are able to customise the configuration file and are almost ready to launch your modelling. 
+After reading the previous sections, you are able to customise the configuration file and are almost ready to launch your modelling.
 Only a few small operations remain to be done. This section will explain the latest updates and how to run.
 To better explain what needs to be done, we have chosen to go through the various operations by referring to an example.
 
-Suppose we want to run the simulation for a small region of Turkey, and 
+Suppose we want to run the simulation for a small region of Turkey, and
 suppose we want to run a simulation on an annual time horizon using the RAMP demand simulation tool.
 
 .. note::
 
-    Remember: when using the tool for the first time, it is always a good idea to run the tutorial case preset in the configuration file. 
+    Remember: when using the tool for the first time, it is always a good idea to run the tutorial case preset in the configuration file.
     This allows you to see if the code is working correctly and generates the config.yaml file which you can edit to run your own simulation.
 
 Choose the type of simulation:
 --------------------------------------
 
-In our case, the goal is to perform a realistic simulation and for an area outside those that can be simulated with the tutorial mode. 
+In our case, the goal is to perform a realistic simulation and for an area outside those that can be simulated with the tutorial mode.
 For this, the first thing to do is to set the tutorial mode false.
 So, let's open the config.yaml file and start with the changes:
 
@@ -34,7 +34,7 @@ So, let's open the config.yaml file and start with the changes:
 
 Specify the country of interest:
 --------------------------------------
-To select the region of interest, simply change the ISO 3166-1 alpha-2 code, 
+To select the region of interest, simply change the ISO 3166-1 alpha-2 code,
 which represents the official country abbreviations. In the case of Turkey: TR.
 
 .. code:: yaml
@@ -44,15 +44,15 @@ which represents the official country abbreviations. In the case of Turkey: TR.
 
 Configure `coordinates`
 --------------------------
-One of the most important tasks is certainly to correctly select the location of the microgrid. 
+One of the most important tasks is certainly to correctly select the location of the microgrid.
 
 .. note::
-    A useful strategy for knowing the coordinates to be entered in the code is to use www.openstreetmap.org. 
-    Once you have selected the area of interest by moving around the map, press the "export" button. 
-    You should now see a window on the left with a set of co-ordinates. By selecting "Select a different area manually" 
+    A useful strategy for knowing the coordinates to be entered in the code is to use www.openstreetmap.org.
+    Once you have selected the area of interest by moving around the map, press the "export" button.
+    You should now see a window on the left with a set of co-ordinates. By selecting "Select a different area manually"
     you can change the boundaries of the micro-network and find the desired set of co-ordinates to insert into the tool.
 
-To enter the coordinates, simply change the values in the microgrid_list section to the desired values, 
+To enter the coordinates, simply change the values in the microgrid_list section to the desired values,
 in our case:
 
 .. code:: yaml
@@ -65,7 +65,7 @@ in our case:
             lat_max: 37.88786
 
 
-The code is able to simulate several systems at the same time. 
+The code is able to simulate several systems at the same time.
 To do so, simply add an additional analogous block to your_microgrid. For example:
 .. code:: yaml
 
@@ -84,8 +84,8 @@ To do so, simply add an additional analogous block to your_microgrid. For exampl
 
 Configure ``enable`` section to download/build data
 ---------------------------------------------------------
-This section determines how much of the data required for the simulation is to be obtained. 
-A configuration of this type is effective for launching the simulation, the inputs can of course be changed as required. 
+This section determines how much of the data required for the simulation is to be obtained.
+A configuration of this type is effective for launching the simulation, the inputs can of course be changed as required.
 Reference can also be made to the documentation in PyPSA-Earth on this.
 
 .. code:: yaml
@@ -102,7 +102,7 @@ Reference can also be made to the documentation in PyPSA-Earth on this.
 
 specify simulation time horizon:
 ----------------------------------
-Let us assume, as already mentioned, that we want to run a simulation on an annual horizon. 
+Let us assume, as already mentioned, that we want to run a simulation on an annual horizon.
 With this operation, the snapshots that will be associated with the network are set.
 
 .. note::
@@ -117,15 +117,15 @@ With this operation, the snapshots that will be associated with the network are 
 
 Choose load forecasting strategy:
 ---------------------------------
-Currently, energy demand can be simulated with two different strategies. 
-- "From_file" : In this case, the electricity demand forecast is made by scaling a static demand profile based on the population associated with each node in the network. 
+Currently, energy demand can be simulated with two different strategies.
+- "From_file" : In this case, the electricity demand forecast is made by scaling a static demand profile based on the population associated with each node in the network.
   The profile used is in the "data" folder.
-- "Ramp" : In this case, the demand profile associated with each node in the network is estimated using the RAMP tool. 
-  The population is modelled on the basis of 5 different user classes, from tier 0, with no access to the electricity carrier, to tier 5 with maximum access (in the data/ramp folder, you can see the files that allow each user class to be modelled). 
+- "Ramp" : In this case, the demand profile associated with each node in the network is estimated using the RAMP tool.
+  The population is modelled on the basis of 5 different user classes, from tier 0, with no access to the electricity carrier, to tier 5 with maximum access (in the data/ramp folder, you can see the files that allow each user class to be modelled).
   Within the configuration file is the "tier percent" parameter, which allows the percentage of the population belonging to each tier to be determined for each node in the network.
-  An average demand profile and its standard deviation is generated for each tier. 
+  An average demand profile and its standard deviation is generated for each tier.
   The demand profile associated with each node is calculated by aggregating the individual demand profiles associated with the node.
-Let us assume in this case that we want to use the strategy based on RAMP. 
+Let us assume in this case that we want to use the strategy based on RAMP.
 
 .. code:: yaml
 
@@ -138,11 +138,11 @@ Updates of configurations required for simulations not in tutorial mode:
 ------------------------------
 .. note::
 
-   Pypsa-Distribution is a tool under development, we are constantly working to improve the usability of the tool! 
+   Pypsa-Distribution is a tool under development, we are constantly working to improve the usability of the tool!
    Currently, to run simulations in different areas than in the tutorial, it is also necessary to make these small changes.
-   This is an interim solution which we aim to make more functional as soon as possible. 
+   This is an interim solution which we aim to make more functional as soon as possible.
 
-Currently, in order to be able to run the simulation correctly, it is also necessary to slightly modify the config.pypsa-earth.yaml file; 
+Currently, in order to be able to run the simulation correctly, it is also necessary to slightly modify the config.pypsa-earth.yaml file;
 we are working on making this part of the procedure no longer necessary, but for the time being it is:
 The changes you need to make to the config.pypsa-earth.yaml file are:
 - Change the type of simulation from tutorial true to tutorial false:
@@ -153,9 +153,9 @@ The changes you need to make to the config.pypsa-earth.yaml file are:
   .. code:: yaml
 
     countries: ["TR"]
-- Replace each time cutout-2013-era-tutorial appears in the config.yaml file with cutout-2013-era. 
+- Replace each time cutout-2013-era-tutorial appears in the config.yaml file with cutout-2013-era.
   If you prefer to use another cutout, replace the name of the cutout above with the one you are interested in.
-  
+
 Run the simulation:
 ------------------------------
 You are now officially ready to run the simulation, remember to open a wsl terminal and use the command to execute the run!

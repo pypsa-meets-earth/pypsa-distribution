@@ -33,8 +33,8 @@ Open the command prompt and run the following command
 Follow the procedure shown in the prompt, and when finished, restart the device.
 
 You may probably need to install conda and create the pypsa-earth environment in the WSL execution environment as well.
-To do this you need to first download the linux version from https://docs.anaconda.com/free/miniconda/. 
-Once the download is done open the wsl terminal ( you can just type wsl in the search panel), place yourself in the folder where the file you just downloaded is located, 
+To do this you need to first download the linux version from https://docs.anaconda.com/free/miniconda/.
+Once the download is done open the wsl terminal ( you can just type wsl in the search panel), place yourself in the folder where the file you just downloaded is located,
 and run the following commands.
 
 .. code:: bash
@@ -78,12 +78,12 @@ Set the IDE:
 
     In this example we will refer to the use of the Visual Studio Code IDE.
 
-First, we have to set up the IDE in order to run the tutorial. 
-In particular it will be necessary, first, to open a new terminal. To do this, simply select the "terminal" option 
+First, we have to set up the IDE in order to run the tutorial.
+In particular it will be necessary, first, to open a new terminal. To do this, simply select the "terminal" option
 at the top left of the VSC interface and select new terminal.
 
-Once this is done we will see a window appear at the bottom of the interface. 
-For Windows users by default, the terminal will be a cmd, however for proper execution of the tool it is necessary to move to a WSL terminal. 
+Once this is done we will see a window appear at the bottom of the interface.
+For Windows users by default, the terminal will be a cmd, however for proper execution of the tool it is necessary to move to a WSL terminal.
 To do this, it is sufficient to select the down arrow next to "cmd" and select from the drop-down menu the terminal "wsl"
 
 At this point we can move on to activate the previously created pypsa-earth environment ( if you have not already created the pypsa-earth environment you can see how to do it in the "installation" section).
@@ -104,7 +104,7 @@ Run the tutorial model
 ---------------------
 
 A tutorial data kit was developed to facilitate exploring the model.
-The user can explore the majority of the model's functions on a local machine by running the tutorial, which uses fewer computational resources than the entire model does. 
+The user can explore the majority of the model's functions on a local machine by running the tutorial, which uses fewer computational resources than the entire model does.
 Currently, the tutorial case study refers to a microgrid in Nigeria whose coverage area is defined by a rectangle whose vertices have the following coordinates:
 
 -	lon_max: 5.0998
@@ -133,7 +133,7 @@ To run the whole modeling workflow you just need the following command:
 
 .. TODO Explain settings of the tutorial case
 
-This command will trigger loading of the whole dataset needed to build the model for a tutorial case if both tutorial and retrieve_databundle flags are on. 
+This command will trigger loading of the whole dataset needed to build the model for a tutorial case if both tutorial and retrieve_databundle flags are on.
 The tutorial model run simulation will take a while (about 20..50 minutes).
-If the simulation was successful, you should be able to display an elec.nc file representing 
+If the simulation was successful, you should be able to display an elec.nc file representing
 the optimised network in the networks/results folder.

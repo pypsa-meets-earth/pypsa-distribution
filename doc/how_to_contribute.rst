@@ -9,7 +9,7 @@
 Contribute
 ##########################################
 
-Contributions are welcome, and they are greatly appreciated! 
+Contributions are welcome, and they are greatly appreciated!
 Every little bit helps, and you always earn credits.
 
 You can contribute on the code side in many ways:
@@ -44,7 +44,7 @@ All test configs are build by updating the ``config.tutorial.yaml`` with the con
 
 To contribute a test:
 
-1. Provide a new test in ``test/<new test>.yaml``, or adjust one of the existing ones. These tests update the config.tutorial.yaml to test other options e.g. landlock countries. 
+1. Provide a new test in ``test/<new test>.yaml``, or adjust one of the existing ones. These tests update the config.tutorial.yaml to test other options e.g. landlock countries.
 2. Add a new test config path to the ``rule build_all_test`` in the ``Snakefile``.
 3. If your functionality should be tested in the CI for every pull request, add a respective code in ``.github/workflows/ci-linux.yaml``. We test all functionalities only for Linux while providing a general test for windows and mac.
 
@@ -65,6 +65,6 @@ A simple way to explore opportunities for collaboration is to join our meetings.
 - `List of meetings and times <https://github.com/pypsa-meets-earth/pypsa-earth#get-involved>`_
 
 - **Discord**
-  
+
   - Chat with the community, team up on features, exchange with developers, code in voice channels
   - `Discord invitation link <https://discord.gg/AnuJBk23FU>`_
