@@ -180,7 +180,10 @@ def retrieve_osm_data_geojson(
                     if r.status_code in (406, 429, 502, 503, 504):  # retry minimale
                         time.sleep(30)
                         r = requests.post(
-                            url, data={"data": overpass_query}, headers=HEADERS, timeout=240
+                            url,
+                            data={"data": overpass_query},
+                            headers=HEADERS,
+                            timeout=240,
                         )
                     r.raise_for_status()
                     data = r.json()
