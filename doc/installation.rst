@@ -70,7 +70,7 @@ Extra python package requirements are satisfied by manually installing them. Cur
     .../pypsa-distribution % conda activate pypsa-earth
 
     (pypsa-earth) pip install rampdemand
-   
+
 
 Install the pre-commit (for developers)
 =======================================
